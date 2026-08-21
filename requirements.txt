@@ -1,0 +1,11 @@
+torch>=2.5
+torchvision
+timm>=1.0
+kornia>=0.8
+opencv-python>=4.10
+rasterio>=1.4
+numpy>=2.0
+pandas>=2.0
+matplotlib>=3.8
+gdown>=5.0
+imageio>=2.34

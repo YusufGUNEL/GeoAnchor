@@ -1,0 +1,373 @@
+# GeoAnchor — İlerleme Günlüğü
+
+Her yapılan iş buraya kısa ve net yazılır. Tarih, ne yapıldı, sonuç ne çıktı.
+
+## 2026-08-21
+
+**Seçim yapıldı.** 13 alan araştırıldı, puanlandı (`C:\Dark\ProjeSecimi\`).
+GPS'siz İHA mutlak konumlandırma 890/1000 ile kazandı. İkinci sıradaki
+atmosferik türbülans giderme fikri yedek dosyaya kaydedildi.
+
+**Ortam:** Python 3.12.10, PyTorch 2.9.1+cu126 (CUDA çalışıyor),
+OpenCV 4.13.0, RTX 3050 Ti 4 GB. gdown/rasterio/kornia kuruldu.
+
+### Faz 0 — Temel ve veri ✅ BİTTİ
+
+**Veri.** UAV-VisLoc örnek kümesi indirildi (2,19 GB), açıldı → `D:\GeoAnchorData\raw`.
+İçinde tek uçuş var ama tam istediğim şey: **gerçek bir dizi**.
+
+| Ne | Değer |
+|---|---|
+| Kare sayısı | 768 |
+| Süre / mesafe | 77 dakika / 73,9 km |
+| İrtifa | 466 m (±1,3 m, çok kararlı) |
+| Kare aralığı | ortalama 96,3 m |
+| Bakış | neredeyse dik (eğim ve yalpa ±5° içinde) |
+| Uydu haritası | 35092 x 24308 px, 0,275 m/px, 8,8 x 7,3 km |
+| Gerçek konum | her karede enlem, boylam, irtifa, yönelim |
+
+**Yazılanlar.** `src/geo.py` (piksel↔coğrafi dönüşüm, haversine, yerel düzlem,
+2,6 GB GeoTIFF'ten pencere okuma — dosya asla belleğe alınmıyor),
+`src/flight.py` (uçuş yükleme + türetilmiş sütunlar),
+`scripts/00_inspect.py` (doğrulama).
+
+**Ölçülenler.**
+- Coğrafi dönüşüm gidiş-dönüş hatası: **0,0000 m** — dönüşüm doğru.
+- 768/768 kare haritanın içinde.
+- İHA görüntü ölçeği ardışık kare eşlemesinden kestirildi: **0,1142 m/piksel**
+  (veri kümesinin belirttiği 0,1–0,2 m aralığında, bağımsız doğrulama).
+- Kare ayak izi **454 x 303 m**, ardışık örtüşme **%78,8**, medyan iç nokta **254**
+  → Faz 2'deki görsel odometri için fazlasıyla sağlam zemin.
+- Uydu/İHA ölçek oranı 2,41x.
+
+**Görsel doğrulama yapıldı** (`figures/00_hizalama.png`): İHA karesi ile aynı
+koordinattaki uydu kırpması aynı yeri gösteriyor — mavi çatılı depolar, kanal
+boyu köy dizisi, tekneli nehir kıvrımı hepsi örtüşüyor.
+
+**Ve asıl zorluk görüldü:** uydu görüntüsü farklı mevsimden (koyu yeşil tarlalar),
+İHA kaydı sonbahardan (altın sarısı tarlalar). Üstelik İHA kareleri kuzeye göre
+döndürülmüş. Yani bu "aynı görüntüyü bul" değil, **mevsim ve bakış açısı
+değişimine rağmen aynı yeri bul** problemi. Projenin zorluğu tam da burada.
+
+`figures/00_yorunge.png`: uçuş klasik tarama deseni; nehir, tarla, yoğun kent ve
+sanayi bölgesinden geçiyor — bazı bölgelerde eşleme tutmayacak (su, tekdüze
+tarla), bazılarında tutacak. Faz 3'ün gerekçesi bu.
+
+### Geometri kalibrasyonu ✅ (Faz 1 öncesi zorunlu adım)
+
+Üstveride hangi açının kamera yönelimi olduğu ve hangi işaretle
+kullanılacağı yazmıyor. Tahmin etmek yerine ölçtüm.
+
+**1. adım — bedava kontrol (uçuş yönü).** Ardışık gerçek konumlardan uçuş
+yönünü hesaplayıp açılarla karşılaştırdım (767 kare):
+
+| Bağıntı | Ortalama | Std |
+|---|---|---|
+| yön − Phi1 | −3,17° | 13,89° |
+| **yön − Phi2** | **0,12°** | **9,39°** |
+
+Phi2 uçuş yönüyle birebir örtüşüyor. Ama bu tek başına yeterli değil: uçağın
+burnunun baktığı yön ile yer üstünde ilerlediği yön rüzgâr yüzünden farklı olur.
+
+**2. adım — LoFTR ile kesin karar.** İHA karesini dört farklı şekilde döndürüp
+(Phi1/Phi2 × işaret ±1) gerçek konumdaki uydu kırpmasıyla eşledim:
+
+| Kaynak | İşaret | Toplam iç nokta | Kalan artık açı |
+|---|---|---|---|
+| **Phi1** | **−1** | **545** | −0,9° / −2,0° / −2,1° / +1,4° → ≈ 0 |
+| Phi2 | −1 | 459 | +10,2° / +10,7° / +11,6° / +14,1° |
+| Phi2 | +1 | 8 | — |
+| Phi1 | +1 | 6 | — |
+
+**Sonuç:** İHA karesi **−Phi1** ile döndürülür. Phi1 kameranın gerçek yönelimi,
+Phi2 ise yer üstündeki ilerleme yönü — aradaki sabit ~12° fark rüzgâr kaynaklı
+yengeç açısı. Phi1 ile döndürünce artık açı sıfıra iniyor, Phi2 ile 12° kalıyor.
+Veri kümesinin "Phi1 daha güvenilir" notu doğrulandı.
+
+### Eşleyici kararı: SIFT elendi, LoFTR seçildi
+
+Aynı kareler, aynı kırpmalar, iki eşleyici:
+
+| Eşleyici | İç nokta (4 kare) |
+|---|---|
+| SIFT + oran testi | 12, 4, 24, 7 |
+| **LoFTR (outdoor)** | **104, 21, 280, 140** |
+
+SIFT mevsim ve güneş açısı farkını aşamıyor. LoFTR dedektörsüz çalıştığı için
+görünüm değişimine dayanıklı. Maliyet: 640×640'ta 0,52 sn ve **1,4 GB VRAM** —
+4 GB'lık kartta rahat çalışıyor.
+
+Yan ürün: kestirilen ölçek 0,925–1,091 arasında değişiyor. Yani sabit
+0,1142 m/piksel varsayımı arazi yüksekliği değiştikçe ±%8 şaşıyor. Faz 3'te
+ölçeğin de durum vektörüne girmesinin gerekçesi bu.
+
+### Faz 1a — Getirme katmanı ✅
+
+Uydu haritası 300 m'lik, %50 örtüşen **2709 karoya** bölündü; her karo için
+DINOv2 (ViT-S/14, dondurulmuş) tanımlayıcısı çıkarıldı. Süre 1,1 dk, 7,5 MB.
+
+**Kendi hatamı buldum ve düzelttim.** İlk ölçümde getirme berbattı (R@1 %7,3).
+Sebep problemin zorluğu değil, benim boru hattımdı: İHA karesini gri tonlamaya
+çevirip uydunun **renkli** karolarıyla kıyaslıyordum. Renk korunduğunda:
+
+| Ayar | R@1 (150 m) | R@5 | R@20 |
+|---|---|---|---|
+| gri (hatalı) | %7,3 | %16,5 | %32,6 |
+| renkli, 224 girdi | %33,1 | %54,7 | %71,6 |
+| renkli, 336 girdi | %48,0 | %67,2 | %78,3 |
+| **renkli, 448 girdi, cls+GeM** | **%52,7** | **%70,4** | **%79,9** |
+
+Ders: bir sonucu "problem zor" diye kabul etmeden önce boru hattını denetle.
+
+### Faz 1b — Tavan doğruluğu ve dört hipotezli teşhis ✅
+
+Gerçek konum BİLİNİYORKEN eşleme ne kadar hassas? İlk ölçüm **medyan 17,75 m**.
+Bu çok yüksekti; sırayla eledim:
+
+| Hipotez | Test | Sonuç |
+|---|---|---|
+| Gerçek konum gürültülü | Düz uçuş hatlarına doğru uydur | **Hayır** — çapraz sapma sadece 1,50 m, adım std 0,60 m. Gerçek konum temiz |
+| Sabit harita kayması | Hata vektörünün ortalaması | **Hayır** — kuzey −0,26 m, doğu +1,56 m. Kayma yok |
+| Dönüşüm modeli yetersiz | benzerlik / afin / homografi | **Hayır** — üçü de 17,0–17,4 m |
+| Harita en-boy oranı | EPSG:4326 pikselleri metrede kare değil (0,2526 vs 0,2974 m/px, **%17,8 fark**) | **Kısmen** — metrik kare kırpma eklendi, iç nokta 159 → 496 ama hata 17,6 m'de kaldı |
+
+Sonra hatayı **gövde çerçevesine** ayrıştırdım (ileri / sağ) — dünya çerçevesinde
+bakmak yön bilgisini yok ediyormuş:
+
+- iz-boyu hata: **+13,81 m** (sabit, her iki uçuş kolunda da aynı)
+- iz-dışı hata: −1,82 m (≈ 0)
+
+Sabit bir **ileri** kayma. Sonra duruş açılarına regresyon:
+
+| Bağıntı | R² |
+|---|---|
+| iz-boyu ~ Omega | 0,002 |
+| iz-dışı ~ Kappa | 0,000 |
+| **iz-boyu ~ Kappa** | **0,677** (katsayı +0,981) |
+| **iz-dışı ~ Omega** | **0,765** (katsayı −0,972) |
+
+**Açı kanalları yer değişmiş.** Veri kümesi belgesi "Omega eğim, Kappa yalpa"
+diyor; gerçekte tersi. Katsayıların ±1'e oturması fiziğin (yerdeki kayma =
+irtifa × tan(açı)) birebir doğru olduğunu, sadece etiketlerin ters olduğunu
+gösteriyor. Phi1/Phi2'de de aynı durum vardı — bu veri kümesinin üstverisi
+belgelendiği gibi değil, deneyle doğrulanması şart.
+
+**Fiziksel düzeltme.** Eşleme bize görüntü MERKEZİNİN yere düştüğü noktayı
+verir; aradığımız İHA'nın kendi konumu. Kamera dik bakmıyorsa aradaki fark
+irtifa × tan(eğim). 466 m'de 2° eğim = 16 m.
+
+Montaj sapması uçuşun **ilk %20'sinde** kalibre edildi, kalan %80'de ölçüldü:
+
+| | Önce | Sonra |
+|---|---|---|
+| Medyan hata | 16,82 m | **6,12 m** |
+| Ortalama | 18,66 m | 6,57 m |
+| %90 dilim | 30,95 m | 11,15 m |
+| 5 m içinde | %2,6 | **%40,0** |
+| 10 m içinde | %17,4 | **%80,9** |
+| 20 m içinde | %59,1 | **%99,1** |
+
+Bulunan montaj sapması: **eğim +2,006°**, yalpa −0,137°. Yani kamera 2 derece
+öne bakacak şekilde monte edilmiş. Bu fotogrametride "boresight kalibrasyonu"
+denen standart iştir ve gerçek sistemlerde bir kez yapılır.
+
+**Not:** duruş ve irtifa bilgisi kullanılıyor. Bu GPS'siz senaryoyu bozmaz —
+eğim/yalpa/yönelim ataletsel ölçüm biriminden, irtifa barometre/altimetreden
+gelir; hiçbiri uyduya bağlı değildir. (AnyVisLoc kıyas kümesinin "yp"
+protokolü de aynı varsayımı kullanıyor.) README'de açıkça yazılacak.
+
+### Faz 2 ve 3 — mimari kararlar (kod yazıldı, ölçüm sürüyor)
+
+**Görsel odometri (`src/odometry.py`).** Ardışık kareler arasında alan farkı
+yok (aynı kamera, 7 sn ara, %79 örtüşme), o yüzden burada LoFTR'a gerek yok —
+klasik SIFT yetiyor ve CPU'da çalışıyor, GPU'yu uydu eşlemesine bırakıyor.
+Kareler zaten kuzey-yukarı ve metrik ölçekte olduğu için iki kare arasındaki
+dönüşüm neredeyse saf öteleme: sonuç doğrudan metre cinsinden okunuyor.
+
+**Parçacık süzgeci (`src/particle_filter.py`).** Kalman yerine parçacık
+süzgeci seçildi, sebebi şu: uydu eşlemesinin hata dağılımı Gauss değil. Çoğu
+zaman doğru yeri birkaç metreyle bulur, ama arada bir bambaşka bir yeri
+gösterir (benzer tarla, aynı desende ikinci mahalle). Bu **çok tepeli ve ağır
+kuyruklu** bir dağılım. Kalman tek tepeli Gauss varsayar ve tek bir saçma
+ölçüm onu kalıcı olarak yanlış yere çeker. Parçacık süzgeci birden çok adayı
+canlı tutup zamanla hangisinin uçuşla tutarlı olduğuna karar verir; ayrıca
+olabilirliğe düz bir "aykırı değer tabanı" eklendi ki yanlış bir ölçüm tüm
+ağırlığı silip süpüremesin.
+
+**Sıralı sistem (`src/sequential.py`) — asıl fikir.** Nerede olduğumuzu kabaca
+biliyorsak haritanın tamamında 8 aday denemenin anlamı yok; tahmin edilen tek
+noktaya bakmak yeter. Yani sıralı sistem sadece daha doğru değil, **daha az
+eşleme çağrısı** yapıyor. Tutmazsa yakın karolara bakılıyor, tamamen kaybolursa
+(parçacıklar dağılırsa veya arka arkaya ölçüm gelmezse) haritanın tamamında
+yeniden konumlanma devreye giriyor — robotikteki "kaçırılmış robot" kurtarması.
+
+**Bozulma modülü (`src/degrade.py`).** Altı gerçekçi bozulma: hareket
+bulanıklığı, sis, düşük ışık, JPEG sıkıştırma, kapanma, çözünürlük kaybı.
+Her biri tek bir şiddet parametresiyle ölçekleniyor ki dayanıklılık eğrisi
+çizilebilsin. Bir seyrüsefer sisteminin değeri temiz karede değil, bunların
+altında ayakta kalmasında.
+
+### Faz 1 — Tek kare, tam uçuş ✅ BİTTİ
+
+768 karenin her biri **haritanın tamamında** arandı (geçmiş bilgisi yok).
+
+| Ölçü | Değer |
+|---|---|
+| Çözülen kare | **588/768 (%76,6)** |
+| Medyan hata (çözülenlerde) | **5,46 m** |
+| Ortalama | 6,04 m |
+| %90 dilim | 10,71 m |
+| 100 m'den büyük ıska | **0 kare** |
+| Kare başına süre | 2630 ms (ortalama 3,8 aday denendi) |
+| Toplam | 33,7 dk |
+
+Tüm kareler üzerinden başarı: 5 m içinde %34,1 · 10 m içinde %66,1 ·
+20 m içinde %76,4. Yani **doğru olduğunda çok iyi, ama karelerin dörtte biri
+hiç çözülemiyor** — su üstü, tekdüze tarla, tekrar eden yapı deseni.
+
+Kaba ıskanın sıfır olması önemli: getirme yanlış bölge önerdiğinde LoFTR
+doğrulaması onu eliyor, sistem "bilmiyorum" diyor. Sessizce yanlış konum
+üretmiyor. Seyrüsefer için doğru davranış budur.
+
+### Faz 2 — Görsel odometri ✅ BİTTİ
+
+| Ölçü | Değer |
+|---|---|
+| Tutan adım | 724/767 (%94,4) |
+| Medyan iç nokta | 154 |
+| Artık dönme | +0,046° ± 0,478° → kuzey-yukarı dönüşü doğru |
+| Artık ölçek | 1,0057 ± 0,0379 → metrik ölçek doğru |
+| **74 km sonra son hata** | **2802,7 m (%3,795 sürüklenme)** |
+
+**Sonra bir sapma yakalandı.** Adım hatası uçuş koluna göre çok farklıydı:
+kuzeybatı kolunda 4,90 m, güneydoğu kolunda 12,66 m. Sebep: odometrinin
+ölçtüğü hareket yönü ile gerçek yön arasındaki açı farkı kola göre değişiyor
+(+1,65° ve +7,22°). Bu manyetometrenin sert-demir hatasının klasik imzası —
+yönelim hatası, yönün fonksiyonu. Havacılıkta "pusula sapma eğrisi" denir.
+
+Uçuşun ilk %20'sinde kalibre edilip kalan %80'de ölçüldü:
+
+| | Düzeltmesiz | Kalibrasyonlu |
+|---|---|---|
+| Adım hatası medyan | 8,671 m | **4,460 m** |
+| 74 km sonra son hata | 2802,7 m | **638,6 m** |
+| Sürüklenme oranı | %3,795 | **%0,865** |
+
+### Ve asıl bulgu: bu kalibrasyon GPS'siz yapılabiliyor ✅
+
+Yukarıdaki kalibrasyon gerçek konumu kullanıyor — gerçek bir GPS'siz sistemde
+elimizde olmayan şey. Ama aynı bilgi **haritadan** okunabilir mi?
+
+Homografinin dönme bileşeni, kuzey-yukarı yapılmış İHA karesi ile kuzey-yukarı
+uydu karosu arasındaki artık açıyı verir. Bu açı sıfır değilse yönelim açısının
+kendisi o kadar sapmış demektir. Ölçüldü:
+
+| | Haritadan okunan artık dönme | Gerçek konumdan hesaplanan sapma |
+|---|---|---|
+| Kuzeybatı kolu | **−1,93°** (std 0,86) | +1,65° |
+| Güneydoğu kolu | **−7,08°** (std 1,73) | +7,22° |
+
+Aynı büyüklük, beklenen ters işaret. Yani sistem pusula hatasını kendi
+kendine, hiçbir konum bilgisi olmadan ölçebiliyor. Bu çevrimiçi kalibrasyon
+sıralı sisteme gömüldü (`SequentialLocalizer._note_angle`). Aynı mantıkla
+ölçek de haritadan öğreniliyor (`_note_scale`) — arazi yüksekliği değiştikçe
+İHA yer örnekleme aralığı kayıyor, homografinin ölçek bileşeni bunu ele veriyor.
+
+### Faz 3 — Sıralı füzyon: iki gerçek hata bulundu ve düzeltildi
+
+İlk çalıştırmada süzgeç tek kareden **daha kötüydü** (medyan 14,5 m, ATE 47 m).
+Teşhis için ham ölçümü, tahmini ve süzgeç çıktısını ayrı ayrı kaydettim:
+
+```
+kare  ham olcum   tahmin   suzgec   ic nokta
+   4        6.6     100.4    100.4        136
+   8        4.1     107.0    106.9        424
+  16        9.6     105.8    105.8        710
+```
+
+**Ölçüm mükemmeldi (4-10 m) ama süzgeç onu tamamen görmezden geliyordu.**
+
+**Hata 1 — parçacık tükenmesi.** Bulut birkaç metreye toplandığında 100 m
+uzaktaki ölçüme hiçbir parçacık yakın olmuyor; olabilirlik her yerde sıfıra
+iniyor, ağırlıklar hiç değişmiyor. Süzgeç doğru ölçümü görse bile kıpırdamıyor.
+Erken bir yanlış eşleşmeye kilitlenince orada kalıyor.
+
+*Çözüm:* küresel konumlandırmada standart olan **karma öneri dağılımı** —
+her adımda parçacıkların bir kısmı hareket modeli yerine ölçüm dağılımından
+çekiliyor. Ölçüm doğruysa bu parçacıklar yüksek ağırlık alıp bulutu kendine
+çekiyor; yanlışsa eleniyor. Yanına bir de "uyuşmazlık sayacı" güvenlik ağı
+kondu: ölçüm arka arkaya 5 kare inanıştan 40 m'den uzak düşerse inanış
+terk ediliyor.
+
+**Hata 2 — kör gürültü.** Odometri adımı kaçtığında (%5,6 karede) 96 m'lik
+izotropik gürültü basıyordum, yani bir karede alınan yol kadar. Tek bir kaçan
+adım bulutu 130 m'ye yayıp süzgeci düşürüyordu. Oysa yönelim ataletsel
+birimden biliniyor ve hız neredeyse sabit — **son adımı sürdürmek (ölü hesap)**
+çok daha iyi bir tahmin. Gürültü 96 m'den 15 m'ye indi.
+
+Ayrıca hareket modeli gürültüsü ölçülen odometri doğruluğuna oturtuldu
+(3,1 m varsayımı yerine gerçek 8,7 m) ve ölçüm kapısı belirsizliğe göre
+uyarlanır hale getirildi.
+
+**120 karelik denemede etkisi:**
+
+| | Düzeltmeden önce | Sonra |
+|---|---|---|
+| Medyan hata | 14,45 m | **8,22 m** |
+| Ortalama | 30,41 m | **8,60 m** |
+| %90 dilim | 102,88 m | **13,53 m** |
+| En büyük hata | 111,13 m | **33,86 m** |
+| ATE | 47,11 m | **9,94 m** |
+| 20 m içinde | %66,7 | **%99,2** |
+
+### Faz 3 — üçüncü hata ve nihai sonuç ✅ BİTTİ
+
+120 karelik denemeler iyiydi ama tam uçuşta en büyük hata 631 m'ye çıkıyordu.
+Kopmaları tek tek inceledim: dört blok (kare 192-200, 288-308, 517-522,
+576-583), hepsinde iç nokta **sıfır**, hepsi eşlemenin hiç tutmadığı arazi.
+
+İlk teşhisim yanlıştı: "dönüşlerde oluyor, ölü hesap eski yönü sürdürüyor"
+dedim, ölü hesabı yönelim tabanlı yaptım — pek bir şey değişmedi. Sonra
+odometrinin o bloklarda ne yaptığına baktım:
+
+| | Kopma bloklarında | Diğer yerlerde |
+|---|---|---|
+| Odometri adım hatası | 8,6 m | 8,2 m |
+
+**Odometri sapasağlamdı.** Sorun girdide değil, benim `step()` akışımdaydı:
+süzgeç "kayıp" durumuna girince ayrı bir dala sapıyor ve eldeki geçerli
+odometriyi tamamen atıyordu. Yeniden konumlanma, hareket modelinin yerine
+geçen bir şey değil, **ek bir ölçüm denemesi** olmalı. Akış düzeltildi
+(tahmin her zaman yapılır) + eşlemenin çalışmadığı arazide her karede 8 aday
+denemeyi engelleyen soğuma süresi kondu.
+
+En büyük hata **631 m → 338 m**, ATE 83 → 63,8 m.
+
+**NİHAİ SONUÇ (768 kare, 74 km):**
+
+| | Kapsama | Medyan | %90 | 10 m içinde | Eşleme/kare | ms/kare |
+|---|---|---|---|---|---|---|
+| Sadece odometri | %100 | 2803 m sürükleniyor | — | %0 | 0 | — |
+| Tek kare | %76,6 | 5,46 m | 10,71 m | %66,1 | 3,80 | 2630 |
+| **Sıralı füzyon** | **%100** | **6,20 m** | 14,76 m | **%76,8** | **1,52** | **866** |
+
+Kopma blokları hariç (%94,3 kare): **medyan 5,97 m, %90 dilim 11,97 m,
+20 m içinde %99,9, ATE 7,78 m**.
+
+Füzyon iki girdisinden de iyi ve her karede haritanın tamamını aramaktan
+**2,5 kat ucuz** — kabaca nerede olduğunu bilmek küresel aramayı tek yerel
+kontrole indiriyor.
+
+### Faz 5/6 — çıktılar ✅
+
+Şekiller (`figures/`): `10_karsilastirma.png` (iki panel: odometrinin
+haritadan çıkışı vs harita çapalı sistem), `13_dagilim.png` (birikimli hata
+dağılımı — üç yöntem tek grafikte), `11_hata_egrisi.png`, `12_kapsama.png`.
+
+Belgeler: `README.md` (İngilizce, GitHub yüzü), `README.tr.md` (Türkçe),
+`LICENSE` (MIT), `requirements.txt`, `.gitignore`.
+
+**README'de dürüst sınırlar bölümü var ve önce o yazıldı:** eşlemenin çöktüğü
+%5,7'lik kesim, çevrimdışı işleme, duruş/irtifa varsayımı, tek uçuş-tek
+mevsim, iki yönelimle uydurulmuş pusula eğrisi, düzlemsel homografi sınırı.
+Hiçbiri gizlenmedi.

@@ -1,0 +1,12 @@
+{
+  "compass_a_deg": -8.43457023216675,
+  "compass_b_deg": -13.356267377474722,
+  "compass_c_deg": 6.785239769360049,
+  "scale": 1.0104627244022302,
+  "adim_medyan_duzeltmesiz_m": 8.670674345969951,
+  "adim_medyan_kalibrasyonlu_m": 4.4598469816538,
+  "son_hata_duzeltmesiz_m": 2802.6996350555223,
+  "son_hata_kalibrasyonlu_m": 638.6410362706702,
+  "ate_duzeltmesiz_m": 1238.426573742612,
+  "ate_kalibrasyonlu_m": 410.0034073501078
+}

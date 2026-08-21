@@ -1,0 +1,28 @@
+# veri ve onbellek (buyuk, veri kumesinden yeniden uretilir)
+data/*.npz
+*.npy
+D:/GeoAnchorData/
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# sonuc ara dosyalari (JSON ozetleri ve sekiller depoda kalir)
+results/*.npz
+results/*_log.txt
+results/07_sequential_deneme*.json
+results/07_sequential_teshis*.json
+results/07_sequential_sweep*.json
+results/07_sequential_kalite*.json
+results/07_sequential_drop*.json
+results/07_sequential_*_*.json
+
+# buyuk medya (demo.gif depoda kalir, mp4 kalmaz)
+figures/*.mp4
+
+# isletim sistemi
+Thumbs.db
+.DS_Store

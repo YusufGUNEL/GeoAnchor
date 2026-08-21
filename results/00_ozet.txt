@@ -1,0 +1,20 @@
+Uçuş 03: 768 kare
+  tarih         : 2018-10-23 08:32:25 → 2018-10-23 09:49:28
+  süre          : 4623 sn (77.0 dk)
+  irtifa        : 465.2 – 467.7 m (ort 466.1)
+  kat edilen yol: 73.85 km
+  kare aralığı  : 96.3 m ort (93.3 – 242.3)
+  yer hızı      : 18.7 m/sn
+  yönelim (Phi1): -44.4° – 127.7°
+  eğim (Omega)  : -4.46° – 5.04°
+  yalpa (Kappa) : -4.03° – 4.31°
+
+Uydu haritası: SatelliteMap(satellite03.tif, 35092x24308 px, GSD ~0.275 m/px, 32.3555..32.2903 N, 119.8059..119.9001 E)
+Harita içinde kalan kare: 768/768
+
+İHA görüntü ölçeği (ardışık kare eşlemesinden kestirildi):
+  yer örnekleme aralığı : 0.1142 m/piksel
+  kare ayak izi         : 454 m x 303 m
+  ardışık kare örtüşmesi: %78.8 (96,3 m adımla)
+  medyan iç nokta       : 254 (görsel odometri için sağlam)
+  uydu/İHA ölçek oranı  : 2.41x
