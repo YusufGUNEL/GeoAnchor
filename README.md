@@ -14,6 +14,10 @@ GNSS of any kind**.
 
 ![Comparison](figures/10_karsilastirma.png)
 
+![Demo](figures/demo.gif)
+
+*Left: the UAV camera. Right: live position on the satellite map — cyan is truth, green is the estimate, red is odometry-only. Bottom: error against distance flown. This 12-second clip deliberately includes one of the segments where satellite matching collapses entirely: the green error curve spikes, the filter coasts on odometry, and then re-anchors.*
+
 ---
 
 ## Headline result
@@ -160,6 +164,42 @@ same four frames: SIFT yielded 12/4/24/7 inliers; LoFTR yielded
 classical keypoints do not. (SIFT *is* used for odometry between consecutive
 UAV frames, where no appearance gap exists — it is faster and runs on the CPU,
 leaving the GPU to the map matching.)
+
+---
+
+## Ablation — which parts actually earn their place
+
+Each row removes one component from the full system. Same 300 frames, same seed.
+
+| Removed | Median | p90 | Within 20 m | Match calls |
+|---|---|---|---|---|
+| *nothing (full system)* | **6.62 m** | 16.17 m | **92.7%** | 1.73 |
+| Online scale calibration | 7.03 m | 17.18 m | 91.7% | 1.74 |
+| Particle injection | 7.62 m | 19.50 m | 90.7% | 1.73 |
+| Online compass calibration | 7.85 m | 18.53 m | 90.7% | 1.73 |
+| Visual odometry (measurement only) | 9.98 m | **367.66 m** | 77.7% | 1.99 |
+| **Attitude / boresight correction** | **17.13 m** | 29.93 m | **67.3%** | 1.75 |
+
+**Two components do not earn their place, and saying so matters more than
+claiming everything was essential:**
+
+| Variant | Median | Within 20 m |
+|---|---|---|
+| 100 particles (vs 600) | 7.08 m | 92.7% |
+| 2000 particles (vs 600) | 6.80 m | 92.7% |
+| **No outlier floor in the likelihood** | **6.76 m** | **93.3%** |
+
+The filter is not particle-starved — 100 particles is nearly as good as 2000,
+so the state space is small enough that sampling is not the bottleneck. And
+removing the outlier floor changes nothing measurable, because the measurement
+gate and the injection mechanism already handle bad fixes before the
+likelihood ever sees them. It stays in the code as a cheap safety net, but on
+this data it is dead weight.
+
+The two rows that matter most are worth restating: **the boresight correction
+is by far the largest single contributor** (17.13 → 6.62 m), and **removing
+odometry does not hurt the median much but destroys the tail** (p90 goes from
+16 m to 368 m) — which is exactly what a motion model is for.
 
 ---
 

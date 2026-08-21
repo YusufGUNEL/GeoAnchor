@@ -371,3 +371,33 @@ Belgeler: `README.md` (İngilizce, GitHub yüzü), `README.tr.md` (Türkçe),
 %5,7'lik kesim, çevrimdışı işleme, duruş/irtifa varsayımı, tek uçuş-tek
 mevsim, iki yönelimle uydurulmuş pusula eğrisi, düzlemsel homografi sınırı.
 Hiçbiri gizlenmedi.
+
+### Faz 5 — Ablasyon ✅ BİTTİ
+
+Her satır tam sistemden tek bir bileşen çıkarıyor (aynı 300 kare, aynı tohum):
+
+| Çıkarılan | Medyan | %90 | 20 m içinde |
+|---|---|---|---|
+| *hiçbiri (tam sistem)* | **6,62 m** | 16,17 m | **%92,7** |
+| Çevrimiçi ölçek kalibrasyonu | 7,03 m | 17,18 m | %91,7 |
+| Parçacık enjeksiyonu | 7,62 m | 19,50 m | %90,7 |
+| Çevrimiçi pusula kalibrasyonu | 7,85 m | 18,53 m | %90,7 |
+| Görsel odometri | 9,98 m | **367,66 m** | %77,7 |
+| **Duruş/boresight düzeltmesi** | **17,13 m** | 29,93 m | **%67,3** |
+
+**İki bileşen yerini hak etmedi** — bunu gizlemek yerine yazdım:
+
+| Varyant | Medyan | 20 m içinde |
+|---|---|---|
+| 100 parçacık (600 yerine) | 7,08 m | %92,7 |
+| 2000 parçacık | 6,80 m | %92,7 |
+| Aykırı değer tabanı YOK | **6,76 m** | **%93,3** |
+
+Parçacık sayısı neredeyse etkisiz → süzgeç parçacık kıtlığı çekmiyor, durum
+uzayı küçük. Aykırı değer tabanı da ölçülebilir hiçbir şey değiştirmiyor;
+ölçüm kapısı ve enjeksiyon kötü eşleşmeleri zaten daha önce eliyor. Kodda
+ucuz bir güvenlik ağı olarak kalıyor ama bu veride ölü ağırlık.
+
+En anlamlı iki satır: **boresight düzeltmesi tek başına en büyük katkı**
+(17,13 → 6,62 m) ve **odometriyi çıkarmak medyanı değil KUYRUĞU bozuyor**
+(%90 dilim 16 → 368 m) — hareket modelinin varlık sebebi tam olarak bu.

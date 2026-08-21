@@ -14,6 +14,10 @@ metre seviyesi konum veriyorlar.
 
 ![Karşılaştırma](figures/10_karsilastirma.png)
 
+![Gosterim](figures/demo.gif)
+
+*Solda İHA kamerası. Sağda uydu haritasında canlı konum — açık mavi gerçek, yeşil kestirim, kırmızı sadece odometri. Altta kat edilen yola göre hata. Bu 12 saniyelik kesit, uydu eşlemesinin tamamen çöktüğü bölümlerden birini bilerek içeriyor: yeşil hata eğrisi fırlıyor, süzgeç odometriyle devam ediyor, sonra yeniden çapa atıyor.*
+
 ---
 
 ## Ana sonuç
@@ -156,6 +160,41 @@ farklı güneş açısı, henüz yapılmamış binalar. Aynı dört karede ölç
 görünüm farkını aşıyor, klasik köşe noktaları aşamıyor. (SIFT ardışık İHA
 kareleri arasındaki odometride kullanılıyor — orada görünüm farkı yok, üstelik
 daha hızlı ve CPU'da çalışıp GPU'yu harita eşlemesine bırakıyor.)
+
+---
+
+## Ablasyon — hangi parça gerçekten işe yarıyor
+
+Her satır, tam sistemden tek bir bileşeni çıkarıyor. Aynı 300 kare, aynı tohum.
+
+| Çıkarılan | Medyan | %90 | 20 m içinde | Eşleme çağrısı |
+|---|---|---|---|---|
+| *hiçbiri (tam sistem)* | **6,62 m** | 16,17 m | **%92,7** | 1,73 |
+| Çevrimiçi ölçek kalibrasyonu | 7,03 m | 17,18 m | %91,7 | 1,74 |
+| Parçacık enjeksiyonu | 7,62 m | 19,50 m | %90,7 | 1,73 |
+| Çevrimiçi pusula kalibrasyonu | 7,85 m | 18,53 m | %90,7 | 1,73 |
+| Görsel odometri (sadece ölçüm) | 9,98 m | **367,66 m** | %77,7 | 1,99 |
+| **Duruş / boresight düzeltmesi** | **17,13 m** | 29,93 m | **%67,3** | 1,75 |
+
+**İki bileşen yerini hak etmiyor. Bunu söylemek, "her şey şarttı" demekten
+daha değerli:**
+
+| Varyant | Medyan | 20 m içinde |
+|---|---|---|
+| 100 parçacık (600 yerine) | 7,08 m | %92,7 |
+| 2000 parçacık (600 yerine) | 6,80 m | %92,7 |
+| **Olabilirlikte aykırı değer tabanı YOK** | **6,76 m** | **%93,3** |
+
+Süzgeç parçacık kıtlığı çekmiyor — 100 parçacık 2000 kadar iyi, yani durum
+uzayı örneklemenin darboğaz olamayacağı kadar küçük. Aykırı değer tabanını
+kaldırmak da ölçülebilir hiçbir şeyi değiştirmiyor; çünkü ölçüm kapısı ve
+enjeksiyon mekanizması kötü eşleşmeleri olabilirlik onları görmeden zaten
+eliyor. Ucuz bir güvenlik ağı olarak kodda kalıyor ama bu veride ölü ağırlık.
+
+En çok anlam taşıyan iki satırı tekrar etmeye değer: **boresight düzeltmesi
+tek başına en büyük katkıyı veriyor** (17,13 → 6,62 m) ve **odometriyi
+çıkarmak medyanı çok bozmuyor ama kuyruğu mahvediyor** (%90 dilim 16 m'den
+368 m'ye çıkıyor) — hareket modelinin var olma sebebi tam olarak bu.
 
 ---
 
