@@ -8,51 +8,58 @@
 
 ## LinkedIn — ana gönderi
 
-> GIF veya videoyu (figures/demo.gif) gönderinin görseli olarak ekle.
-> Bağlantıyı ilk yoruma koy (LinkedIn dış bağlantılı gönderiyi az gösteriyor).
+> Görsel olarak `figures/demo.gif` ekle. Bağlantıyı ilk yoruma koy.
 
 ---
 
 GPS'i karıştırılan bir İHA nerede olduğunu bilmez.
 
-Son birkaç gündür bunun üzerine çalıştım. Elimde tek şey vardı: aşağı bakan
-bir kamera ve önceden indirilmiş bir uydu haritası.
+Son günlerde bunun üzerine çalıştım. Elimde iki şey vardı: aşağı bakan bir
+kamera ve önceden indirilmiş bir uydu haritası.
 
 İki yöntem var, ikisi de tek başına yetmiyor:
 
-→ Görsel odometri kareler arası hareketi verir, ama sürüklenir.
+→ Kareler arası hareketi takip etmek sürekli çalışır ama hata birikir.
   74 km'lik gerçek bir uçuşta sonunda 2,8 kilometre şaşıyor.
 
-→ Kamerayı uydu haritasıyla eşlemek mutlak konum verir, ama kare kare
-  güvenilmez. Aynı uçuşta karelerin %23'ünde hiç tutmadı — su üstünde,
-  tekdüze tarlada, tekrar eden yapı deseninde.
+→ Kamerayı uydu haritasıyla eşlemek hata biriktirmez ama kare kare
+  güvenilmez. Aynı uçuşta karelerin dörtte birinde hiç tutmadı.
 
-İkisini bir parçacık süzgecinde birleştirince:
-768 karenin tamamında konum, medyan hata 6,2 metre.
-Üstelik her karede haritanın tamamını aramaktan 2,5 kat daha ucuz — çünkü
-kabaca nerede olduğunu bilmek küresel aramayı tek bir yerel kontrole indiriyor.
+İkisini bir parçacık süzgecinde birleştirdim. Sonra en önemli kısmı yaptım:
+tek uçuşta durmadım, **dokuz gerçek uçuşta** denedim — 406 metreden 2572
+metreye irtifa, 2016'dan 2023'e tarih, uçuş başına 9 ile 103 kilometre.
 
-En beğendiğim kısım bu olmadı ama.
+Sonuçlar ikiye ayrıldı. Altı uçuşta 8 ile 25 metre arası, karelerin
+%99,7'sinde konum. Üç uçuşta ise sistem çöktü.
 
-Sistem çalışırken fark ettim ki, İHA karesini uydu karosuna oturtan
-dönüşümün dönme bileşeni, uçağın yönelim açısının ne kadar yanlış olduğunu
-söylüyor. Ölçtüm: hata uçağın hangi yöne baktığına göre değişiyordu —
-bir kolda 1,9 derece, diğerinde 7,1 derece. Bu manyetometrelerdeki
-sert-demir hatasının klasik imzası.
+İlginç olan kısım şu: **hangi uçuşun hangi gruba düşeceğini önceden söyleyen
+tek bir ölçülebilir şey var.** İrtifa değil — 2572 metredeki uçuş çalışıyor,
+551 metredeki çöküyor.
 
-Yani uçak, kendi pusulasını haritaya bakarak, hiçbir uydu sinyali olmadan
-kalibre edebiliyor. Bunu geri besleyince odometrinin sürüklenmesi
-%3,8'den %0,9'a indi.
+Belirleyici olan, İHA görüntüsünün uydu haritasıyla ne kadar örtüştüğü.
+Bunu gerçek konumu bilerek ölçtüm: eşleşme oranı %50'nin üstündeyse sistem
+çalışıyor, altındaysa çöküyor. Korelasyon −0,77.
 
-Bir de veri kümesinin belgesinde iki hata buldum (duruş açılarının
-etiketleri ters, yönelim açısı yanlış sütunda) ve kameranın 2 derece öne
-monte edildiğini keşfettim — 466 metre irtifada bu yerde 16 metre kayma
-demek. Tek en büyük hata kaynağı buydu.
+Bunun pratik karşılığı var: bir görev planlanırken, **uçmadan önce** o rota
+üzerinde bu ölçüm yapılabilir. Yani sistemin orada işe yarayıp yaramayacağı
+önceden bilinebilir.
+
+Yol boyunca üç şey buldum, hiçbiri bana söylenmemişti:
+
+• Kamera 2 derece öne eğik monteliymiş. 466 metre irtifada bu, yerde 16 metre
+  kayma demek — hatanın tek en büyük kaynağıydı.
+
+• Uçağın pusulası bozukmuş ve bozukluk uçuş yönüne göre değişiyormuş. Bunu
+  haritaya bakarak ölçtüm; sistem kendi pusulasını GPS olmadan kalibre ediyor.
+
+• Veri kümesinin kendi belgelerinde iki hata varmış (duruş açılarının
+  etiketleri ters, yönelim yanlış sütunda).
 
 Hepsi 4 GB'lık bir dizüstü ekran kartında çalışıyor.
 
-Kod, ölçümler ve dürüst sınırlar (eşlemenin tamamen çöktüğü %5,7'lik kesim
-dahil, üstü örtülmedi) depoda.
+Çalışmayan üç uçuşu da, ağır titreşimde sistemin kırıldığını da depoda
+yazdım. Bir sistemin nerede çalışmadığını bilmek, nerede çalıştığını
+bilmek kadar önemli.
 
 #bilgisayarlıgörü #İHA #seyrüsefer #yapayzeka
 
@@ -62,21 +69,22 @@ dahil, üstü örtülmedi) depoda.
 
 Depo: github.com/YusufGUNEL/GeoAnchor
 
-Veri: UAV-VisLoc (arXiv:2405.11936) — gerçek bir tarama uçuşu, 768 kare,
-77 dakika, 466 m irtifa. Gerçek konum işlenmiş GNSS.
+Veri: UAV-VisLoc (arXiv:2405.11936) — 9 gerçek tarama uçuşu. Gerçek konum
+işlenmiş GNSS; düz uçuş hatlarındaki sapması 1,5 m ölçüldü, yani referansın
+kendisi temiz.
 
 ---
 
 ## Kısa sürüm (X / Bluesky)
 
-GPS'siz İHA konumlandırma:
+GPS'siz İHA konumlandırma, 9 gerçek uçuşta:
 
-görsel odometri → 74 km sonra 2,8 km sürükleniyor
-uydu eşlemesi → karelerin %23'ünde hiç tutmuyor
-ikisi + parçacık süzgeci → %100 kare, medyan 6,2 m hata
+görsel odometri → 74 km sonra 2,8 km sürüklenme
+uydu eşlemesi → karelerin %25'inde hiç tutmuyor
+ikisi + parçacık süzgeci → %99,7 kare, 8-25 m
 
-Bonus: sistem kendi pusula sapmasını haritadan ölçüp düzeltiyor.
-Sürüklenme %3,8 → %0,9.
+Asıl bulgu: hangi uçuşta çalışacağını irtifa değil, görüntünün haritayla
+örtüşmesi belirliyor. Uçmadan önce ölçülebiliyor.
 
 4 GB VRAM'de çalışıyor.
 
@@ -99,6 +107,13 @@ kıpırdayamıyor — erken bir yanlış eşleşmeye kilitlenip orada kalıyordu
 Çözüm karma öneri dağılımı: her adımda parçacıkların bir kısmı hareket
 modeli yerine ölçüm dağılımından çekiliyor. ATE 47 metreden 10 metreye indi.
 
+**"Neden bazı uçuşlarda çalışmıyor?"**
+Ölçtüm. Gerçek konum biliniyorken bile o uçuşların görüntüleri uydu
+haritasıyla eşleşmiyor — uçuş 08'de doğru konumda medyan 8 iç nokta, uçuş
+03'te 544. Yani sistem kötü çalışmıyor, o veride eşleştirilecek bir şey yok.
+Eşik %50 eşleşme oranı; üstünde 8-25 m, altında çöküyor. Bunu uçuş öncesi
+ölçmek mümkün, o yüzden bu bir kusur değil bir kullanım kuralı.
+
 **"SIFT neden yetmedi?"**
 Uydu görüntüsü uçuştan farklı mevsimden. Aynı dört karede SIFT 12/4/24/7 iç
 nokta verdi, LoFTR 104/21/280/140. Dedektörsüz yoğun eşleme görünüm farkını
@@ -112,15 +127,22 @@ protokolü de aynı varsayımı kullanıyor. Zaten pusula bulgusu tam olarak o
 duyargaların kusursuz olmadığını gösteriyor — sistem onların hatasını
 haritadan düzeltiyor.
 
+**"Kalibrasyonda gerçek konumu kullanıyorsun, bu hile değil mi?"**
+İki yerde kullanıyorum: kamera montaj açısı ve ölçek. İkisi de gerçek
+sistemlerde kurulumda bir kez yapılan fabrika ayarı. Her uçuşun sadece ilk
+%20'sinde ölçüp kalan %80'inde değerlendiriyorum. Ayrıca bir güvenlik kuralı
+koydum: kalibrasyon kareleri ikiye bölünüyor, düzeltme sınama yarısında
+hatayı azaltmıyorsa hiç uygulanmıyor. İki uçuşta gerçekten devreye girdi.
+
 **"Sistemin en zayıf yanı ne?"**
-Özelliksiz arazi. Dört kesimde (karelerin %5,7'si, en uzunu 21 kare, yaklaşık
-2 km) uydu eşlemesi sıfır iç nokta verdi. Orada süzgeç odometriyle devam
-ediyor ve yeniden çapa atana kadar en fazla 338 metreye kadar bozuluyor.
-Bunu README'de saklamadım, şekilde kırmızı noktalarla gösterdim. Çözümü
-muhtemelen daha iyi bir ataletsel ölçüm birimi veya çok mevsimli harita.
+İki tane var. Birincisi ağır titreşim bulanıklığı: medyan hata 6,6'dan
+58 metreye çıkıyor. Uydu karosunu da aynı kadar bulanıklaştırarak 20 metreye
+indirdim ama çözmedim. İkincisi özelliksiz arazi: su üstünde ve tekdüze
+tarlada eşleme sıfır iç nokta veriyor, orada odometriyle devam ediyor ve
+338 metreye kadar bozuluyor. İkisi de README'de yazılı, şekilde gösterili.
 
 **"Bunu gerçek bir İHA'ya koyabilir misin?"**
 Şu haliyle hayır — çevrimdışı işleniyor. Kare başına 866 ms, bu veri
-kümesinde kareler 7 saniyede bir geldiği için rahatça yetiyor ama gömülü
-donanımda denenmedi. Sıradaki adım o olurdu: LoFTR'ı damıtıp Jetson sınıfı
-bir karta indirmek.
+kümesinde kareler 7 saniyede bir geldiği için rahat yetiyor ama gömülü
+donanımda denenmedi. Sıradaki adım o olurdu: eşleyiciyi damıtıp Jetson
+sınıfı bir karta indirmek.
