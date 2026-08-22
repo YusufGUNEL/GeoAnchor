@@ -532,3 +532,51 @@ Kod `RomaMatcher` ve `--matcher roma` anahtarını koruyor (sonuç yeniden
 
 **Ders:** Bir iyileştirmeyi duyurmadan önce uçtan uca ölç. Ara ölçüt (eşleşme
 oranı) yanlış yönü ölçüyordu ve neredeyse yanlış bir sonucu rapor ediyordum.
+
+---
+
+## Faz 9 — Onuncu uçuş ve makale taslağı (2026-08-22)
+
+**Uçuş 09 aslında inmişti.** İndirici "eksik" diyordu çünkü `satellite09.tif`
+arıyordu; oysa o uçuşun haritası **2×2 dört parçaya** bölünmüş (toplam 4,5 GB).
+
+Parçaları birleştirip diske yazmak 4,5 GB'lik kopya demekti. Bunun yerine
+`src/mosaic.py` yazıldı: GDAL sanal raster (VRT) — kaynaklara işaret eden
+küçük bir XML. rasterio tek raster gibi açıyor, hiçbir şey kopyalanmıyor.
+Sonuç: 44800×33280 px tek harita, 11,5 × 9,9 km, 766 karenin hepsi içinde.
+
+Gerçek konuşlandırmalarda haritalar zaten karolu gelir, yani bu bir yama değil
+eksik bir yetenekti.
+
+**Uçuş 09 sonucu:** %100 kapsama, medyan **14,94 m**, %90 dilim 59,33 m.
+Kalibrasyon hatası 15,1 → 6,2 m. Eşleşme oranı %70 — eşiğin üstünde, ve
+sonuç tam beklenen bantta çıktı. Yasa doğrulandı.
+
+**10 uçuşla güncel tablo:**
+
+| | Uçuş | Medyan hata | Kapsama |
+|---|---|---|---|
+| Eşleşme oranı ≥ %50 | **7** | 8,35 – 24,79 m (medyan 15,44 m) | ≥ %99,7 |
+| Eşleşme oranı < %50 | 3 | 53 – 648 m | %80 – 85 |
+
+Korelasyon −0,764.
+
+### Makale taslağı
+
+`paper/geoanchor.tex` — IEEE konferans biçimi, 6 sayfa.
+
+**Başlık:** *Knowing When You Do Not Know: Sequential Map-Anchored Visual
+Localization for GNSS-Denied UAV Flight*
+
+**Literatür taraması (arXiv API):** 2024-2026 arası 20 çapraz görüş
+makalesinin **hiçbiri** kare sonucunu hareket modeliyle birleştirmiyor.
+Parçacık süzgeci + hava haritası işleri var ama hepsi **yer aracı**
+(BEV-Patch-PF 2025, Downes 2022, Dixit 2020). Tek İHA çalışması Shan 2017 —
+öğrenilmiş eşleyicilerden önce, optik akış + harita korelasyonu.
+
+Boşluk net: modern dedektörsüz eşleyici + sıralı süzgeç + uçak + metrik hata.
+
+**Hedef:** SİU 2026 temmuzda geçti, SİU 2027 şubat civarı, ELECO iki yılda bir
+(sonraki 2027). Bu yüzden **önce arXiv ön baskısı**, aynı metin şubatta SİU'ya.
+
+**Not:** LaTeX kurulu değil. Overleaf'e yüklenip derlenebilir.

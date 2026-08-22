@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from .geo import haversine_m_array, latlon_to_local_m
+from .mosaic import resolve_basemap
 
 
 @dataclass
@@ -89,5 +90,5 @@ def load_flight(data_root: str | Path, flight_id: str = "03") -> Flight:
     df["east_m"] = east
 
     return Flight(flight_id=flight_id, root=root, df=df,
-                  satellite_path=root / f"satellite{flight_id}.tif",
+                  satellite_path=resolve_basemap(root, flight_id),
                   lat0=lat0, lon0=lon0)

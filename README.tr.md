@@ -24,7 +24,7 @@ metre seviyesi konum veriyorlar.
 
 ## Ana sonuç
 
-**Dokuz gerçek İHA tarama uçuşunda** değerlendirildi (UAV-VisLoc):
+**On gerçek İHA tarama uçuşunda** değerlendirildi (UAV-VisLoc):
 **406 m ile 2572 m arasında irtifa**, uçuş başına 9-103 km, yedi arazi türü,
 2016'dan 2023'e yayılan çekim tarihleri. Gerçek konum işlenmiş GNSS verisi —
 düz uçuş hatlarındaki ölçülen sapma **1,5 m**, yani referansın kendisi temiz.
@@ -34,8 +34,9 @@ uçuşun ilk %20'sinden kalibre edilip kalan %80'de ölçülüyor.
 | Uçuş | Kare | İrtifa | Yol | Eşleşme oranı | Kapsama | Medyan | %90 |
 |---|---|---|---|---|---|---|---|
 | 03 | 768 | 466 m | 74 km | %93 | %100,0 | **8,35 m** | 20,03 m |
-| 04 | 738 | 544 m | 83 km | %90 | %100,0 | **15,44 m** | 54,64 m |
+| 09 | 766 | 546 m | 77 km | %70 | %100,0 | **14,94 m** | 59,33 m |
 | 06 | 344 | 834 m | 24 km | %76 | %99,7 | **15,06 m** | 365,32 m |
+| 04 | 738 | 544 m | 83 km | %90 | %100,0 | **15,44 m** | 54,64 m |
 | 05 | 473 | 2313 m | 30 km | %50 | %99,8 | **16,69 m** | 182,51 m |
 | 01 | 817 | 406 m | 66 km | %77 | %100,0 | **22,51 m** | 114,60 m |
 | 11 | 590 | 2572 m | 84 km | %90 | %99,8 | **24,79 m** | 424,41 m |
@@ -50,10 +51,10 @@ yani algoritmanın değil, verinin bir özelliği.
 
 | | Uçuş | Medyan hata | Kapsama |
 |---|---|---|---|
-| Eşleşme oranı **≥ %50** | 6 | **8,35 – 24,79 m** (medyan 16,07 m) | ≥ %99,7 |
+| Eşleşme oranı **≥ %50** | 7 | **8,35 – 24,79 m** (medyan 15,44 m) | ≥ %99,7 |
 | Eşleşme oranı **< %50** | 3 | 53 – 648 m | %80 – 85 |
 
-Eşleşme oranı ile logaritmik hata arasındaki korelasyon: **−0,765**.
+Eşleşme oranı ile logaritmik hata arasındaki korelasyon: **−0,764**.
 
 Ayırt edici olan irtifa *değil* — 2572 metredeki uçuş 11 çalışıyor (24,79 m),
 551 metredeki uçuş 08 çöküyor. Belirleyici olan, İHA görüntüsü ile uydu
@@ -432,11 +433,11 @@ Hiçbir şey abartılmasın diye önce bunlar yazıldı.
 - **Montaj kalibrasyonu uçuşun ilk %20'sini kullanıyor.** Gerçek sistemlerde
   bu kurulumda bir kez yapılır; burada veriden yapıldı ve raporlanan her şey
   ayrılan geri kalan kısımda ölçüldü.
-- **Dokuz uçuş, hepsi tek veri kümesinden, hepsi Çin'de.** İrtifa 406–2572 m,
+- **On uçuş, hepsi tek veri kümesinden, hepsi Çin'de.** İrtifa 406–2572 m,
   tarihler 2016–2023 arasına yayılıyor; ama her uçuş aynı çekim sistemini ve
   aynı sınıf uydu haritasını kullanıyor. Burada hiçbir şey dağlık arazide,
   gece, kışın veya farklı bir sensörle nasıl davranacağını göstermiyor.
-- **Dokuz uçuşun üçü başarısız** (eşleşme oranı %50 altı: uçuş 02, 08, 10 —
+- **On uçuşun üçü başarısız** (eşleşme oranı %50 altı: uçuş 02, 08, 10 —
   medyan hata 53 m, 648 m, 127 m). Sebep ölçülüp yazıldı, dışlanmadı: o
   uçuşların görüntüleri, gerçek konum bilindiği hâlde bile uydu haritasıyla
   neredeyse hiç eşleşmiyor. Bu verinin özelliği ama aynı zamanda gerçek bir

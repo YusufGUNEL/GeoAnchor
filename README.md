@@ -24,7 +24,7 @@ GNSS of any kind**.
 
 ## Headline result
 
-Evaluated on **nine real UAV survey flights** (UAV-VisLoc) spanning
+Evaluated on **ten real UAV survey flights** (UAV-VisLoc) spanning
 **406 m to 2572 m altitude**, 9 to 103 km per flight, seven terrain types,
 and acquisition dates from 2016 to 2023. Ground truth is post-processed GNSS
 (measured cross-track scatter on straight legs: **1.5 m**, so the reference
@@ -35,8 +35,9 @@ evaluated on the remaining 80%.
 | Flight | Frames | Altitude | Distance | Match rate | Coverage | Median | p90 |
 |---|---|---|---|---|---|---|---|
 | 03 | 768 | 466 m | 74 km | 93% | 100.0% | **8.35 m** | 20.03 m |
-| 04 | 738 | 544 m | 83 km | 90% | 100.0% | **15.44 m** | 54.64 m |
+| 09 | 766 | 546 m | 77 km | 70% | 100.0% | **14.94 m** | 59.33 m |
 | 06 | 344 | 834 m | 24 km | 76% | 99.7% | **15.06 m** | 365.32 m |
+| 04 | 738 | 544 m | 83 km | 90% | 100.0% | **15.44 m** | 54.64 m |
 | 05 | 473 | 2313 m | 30 km | 50% | 99.8% | **16.69 m** | 182.51 m |
 | 01 | 817 | 406 m | 66 km | 77% | 100.0% | **22.51 m** | 114.60 m |
 | 11 | 590 | 2572 m | 84 km | 90% | 99.8% | **24.79 m** | 424.41 m |
@@ -51,10 +52,10 @@ already known — a property of the data, not of the algorithm.
 
 | | Flights | Median error | Coverage |
 |---|---|---|---|
-| Match rate **≥ 50%** | 6 | **8.35 – 24.79 m** (median 16.07 m) | ≥ 99.7% |
+| Match rate **≥ 50%** | 7 | **8.35 – 24.79 m** (median 15.44 m) | ≥ 99.7% |
 | Match rate **< 50%** | 3 | 53 – 648 m | 80 – 85% |
 
-Correlation between match rate and log error: **−0.765**.
+Correlation between match rate and log error: **−0.764**.
 
 Altitude is *not* the discriminator — flight 11 at 2572 m works (24.79 m)
 while flight 08 at 551 m fails. What matters is whether the drone imagery and
@@ -442,11 +443,11 @@ Written down first, so nothing here is oversold.
 - **The boresight calibration uses the first 20% of the flight.** Real systems
   do this once at installation; here it is done from data, and everything
   reported is evaluated on the held-out remainder.
-- **Nine flights, all from one dataset, all in China.** Altitudes span
+- **Ten flights, all from one dataset, all in China.** Altitudes span
   406–2572 m and dates span 2016–2023, but every flight uses the same capture
   system and the same class of satellite basemap. Nothing here demonstrates
   behaviour over mountains, at night, in winter, or with a different sensor.
-- **Three of the nine flights fail** (match rate below 50%: flights 02, 08,
+- **Three of the ten flights fail** (match rate below 50%: flights 02, 08,
   10 — median error 53 m, 648 m, 127 m). The cause is measured and reported
   rather than excluded: those flights' imagery barely matches the satellite
   basemap even at the known true position. That is a data property, but it is

@@ -1,0 +1,437 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\begin{document}
+
+\title{Knowing When You Do Not Know: Sequential Map-Anchored\\
+Visual Localization for GNSS-Denied UAV Flight}
+
+\author{\IEEEauthorblockN{Yusuf G\"unel}
+\IEEEauthorblockA{\textit{Independent Researcher} \\
+Ankara, T\"urkiye \\
+yusufgunel71@hotmail.com}}
+
+\maketitle
+
+\begin{abstract}
+Matching a downward-looking camera against a pre-loaded satellite map is the
+standard route to absolute position when GNSS is denied. The recent literature
+optimises this as a single-image retrieval problem, and the common benchmark
+is close to saturated. A flying aircraft, however, produces a \emph{sequence},
+and in that setting the binding constraint is not retrieval accuracy but the
+fact that a large fraction of frames cannot be matched at all. We fuse
+cross-view matching with visual odometry in a particle filter and evaluate on
+ten real UAV survey flights spanning 406--2572\,m altitude, 9--103\,km per
+flight and acquisition dates from 2016 to 2023. On the seven flights whose
+imagery is usable against the basemap the system holds a median error of
+8.4--24.8\,m with $\geq$99.7\% of frames localised, while visual odometry
+alone drifts 2803\,m over 74\,km. Two by-products follow from the same
+machinery: the residual rotation of each map match exposes the platform's
+heading error, letting the system calibrate its own magnetometer deviation
+without GNSS and cutting odometry drift from 3.795\% to 0.865\% of distance
+travelled; and the \emph{match rate}, measurable on a planned route before
+flight, predicts whether the system will work there at all
+($\rho=-0.764$ against log error, with a threshold near 50\%). Finally we
+report a negative result that we believe generalises: replacing LoFTR with
+RoMa raises match rate on the failing flights from 12--42\% to 96--100\% and
+makes end-to-end accuracy dramatically \emph{worse}, because RoMa returns
+confident correspondences for unrelated imagery. For localization, a matcher
+is useful in proportion to its ability to stay silent, not to match.
+\end{abstract}
+
+\begin{IEEEkeywords}
+GNSS-denied navigation, cross-view geo-localization, particle filter, visual
+odometry, unmanned aerial vehicles, image matching
+\end{IEEEkeywords}
+
+\section{Introduction}
+
+An unmanned aerial vehicle whose GNSS receiver is jammed or spoofed loses
+absolute position. Inertial and visual odometry continue to supply relative
+motion, but their error accumulates without bound: on the 74\,km flight
+studied here, frame-to-frame visual odometry ends 2803\,m from truth. The
+established remedy is to carry a georeferenced satellite basemap and recover
+absolute position by matching what the camera sees against it.
+
+Recent work treats this as cross-view image retrieval and has driven the
+common benchmark close to saturation; University-1652 now sits at 97.5\%
+Recall@1~\cite{mgs2net}. That framing quietly assumes the hard part is
+choosing correctly among candidate locations. In flight over real terrain we
+find a different constraint dominates: on a substantial fraction of frames
+\emph{no} correct match exists to be chosen. Over water, uniform farmland, or
+repeated building patterns, and wherever the basemap and the camera disagree
+in season or in years, matching returns nothing usable. In our single-frame
+baseline this is 23\% of frames on the easiest flight in our set and 96\% on
+the hardest.
+
+A flying aircraft is not a collection of independent photographs. It follows a
+trajectory, and frames that cannot be matched are bracketed by frames that
+can. We therefore treat the problem as sequential state estimation: visual
+odometry supplies a motion model, map matching supplies absolute fixes and is
+permitted to fail, and a particle filter carries the two together. This is
+standard practice in ground robotics but is almost absent from the recent UAV
+cross-view literature, which we survey in Section~\ref{sec:related}.
+
+Our contributions are:
+
+\begin{enumerate}
+\item A sequential map-anchored localization system evaluated on \emph{ten}
+real UAV flights rather than one, spanning a 6.3$\times$ altitude range and
+seven years of acquisition dates, fully automatic with per-flight calibration
+derived from each flight's own first 20\% and evaluated on the remainder
+(Section~\ref{sec:results}).
+\item Online self-calibration of platform heading and image scale from the
+geometry of the map matches themselves, requiring no GNSS. The measured
+magnetometer deviation, $-1.93^\circ$ and $-7.08^\circ$ on the two legs of a
+survey pattern, agrees with the GNSS-derived value in magnitude and sign, and
+correcting for it reduces odometry drift by a factor of 4.4
+(Section~\ref{sec:selfcal}).
+\item A pre-flight predictor of deployability. The fraction of frames that
+match the basemap at a known position separates working from failing flights
+with $\rho = -0.764$ against log error and a threshold near 50\%. Because it
+requires no flight, it turns "will this work here?" into a measurement
+(Section~\ref{sec:law}).
+\item A negative result on matcher choice, with the mechanism identified: a
+stronger dense matcher degrades localization because it lacks the ability to
+refuse (Section~\ref{sec:matcher}).
+\end{enumerate}
+
+\section{Related Work}
+\label{sec:related}
+
+\textbf{Cross-view geo-localization.} The dominant formulation matches a
+single UAV image against a database of satellite tiles. Recent entries include
+transformer and state-space architectures~\cite{dinogfsa,mgs2net}, robustness
+to off-nadir viewing~\cite{offnadir}, degraded imagery~\cite{relate}, and
+metric scale recovery via semantic anchors~\cite{scaleaware}. Surveying
+twenty such papers from 2024--2026 we found none that fuse the per-frame
+result with a motion model over time.
+
+\textbf{Sequential localization against overhead imagery.} Particle filtering
+against aerial maps is established for \emph{ground} platforms: BEV-Patch-PF
+combines learned bird's-eye matching with a particle filter for off-road
+vehicles~\cite{bevpatchpf}, and earlier work localises street-level imagery
+city-wide to roughly 20\,m~\cite{downes}. For aircraft the closest work
+predates modern learned matching: Shan et al.~\cite{shan} filter optical flow
+against map correlation. Our contribution sits at the intersection: a modern
+detector-free matcher inside a sequential filter, on an aircraft, evaluated
+with metric error over multi-kilometre trajectories.
+
+\textbf{Image matching.} LoFTR~\cite{loftr} performs detector-free coarse-to-fine
+matching with transformers. RoMa~\cite{roma} predicts a dense warp with a
+foundation-model encoder and leads current matching benchmarks. We use both
+and report in Section~\ref{sec:matcher} why benchmark ranking does not transfer
+to this task.
+
+\section{Method}
+
+\subsection{Frame preparation}
+Each UAV frame is rotated to north-up using the platform heading and resampled
+to the basemap's ground scale, giving a metric, north-aligned crop covering
+$300 \times 300$\,m. Heading comes from the inertial unit and altitude from the
+barometric altimeter; neither depends on GNSS, matching the pose-prior protocol
+used by contemporary benchmarks. The basemap is stored in EPSG:4326, whose
+pixels are square in degrees but not in metres --- at our latitude
+0.2526\,m/px east-west against 0.2974\,m/px north-south, an 17.8\% anisotropy
+--- so satellite crops are resampled to be metrically square before matching.
+
+\subsection{Absolute fixes}
+A grid of overlapping 300\,m basemap tiles is indexed with frozen DINOv2
+descriptors~\cite{dinov2}. For a query frame, the nearest tiles by cosine
+similarity give candidate regions; each candidate is verified by LoFTR matching
+against a 400\,m crop, followed by MAGSAC homography estimation. The image
+centre transported through the homography gives a ground point.
+
+\subsection{From image centre to aircraft position}
+\label{sec:boresight}
+The matched ground point is where the optical axis meets the ground, not where
+the aircraft is. With altitude $h$ and attitude angle $\theta$ the two differ
+by $h\tan\theta$; at 466\,m a $2^\circ$ tilt displaces the estimate by 16\,m.
+Regressing localization error in the body frame against attitude recovers this
+relation with coefficients $+0.981$ (along-track) and $-0.972$ (cross-track),
+confirming the model. Calibrating the constant mounting offset on a flight's
+first 20\% and evaluating on the remaining 80\% reduces median error from
+16.82\,m to 6.12\,m.
+
+Two safeguards proved necessary across flights. First, the recorded height is
+not always true height above ground; on one flight (recorded 2313\,m) applying
+the correction \emph{increased} error from 27.8\,m to 131.2\,m, so an effective
+altitude is estimated from the data. Second, calibration frames are split in
+half, the correction is fitted on one half and verified on the other, and a
+correction that does not reduce error is not applied. This declined to fire on
+two of nine flights.
+
+\subsection{Sequential fusion}
+State is planar position. The motion model applies the odometry increment with
+process noise matched to its measured step accuracy. The measurement model
+treats candidate positions as a multi-modal likelihood with a flat outlier
+floor. A Kalman filter is inappropriate here: map matching is usually accurate
+to metres but occasionally confident and completely wrong, giving a
+heavy-tailed, multi-modal error distribution that a single Gaussian mode cannot
+represent.
+
+Two mechanisms proved essential in practice. \emph{Measurement-driven
+injection}: once the particle cloud contracts to a few metres, no particle lies
+near a fix 100\,m away, the likelihood is uniformly zero and the filter cannot
+move even when the measurement is correct --- we observed a filter locked
+105\,m from truth for twenty frames while receiving 4--10\,m measurements.
+Replacing a fraction of particles with draws from the measurement distribution
+each step resolves this. \emph{Dead reckoning on the heading}: when odometry
+fails, propagating the last motion \emph{vector} fails at turns; propagating
+speed along the inertially-known heading does not.
+
+Because the predicted position is known, verification normally requires a
+single match attempt rather than a search over the map: 1.52 calls per frame
+against 3.80 for the single-frame baseline.
+
+\subsection{Self-calibration from the map}
+\label{sec:selfcal}
+The homography aligning a north-up frame to a north-up tile carries a residual
+rotation. If heading were exact this residual would be zero; it is therefore a
+direct measurement of heading error. Measured across a survey flight it was
+$-1.93^\circ$ ($\sigma=0.86$) on the northwest legs and $-7.08^\circ$
+($\sigma=1.73$) on the southeast legs. Heading error varying with heading is
+the signature of magnetometer hard-iron distortion. The GNSS-derived odometry
+direction bias on the same legs was $+1.65^\circ$ and $+7.22^\circ$: same
+magnitudes, opposite sign, as the geometry predicts. Feeding a running estimate
+of this residual back into the odometry reduced drift from 3.795\% to 0.865\%
+of distance travelled, that is 2803\,m to 639\,m over 74\,km, using no
+positioning information of any kind. The scale component of the same homography
+similarly corrects the assumed ground sampling distance as terrain elevation
+changes.
+
+\section{Experimental Setup}
+
+We use UAV-VisLoc~\cite{uavvisloc}, which pairs real survey flights with
+georeferenced basemaps and post-processed GNSS. We verified the reference
+quality independently: on straight survey legs the cross-track scatter is
+1.50\,m and the step-length scatter 0.60\,m, so the reference is clean relative
+to the errors we report.
+
+Of eleven flights we evaluate ten. The excluded one has no attitude or heading
+columns in its metadata, which the method requires; our loader rejects it
+explicitly rather than producing unsupported numbers. One flight ships its
+basemap as a $2\times2$ grid of GeoTIFFs totalling 4.5\,GB rather than a single
+file; we present these to the pipeline through a GDAL virtual raster so that
+no copy is made, which is also how tiled basemaps would arrive in deployment. Per-flight ground sampling distance and
+camera boresight are estimated from each flight's own first 20\% and all
+reported figures come from the remaining 80\%.
+
+We report coverage (fraction of frames for which a position is produced),
+median and 90th-percentile error, and matching calls per frame. All experiments
+run on a laptop NVIDIA RTX 3050 Ti with 4\,GB of VRAM; peak usage is 1.4\,GB
+with LoFTR.
+
+\section{Results}
+\label{sec:results}
+
+\begin{table}[t]
+\caption{Per-flight results, fully automatic}
+\label{tab:flights}
+\centering
+\small
+\begin{tabular}{lrrrrrr}
+\toprule
+Flight & Frames & Alt.\,(m) & Dist.\,(km) & Match & Cover. & Median \\
+\midrule
+03 & 768  & 466  & 74  & 93\% & 100.0\% & \textbf{8.35\,m} \\
+09 & 766  & 546  & 77  & 70\% & 100.0\% & \textbf{14.94\,m} \\
+06 & 344  & 834  & 24  & 76\% & 99.7\%  & \textbf{15.06\,m} \\
+04 & 738  & 544  & 83  & 90\% & 100.0\% & \textbf{15.44\,m} \\
+05 & 473  & 2313 & 30  & 50\% & 99.8\%  & \textbf{16.69\,m} \\
+01 & 817  & 406  & 66  & 77\% & 100.0\% & \textbf{22.51\,m} \\
+11 & 590  & 2572 & 84  & 90\% & 99.8\%  & \textbf{24.79\,m} \\
+\midrule
+02 & 1071 & 406  & 86  & 37\% & 99.7\%  & 53.45\,m \\
+10 & 144  & 773  & 9   & 13\% & 84.7\%  & 126.88\,m \\
+08 & 1033 & 551  & 103 & 33\% & 79.7\%  & 648.49\,m \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:flights} gives per-flight results. Seven flights localise with
+median error between 8.4\,m and 24.8\,m and coverage at or above 99.7\%. Three
+fail.
+
+\subsection{Component comparison}
+On flight 03, comparing the three approaches directly: visual odometry alone
+covers every frame but drifts to 2803\,m; single-frame map matching achieves
+5.46\,m median but only on the 76.6\% of frames it can solve, at 3.80 matching
+calls per frame; the fused system covers 100\% of frames at 6.20\,m median with
+1.52 calls per frame. The single-frame baseline produces no gross outliers
+beyond 100\,m --- when retrieval proposes the wrong region, verification
+rejects it and the system reports nothing rather than reporting a wrong
+position.
+
+\subsection{What separates working flights from failing ones}
+\label{sec:law}
+Performance varies by a factor of 78 across flights, which raises the question
+of whether the system fails on some flights or whether some flights are
+unmatched\-able. We measure the latter directly: with the true position given,
+what fraction of frames match the basemap at all? This is a property of the
+data, since no search is involved.
+
+The answer separates the two groups. Flights with match rate $\geq 50\%$ give
+median errors of 8.35--24.79\,m (median 15.44\,m) at coverage $\geq$99.7\%;
+those below give 53--648\,m at 80--85\% coverage. The correlation between match
+rate and log error is $-0.764$. Altitude is not the discriminator: the 2572\,m
+flight works and the 551\,m flight fails.
+
+This is practically useful because match rate needs no flight. Given a planned
+route and a basemap, it can be measured in advance, converting deployability
+from a question into a measurement.
+
+\subsection{Ablation}
+Removing components one at a time (300 frames, fixed seed): the boresight
+correction is by far the largest single contributor (17.13\,m without it
+against 6.62\,m with); removing odometry barely changes the median but
+destroys the tail (90th percentile 368\,m against 16\,m), which is precisely
+what a motion model is for; removing measurement-driven injection costs
+1.0\,m median and 3.3\,m at the 90th percentile.
+
+Two components do not earn their place and we report this rather than claiming
+otherwise: particle count is nearly irrelevant (7.08\,m with 100 particles,
+6.80\,m with 2000, 6.62\,m with 600), and removing the likelihood outlier floor
+changes nothing measurable, because gating and injection already filter bad
+fixes upstream.
+
+\subsection{Robustness}
+Across twenty conditions on 300 frames, the pattern is that the system is
+indifferent to radiometry and sensitive to texture. Fog at maximum severity
+costs 0.6\,m; occlusion covering a third of the frame costs 0.6\,m; resolution
+loss costs 0.9\,m. Motion blur is the failure mode: moderate blur takes median
+error from 6.62\,m to 58.31\,m, and heavy blur to 500\,m. Extreme darkness
+prevents initialisation entirely, producing no position at all.
+
+Discarding satellite fixes at random costs little until they become scarce:
+6.62\,m at no dropout, 7.38\,m with half of all fixes discarded, 10.76\,m at
+75\% and 41.55\,m at 90\%.
+
+Blur can be partially mitigated by equalising the domain: since the basemap
+tile is sharp and depicts the same ground at the same scale, the sharpness gap
+between query and tile measures the blur, and blurring the tile to match
+reduces median error under sustained blur from 44.47\,m to 20.00\,m and the
+90th percentile from 214\,m to 91\,m. It does not restore clean performance;
+heavy vibration remains a genuine limit.
+
+\section{What Makes a Matcher Useful Here}
+\label{sec:matcher}
+
+Section~\ref{sec:law} identifies match quality as the binding constraint, which
+suggests replacing LoFTR with a stronger matcher. RoMa~\cite{roma} leads
+current matching benchmarks. Measured at known true positions it appears to
+solve the problem outright: match rate on the three failing flights rises from
+12--42\% to 96--100\%, within 2.7\,GB of VRAM.
+
+End-to-end it is far worse: 1669\,m on flight 01, where LoFTR gives 22\,m.
+
+The bake-off asked the wrong question. It showed each matcher only the
+\emph{correct} tile, whereas a localization system spends most of its effort
+deciding whether a candidate is the right place at all. Matching each frame
+against a crop from a random, unrelated part of the map gives:
+
+\begin{center}
+\small
+\begin{tabular}{lrrr}
+\toprule
+ & Correct place & Wrong place & Ratio \\
+\midrule
+LoFTR & 709 inliers & \textbf{0} & 709$\times$ \\
+RoMa  & 4598 inliers & 341 & 13.5$\times$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+LoFTR returns nothing on unrelated imagery; RoMa returns hundreds of
+correspondences. Its apparent advantage was an artifact of a metric that only
+measured the easy direction.
+
+Recalibrating the acceptance threshold does not rescue it. Testing raw inlier
+count, inlier ratio and matcher confidence on correct-versus-wrong pairs, LoFTR
+admits a threshold with zero errors under two of the three criteria; for RoMa
+no threshold exists under any criterion, as some wrong places outscore some
+correct ones (best accuracy 98.1\%).
+
+End-to-end, with thresholds tuned in RoMa's favour, flight 08 makes the cost
+concrete. LoFTR produces a position on 4.5\% of frames, median error 582\,m ---
+it is reporting that it does not know. RoMa produces one on 95.5\% of frames
+and is 6250\,m wrong on average. In flight the first behaviour triggers a
+handover to inertial navigation; the second flies the aircraft six kilometres
+off course without indication.
+
+We therefore keep LoFTR, not because it is the stronger matcher --- it is not
+--- but because this task requires a property that matching benchmarks do not
+measure. A matcher is useful for localization in proportion to its willingness
+to return nothing.
+
+\section{Limitations}
+
+All ten flights come from one dataset and one country, and although altitudes
+span 406--2572\,m and dates 2016--2023, the capture system and basemap class
+are common to all. Three of the ten fail, and while the cause is measured, it
+is also a real operational limit. Processing is offline at 866\,ms per frame on
+a laptop GPU; frames arrive every 7\,s in this data, so it is comfortably
+real-time for these flights, but it has not been run on embedded hardware.
+Attitude and altitude are assumed available from non-GNSS sensors, and
+Section~\ref{sec:selfcal} shows those sensors are themselves imperfect. The
+planar homography assumption holds for near-nadir frames and degrades with
+obliquity; building relief displacement is the dominant residual error source
+and is why the achievable floor is near 6\,m rather than near 1\,m.
+
+\section{Conclusion}
+
+Treating GNSS-denied visual localization as sequential estimation rather than
+per-frame retrieval changes which problem is hard. Retrieval accuracy is not
+the constraint; the constraint is that many frames cannot be matched at all,
+and a motion model covers exactly those. Across ten real flights the fused
+system localises 99.7\% or more of frames at 8--25\,m median wherever the
+basemap and the camera depict a recognisably similar world, and the fraction of
+frames satisfying that condition can be measured before flight.
+
+The same match geometry that yields position also yields the platform's own
+heading error, allowing a magnetometer to be calibrated against the map with no
+positioning information. And the matcher study suggests a criterion the
+matching literature does not currently report: for localization, selectivity
+dominates sensitivity. A matcher that always answers is worse than one that
+sometimes declines.
+
+Code, data preparation and every measurement reported here are available at
+\url{https://github.com/YusufGUNEL/GeoAnchor}.
+
+\begin{thebibliography}{00}
+\bibitem{mgs2net} M. Li \textit{et al.}, ``(MGS)$^2$-Net: Macro/micro-geometric
+structure and scale modeling for cross-view geo-localization,'' arXiv:2602.10704, 2026.
+\bibitem{dinogfsa} B. Hu \textit{et al.}, ``DINO-GFSA: LoRA-adapted DINOv3 with
+semantic gating for UAV self-positioning,'' arXiv:2606.00784, 2026.
+\bibitem{offnadir} Q. Qiao \textit{et al.}, ``OffNadirLoc: A benchmark for large
+off-nadir view geo-localization,'' arXiv:2607.19951, 2026.
+\bibitem{relate} H. Jiang \textit{et al.}, ``ReLATE: Reliability-guided evidence
+fusion for degraded UAV--satellite matching,'' arXiv:2607.25524, 2026.
+\bibitem{scaleaware} Y. Ye \textit{et al.}, ``Scale-aware UAV-to-satellite
+localization with semantic anchors,'' arXiv:2603.07535, 2026.
+\bibitem{bevpatchpf} D. Lee \textit{et al.}, ``BEV-Patch-PF: Particle filtering
+with learned aerial patch matching for GPS-free localization,'' arXiv:2512.15111, 2025.
+\bibitem{downes} L. M. Downes \textit{et al.}, ``City-wide street-to-satellite
+image geolocalization,'' arXiv:2203.05612, 2022.
+\bibitem{shan} M. Shan \textit{et al.}, ``Google map aided visual navigation for
+UAVs in GPS-denied environment,'' arXiv:1703.10125, 2017.
+\bibitem{loftr} J. Sun \textit{et al.}, ``LoFTR: Detector-free local feature
+matching with transformers,'' in \textit{CVPR}, 2021.
+\bibitem{roma} J. Edstedt \textit{et al.}, ``RoMa: Robust dense feature
+matching,'' in \textit{CVPR}, 2024.
+\bibitem{dinov2} M. Oquab \textit{et al.}, ``DINOv2: Learning robust visual
+features without supervision,'' \textit{TMLR}, 2024.
+\bibitem{uavvisloc} W. Xu \textit{et al.}, ``UAV-VisLoc: A large-scale dataset
+for UAV visual localization,'' arXiv:2405.11936, 2024.
+\end{thebibliography}
+
+\end{document}
