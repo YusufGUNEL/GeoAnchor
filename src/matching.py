@@ -82,3 +82,59 @@ def apply_M(M: np.ndarray, pt: tuple[float, float]) -> tuple[float, float]:
     x, y = pt
     return (float(M[0, 0] * x + M[0, 1] * y + M[0, 2]),
             float(M[1, 0] * x + M[1, 1] * y + M[1, 2]))
+
+
+class RomaMatcher:
+    """RoMa yogun esleyici — LoFTRMatcher ile ayni arayuz.
+
+    NEDEN EKLENDI: dokuz ucusluk degerlendirme, basarimi belirleyen seyin
+    esleme kalitesi oldugunu gosterdi (bkz scripts/21_why_flights_differ.py).
+    Uc ucusta LoFTR karelerin sadece %12-42'sinde tutuyordu; RoMa ayni
+    karelerde %96-100'e cikariyor:
+
+        ucus   LoFTR ic nokta / tutma     RoMa ic nokta / tutma
+        03            468 / %100              4342 / %100
+        01            118 / % 75              1766 / % 96
+        05             65 / % 54              1658 / %100
+        02             12 / % 42               704 / %100
+        08             14 / % 29              2935 / %100
+        10              0 / % 12               160 / % 96
+
+    Bedeli hiz: kare basina ~1,6 sn (LoFTR ~0,3 sn). VRAM 2,7 GB, yani 4 GB'lik
+    kartta calisiyor.
+
+    upsample_preds ACIK olmali: kapaliyken eslesme sayisi yuksek ama konum
+    hassasiyeti dusuyor (ucus 08'de 50,3 m'ye karsi 24,8 m).
+    """
+
+    def __init__(self, coarse: int = 280, upsample: int = 448,
+                 n_sample: int = 5000, device: str = "cuda"):
+        from romatch import roma_outdoor
+        self.model = roma_outdoor(device=device, coarse_res=coarse,
+                                  upsample_res=upsample)
+        self.model.upsample_preds = True
+        self.n_sample = n_sample
+        self.device = device
+        self.size = upsample
+
+    @torch.no_grad()
+    def match(self, img_a: np.ndarray, img_b: np.ndarray):
+        """LoFTRMatcher.match ile ayni sozlesme: (pts_a, pts_b, guven)."""
+        from PIL import Image
+        ha, wa = img_a.shape[:2]
+        hb, wb = img_b.shape[:2]
+        a = cv2.cvtColor(img_a, cv2.COLOR_GRAY2RGB) if img_a.ndim == 2 else img_a
+        b = cv2.cvtColor(img_b, cv2.COLOR_GRAY2RGB) if img_b.ndim == 2 else img_b
+        warp, cert = self.model.match(Image.fromarray(a), Image.fromarray(b),
+                                      device=self.device)
+        matches, c = self.model.sample(warp, cert, num=self.n_sample)
+        kpa, kpb = self.model.to_pixel_coordinates(matches, ha, wa, hb, wb)
+        c = c.cpu().numpy() if hasattr(c, "cpu") else np.asarray(c)
+        return kpa.cpu().numpy(), kpb.cpu().numpy(), c
+
+
+def make_matcher(name: str = "loftr", **kw):
+    """Esleyici secimi: 'loftr' (hizli) veya 'roma' (dayanikli)."""
+    if name.lower() == "roma":
+        return RomaMatcher(**kw)
+    return LoFTRMatcher(**kw)

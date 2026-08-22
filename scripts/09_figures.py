@@ -30,10 +30,14 @@ C_SF = "#ffb000"
 C_VO = "#ff2d55"
 C_PF = "#00ff6a"
 
-T_SOL = "Sadece gorsel odometri ne yapiyor?\nSuruklenme IHA'yi haritanin disina tasiyor"
-T_SAG = "Harita capasi takilinca\nYorunge gercegin ustunde kaliyor"
-T_CDF = "Hata birikimli dagilimi\nSola ve yukariya yaslanan egri iyidir"
-T_ERR = "Hata mesafeyle nasil degisiyor?\nOdometri surukleniyor, fuzyon sabit kaliyor"
+T_SOL = ("BU SISTEM OLMASAYDI\n"
+         "Sadece odometri: suruklenme IHA'yi haritanin DISINA tasiyor")
+T_SAG = ("BU SISTEMLE\n"
+         "Yesil cizgi, kalin beyaz gercegin ustunde kaliyor")
+T_CDF = ("Hata birikimli dagilimi\n"
+         "SOLA ve YUKARIYA yaslanan egri IYIDIR")
+T_ERR = ("Hata mesafeyle nasil degisiyor?\n"
+         "KIRMIZI ile YESIL arasindaki fark ne kadar buyukse o kadar iyi")
 
 
 def load_all():
@@ -83,10 +87,10 @@ def fig_trajectories(D):
 
     ax = axes[0]
     ax.imshow(ov, alpha=0.5)
-    ax.plot(gx, gy, "-", lw=2.4, color=C_GT, label="gercek yorunge", zorder=5)
+    ax.plot(gx, gy, "-", lw=2.4, color=C_GT, label="gercek yorunge (dogru cevap)", zorder=5)
     if "vo" in D:
         vx, vy = to_px(D["vo"]["north"], D["vo"]["east"])
-        lbl = "sadece gorsel odometri, 74 km sonra {:.0f} m sapma".format(
+        lbl = "sistem OLMADAN: 74 km sonra {:.0f} m sapma".format(
             D["vo"]["err"][-1])
         ax.plot(vx, vy, "-", lw=1.8, color=C_VO, alpha=0.95, zorder=4, label=lbl)
         ax.plot(vx[-1], vy[-1], "X", ms=14, color=C_VO, mec="k", mew=0.8, zorder=6)
@@ -98,7 +102,7 @@ def fig_trajectories(D):
     ax = axes[1]
     ax.imshow(ov)
     ax.plot(gx, gy, "-", lw=5.0, color="#ffffff", alpha=0.9,
-            label="gercek yorunge (kalin beyaz)", zorder=4)
+            label="GERCEK yorunge (kalin beyaz)", zorder=4)
     if "sf" in D:
         m = np.isfinite(D["sf"]["north"])
         sxp, syp = to_px(D["sf"]["north"][m], D["sf"]["east"][m])
@@ -108,7 +112,7 @@ def fig_trajectories(D):
         px, py = to_px(D["pf"]["north"], D["pf"]["east"])
         e = D["pf"]["err"]
         ax.plot(px, py, "-", lw=1.5, color=C_PF, alpha=0.95, zorder=6,
-                label="sirali fuzyon - %100 kare, medyan {:.1f} m".format(
+                label="BU SISTEM - %100 kare, medyan {:.1f} m".format(
                     np.nanmedian(e)))
         bad = e > 50
         if bad.any():
@@ -132,7 +136,7 @@ def fig_cdf(D):
     n_tot = len(D["gt_n"])
     fig, ax = plt.subplots(figsize=(10, 6.5))
     for key, color, name in [("sf", C_SF, "tek kare (harita geneli arama)"),
-                             ("pf", C_PF, "sirali fuzyon")]:
+                             ("pf", C_PF, "BU SISTEM (sirali fuzyon)")]:
         if key not in D:
             continue
         e = D[key]["err"]
@@ -142,7 +146,7 @@ def fig_cdf(D):
     if "vo" in D:
         e = np.sort(D["vo"]["err"])
         ax.plot(e, np.arange(1, len(e) + 1) / n_tot * 100, lw=2.0,
-                color=C_VO, label="sadece gorsel odometri")
+                color=C_VO, label="sistem OLMADAN (sadece odometri)")
     for t in (5, 10, 20):
         ax.axvline(t, color="#888", ls=":", lw=1)
         ax.text(t, 3, "{} m".format(t), color="#666", fontsize=9, ha="center")
@@ -167,13 +171,13 @@ def fig_error_curve(D):
     ax = axes[0]
     if "vo" in D:
         ax.plot(km, D["vo"]["err"], color=C_VO, lw=1.6,
-                label="sadece gorsel odometri")
+                label="sistem OLMADAN (sadece odometri)")
     if "sf" in D:
         m = np.isfinite(D["sf"]["err"])
         ax.plot(km[m], D["sf"]["err"][m], ".", ms=3, color=C_SF, alpha=0.6,
                 label="tek kare (cozulen kareler)")
     if "pf" in D:
-        ax.plot(km, D["pf"]["err"], color=C_PF, lw=1.6, label="sirali fuzyon")
+        ax.plot(km, D["pf"]["err"], color=C_PF, lw=1.6, label="BU SISTEM")
     ax.set_yscale("log")
     ax.set_ylabel("konum hatasi (m, logaritmik)")
     ax.grid(alpha=0.3, which="both")
@@ -182,7 +186,7 @@ def fig_error_curve(D):
 
     ax = axes[1]
     if "pf" in D:
-        ax.plot(km, D["pf"]["err"], color=C_PF, lw=1.4, label="sirali fuzyon")
+        ax.plot(km, D["pf"]["err"], color=C_PF, lw=1.4, label="BU SISTEM")
         ax.fill_between(km, 0, D["pf"]["spread"], color=C_PF, alpha=0.2,
                         label="suzgecin kendi belirsizlik kestirimi")
     ax.set_xlabel("kat edilen yol (km)")

@@ -1,0 +1,134 @@
+[
+  {
+    "esleyici": "LoFTR",
+    "ucus": "03",
+    "medyan_ic_nokta": 468.0,
+    "ort_ic_nokta": 509.7083333333333,
+    "tutma_orani": 1.0,
+    "medyan_hata_m": 17.308394627312857,
+    "n_konum": 24,
+    "ms": 312.1233880519867,
+    "vram_mb": 1410.406912
+  },
+  {
+    "esleyici": "LoFTR",
+    "ucus": "01",
+    "medyan_ic_nokta": 118.0,
+    "ort_ic_nokta": 119.29166666666667,
+    "tutma_orani": 0.75,
+    "medyan_hata_m": 14.793990963176398,
+    "n_konum": 18,
+    "ms": 276.99830134709674,
+    "vram_mb": 1410.406912
+  },
+  {
+    "esleyici": "LoFTR",
+    "ucus": "05",
+    "medyan_ic_nokta": 65.0,
+    "ort_ic_nokta": 157.41666666666666,
+    "tutma_orani": 0.5416666666666666,
+    "medyan_hata_m": 33.42159838414875,
+    "n_konum": 13,
+    "ms": 284.96067722638446,
+    "vram_mb": 1410.406912
+  },
+  {
+    "esleyici": "LoFTR",
+    "ucus": "02",
+    "medyan_ic_nokta": 11.5,
+    "ort_ic_nokta": 71.79166666666667,
+    "tutma_orani": 0.4166666666666667,
+    "medyan_hata_m": 15.301550796301292,
+    "n_konum": 10,
+    "ms": 284.6011718114217,
+    "vram_mb": 1410.406912
+  },
+  {
+    "esleyici": "LoFTR",
+    "ucus": "08",
+    "medyan_ic_nokta": 14.0,
+    "ort_ic_nokta": 51.583333333333336,
+    "tutma_orani": 0.2916666666666667,
+    "medyan_hata_m": 28.97609553914711,
+    "n_konum": 7,
+    "ms": 287.78233130772907,
+    "vram_mb": 1410.406912
+  },
+  {
+    "esleyici": "LoFTR",
+    "ucus": "10",
+    "medyan_ic_nokta": 0.0,
+    "ort_ic_nokta": 16.333333333333332,
+    "tutma_orani": 0.125,
+    "medyan_hata_m": 24.91840961685613,
+    "n_konum": 3,
+    "ms": 289.9429500102997,
+    "vram_mb": 1410.406912
+  },
+  {
+    "esleyici": "RoMa",
+    "ucus": "03",
+    "medyan_ic_nokta": 4342.5,
+    "ort_ic_nokta": 3966.0416666666665,
+    "tutma_orani": 1.0,
+    "medyan_hata_m": 18.312008811546626,
+    "n_konum": 24,
+    "ms": 718.9994156360626,
+    "vram_mb": 2675.944448
+  },
+  {
+    "esleyici": "RoMa",
+    "ucus": "01",
+    "medyan_ic_nokta": 1766.5,
+    "ort_ic_nokta": 1734.5,
+    "tutma_orani": 0.9583333333333334,
+    "medyan_hata_m": 22.525708511605966,
+    "n_konum": 23,
+    "ms": 578.5468220710754,
+    "vram_mb": 2675.944448
+  },
+  {
+    "esleyici": "RoMa",
+    "ucus": "05",
+    "medyan_ic_nokta": 1658.5,
+    "ort_ic_nokta": 1845.9166666666667,
+    "tutma_orani": 1.0,
+    "medyan_hata_m": 35.56429942365119,
+    "n_konum": 24,
+    "ms": 572.0954140027364,
+    "vram_mb": 2675.944448
+  },
+  {
+    "esleyici": "RoMa",
+    "ucus": "02",
+    "medyan_ic_nokta": 703.5,
+    "ort_ic_nokta": 1366.0833333333333,
+    "tutma_orani": 1.0,
+    "medyan_hata_m": 45.286809394866566,
+    "n_konum": 24,
+    "ms": 573.3739336331686,
+    "vram_mb": 2675.944448
+  },
+  {
+    "esleyici": "RoMa",
+    "ucus": "08",
+    "medyan_ic_nokta": 476.5,
+    "ort_ic_nokta": 1572.6666666666667,
+    "tutma_orani": 1.0,
+    "medyan_hata_m": 50.3437403052272,
+    "n_konum": 24,
+    "ms": 578.4663160641988,
+    "vram_mb": 2675.944448
+  },
+  {
+    "esleyici": "RoMa",
+    "ucus": "10",
+    "medyan_ic_nokta": 160.5,
+    "ort_ic_nokta": 356.5,
+    "tutma_orani": 0.9583333333333334,
+    "medyan_hata_m": 187.07218332527307,
+    "n_konum": 23,
+    "ms": 594.9927469094595,
+    "vram_mb": 2675.944448
+  }
+]

@@ -83,13 +83,14 @@ def main():
     ax.plot(vx, vy, "-", lw=1.5, color=C_VO, alpha=0.9)
     ax.plot(px, py, "-", lw=1.5, color=C_PF)
     ax.plot(px[FRAME], py[FRAME], "o", ms=11, color=C_PF, mec="k", mew=0.8, zorder=6)
-    ax.set_title("where it thinks it is   (no GPS)", color="w", fontsize=13, pad=6)
+    ax.set_title("GREEN = this system   ·   RED = what happens without it",
+                 color="w", fontsize=13, pad=6)
     ax.axis("off")
-    ax.add_patch(Rectangle((0.012, 0.012), 0.30, 0.185, transform=ax.transAxes,
+    ax.add_patch(Rectangle((0.012, 0.012), 0.62, 0.185, transform=ax.transAxes,
                            color="#000000", alpha=0.62, zorder=7))
-    for i, (c, t) in enumerate([("#ffffff", "ground truth"),
-                                (C_PF, "GeoAnchor"),
-                                (C_VO, "odometry only")]):
+    for i, (c, t) in enumerate([("#ffffff", "truth  (where the drone really was)"),
+                                (C_PF, "GeoAnchor  — tracks the truth"),
+                                (C_VO, "without GeoAnchor — drifts off the map")]):
         ax.add_patch(Rectangle((0.032, 0.148 - i * 0.058), 0.038, 0.026,
                                transform=ax.transAxes, color=c, zorder=8))
         ax.text(0.082, 0.161 - i * 0.058, t, transform=ax.transAxes,
@@ -98,8 +99,8 @@ def main():
     # --- panel 3: hata ---
     ax = fig.add_axes([0.725, 0.155, 0.258, 0.63])
     ax.set_facecolor("#141822")
-    ax.plot(km, vo["err"], color=C_VO, lw=1.8, label="odometry only")
-    ax.plot(km, err, color=C_PF, lw=1.8, label="GeoAnchor")
+    ax.plot(km, vo["err"], color=C_VO, lw=1.8, label="without GeoAnchor")
+    ax.plot(km, err, color=C_PF, lw=1.8, label="with GeoAnchor")
     ax.set_yscale("log")
     ax.set_ylim(1, 5000)
     ax.set_xlim(0, km[-1])
@@ -111,7 +112,11 @@ def main():
     ax.grid(alpha=0.16, which="both", color="#7a8496")
     ax.legend(fontsize=10, facecolor="#141822", edgecolor="#39404f",
               labelcolor="w", loc="center left")
-    ax.set_title("drift vs anchored", color="w", fontsize=13, pad=6)
+    ax.annotate("", xy=(km[-1] * 0.62, 2600), xytext=(km[-1] * 0.62, 7),
+                arrowprops=dict(arrowstyle="<->", color="#ffd166", lw=1.8))
+    ax.text(km[-1] * 0.60, 130, "370x\nbetter", color="#ffd166", fontsize=12,
+            weight="bold", ha="right", va="center")
+    ax.set_title("bigger gap = bigger win", color="w", fontsize=13, pad=6)
 
     fig.savefig(ROOT / "figures" / "00_hero.png", dpi=110,
                 facecolor=BG, bbox_inches="tight")

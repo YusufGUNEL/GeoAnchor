@@ -28,7 +28,7 @@ import numpy as np
 from src.flight import load_flight, MissingMetadata
 from src.geo import SatelliteMap, haversine_m
 from src.features import Dinov2Embedder
-from src.matching import LoFTRMatcher
+from src.matching import LoFTRMatcher, make_matcher
 from src.localize import SingleFrameLocalizer
 from src.particle_filter import PFConfig
 from src.sequential import SequentialLocalizer
@@ -37,7 +37,15 @@ from src import pipeline as P
 DATA = r"D:\GeoAnchorData\full"
 CACHE = Path(r"D:\GeoAnchorData\cache_multi")
 ROOT = Path(__file__).resolve().parents[1]
+TAG_SUFFIX = ""
 OUT = ROOT / "results" / "20_multiflight.json"
+
+
+def set_out(tag):
+    global OUT, TAG_SUFFIX
+    TAG_SUFFIX = ("_" + tag) if tag else ""
+    if tag:
+        OUT = ROOT / "results" / ("20_multiflight_%s.json" % tag)
 
 
 def load_done():
@@ -133,7 +141,7 @@ def do_flight(fid: str, emb: Dinov2Embedder, matcher: LoFTRMatcher) -> dict:
             "basari_10m": float((e <= 10).mean() * len(e) / flight.n_frames),
             "basari_20m": float((e <= 20).mean() * len(e) / flight.n_frames),
             "loftr": float(nl.mean())})
-    np.savez(ROOT / "results" / f"20_flight_{fid}.npz", err=err, n_loftr=nl,
+    np.savez(ROOT / "results" / f"20_flight_{fid}{TAG_SUFFIX}.npz", err=err, n_loftr=nl,
              vo_err=vo_err, dist=d["cum_dist_m"].values)
     rec["sure_dk"] = float((time.time() - t0) / 60)
     sat.close()
@@ -142,15 +150,18 @@ def do_flight(fid: str, emb: Dinov2Embedder, matcher: LoFTRMatcher) -> dict:
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--matcher", default="loftr", choices=["loftr","roma"])
+    ap.add_argument("--tag", default="")
     ap.add_argument("--flights", default=None,
                     help="bosluklu liste; verilmezse hazir olanlarin hepsi")
     a = ap.parse_args()
 
+    set_out(a.tag)
     ready = (a.flights.split() if a.flights else
              (ROOT / "data" / "ready_flights.txt").read_text().split())
     done = load_done()
     emb = Dinov2Embedder(img_size=448, mode="both")
-    matcher = LoFTRMatcher(size=640)
+    matcher = make_matcher(a.matcher) if a.matcher=="roma" else LoFTRMatcher(size=640)
     CACHE.mkdir(parents=True, exist_ok=True)
 
     for fid in ready:
