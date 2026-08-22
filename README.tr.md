@@ -333,6 +333,87 @@ sistemin gerçek sınırı olarak kalıyor.
 
 ---
 
+## İşleri kötüleştiren güçlü eşleyici
+
+Dokuz uçuşluk çözümleme tek bir darboğaza işaret ediyordu: eşleme kalitesi.
+O hâlde bariz sonraki adım daha güçlü bir eşleyiciydi — RoMa, yoğun eşlemede
+bugünün en iyisi ve görünüm değişimine LoFTR'dan belirgin biçimde dayanıklı.
+
+**İlk bakışta apaçık bir kazanç gibi göründü.** Gerçek konum biliniyorken,
+aynı karelerde ölçüldü:
+
+| Uçuş | LoFTR iç nokta / eşleşme oranı | RoMa iç nokta / eşleşme oranı |
+|---|---|---|
+| 03 | 468 / %100 | 4342 / %100 |
+| 01 | 118 / %75 | 1766 / %96 |
+| 05 | 65 / %54 | 1658 / %100 |
+| 02 | 12 / %42 | 704 / **%100** |
+| 08 | 14 / %29 | 2935 / **%100** |
+| 10 | 0 / %12 | 160 / **%96** |
+
+Çöken üç uçuş da eşiğin üstüne çıkmıştı. 2,7 GB VRAM'e sığıyordu. Bunu
+çözüm olarak duyurmaya hazırdım.
+
+**Sonra uçtan uca çalıştırma uçuş 01'de 1669 metre verdi — LoFTR'ın 22 metre
+verdiği yerde.**
+
+Kıyaslama yanlış soruyu sormuştu. Her iki eşleyiciye de yalnızca **doğru**
+uydu karosunu göstermiştim. Oysa bir konumlandırma sistemi mesaisinin çoğunu
+tersi soruya harcar: *burası gerçekten doğru yer mi?* Onu ölçtüm — her İHA
+karesini haritanın rastgele, alakasız bir köşesinden alınan kırpmayla eşledim.
+
+| | DOĞRU yerde iç nokta | **YANLIŞ** yerde iç nokta | Oran |
+|---|---|---|---|
+| **LoFTR** | 709 | **0** | **709 kat** |
+| **RoMa** | 4598 | **341** | 13,5 kat |
+
+**LoFTR alakasız görüntüde hiçbir şey döndürmüyor. RoMa 341 eşleşme
+uyduruyor.** RoMa'nın "%100 eşleşme oranı" hiçbir zaman bir yetenek değildi —
+her şeye eşleşiyor, orada olmayan şeye bile. Görünen üstünlüğü, yalnızca kolay
+yönü ölçen bir ölçütün yan ürünüymüş.
+
+Kabul eşiğini RoMa'ya göre yeniden ayarlamak da kurtarmıyor. Doğru/yanlış
+çiftlerinde her ölçüt tek tek sınandı:
+
+| Ölçüt | LoFTR | RoMa |
+|---|---|---|
+| Ham iç nokta sayısı | **%100 temiz ayrım** | %98,1, dağılımlar örtüşüyor |
+| İç nokta oranı | **%100 temiz ayrım** | %98,1, dağılımlar örtüşüyor |
+| Eşleyici güveni | %96,2 | %96,2 |
+
+LoFTR iki durumu kusursuz ayırıyor — sıfır hatalı bir eşik **var**. RoMa için
+öyle bir eşik yok: bazı yanlış yerler bazı doğru yerlerden yüksek puan alıyor.
+
+Uçtan uca, eşikler RoMa'nın lehine ayarlanmış hâlde:
+
+| Uçuş | Yapılandırma | Kapsama | Medyan hata |
+|---|---|---|---|
+| 01 | LoFTR | %100 | **21,82 m** |
+| 01 | RoMa, ham eşik 3050 | %99,5 | 39,71 m |
+| 01 | RoMa, oran eşiği 0,61 | %100 | 40,53 m |
+| 08 | LoFTR | **%4,5** | 582 m |
+| 08 | RoMa, ham eşik 3050 | %95,5 | **6250 m** |
+| 08 | RoMa, oran eşiği 0,61 | %95,5 | 3689 m |
+
+Uçuş 08 satırı tek başına bütün tartışmayı bitiriyor. LoFTR karelerin
+%4,5'inde konum üretiyor — yani **bilmediğini söylüyor**. RoMa %95,5'inde
+üretiyor ve ortalama **6 kilometre** yanılıyor. Havada bunun karşılığı şudur:
+birinci sistem "konum alamıyorum" deyip ataletsel seyrüsefere devreder.
+İkincisi uçağı altı kilometre yanlış yere götürür ve bundan hiç söz etmez.
+
+**RoMa devre dışı kalıyor.** Daha zayıf bir eşleyici olduğu için değil —
+yaygın ölçütlerde açıkça daha güçlü — bu görev o ölçütlerin ölçmediği bir şey
+istediği için:
+
+> Bir eşleyicinin buradaki değeri ne kadar eşleştirdiğiyle değil, hiç
+> eşleşmemesi gereken yerde susabilmesiyle ölçülür.
+
+Kod `RomaMatcher` sınıfını ve `--matcher roma` anahtarını koruyor ki sonuç
+yeniden üretilebilsin; `accept_ratio` ölçütü de bu araştırma sırasında eklendi.
+Varsayılan LoFTR olarak kalıyor.
+
+---
+
 ## Dürüst sınırlar
 
 Hiçbir şey abartılmasın diye önce bunlar yazıldı.

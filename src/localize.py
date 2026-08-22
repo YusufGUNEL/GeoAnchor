@@ -57,7 +57,8 @@ class SingleFrameLocalizer:
                  crop_m: float = 400.0, crop_px: int = 640,
                  min_inliers: int = 40, early_exit: int = 200,
                  max_cands: int = 8, cand_sep_m: float = 200.0,
-                 topk_pool: int = 40, ransac_thr: float = 4.0):
+                 topk_pool: int = 40, ransac_thr: float = 4.0,
+                 accept_ratio: float = 0.0):
         self.sat = sat
         self.tile_lat, self.tile_lon, self.tile_emb = tile_lat, tile_lon, tile_emb
         self.matcher = matcher
@@ -66,6 +67,10 @@ class SingleFrameLocalizer:
         self.min_inliers, self.early_exit = min_inliers, early_exit
         self.max_cands, self.cand_sep_m = max_cands, cand_sep_m
         self.topk_pool, self.ransac_thr = topk_pool, ransac_thr
+        # Yogun esleyiciler (RoMa) yanlis yere bakinca da yuzlerce eslesme
+        # uretir; ham sayi orada anlamsiz kalir. Ic nokta ORANI ayrimi
+        # cok daha iyi yapiyor (bkz scripts/27_roma_threshold.py).
+        self.accept_ratio = accept_ratio
         self.m_lat, self.m_lon = meters_per_degree(sat.center_lat)
 
     def match_at(self, query_gray: np.ndarray, lat: float, lon: float,
@@ -107,6 +112,8 @@ class SingleFrameLocalizer:
             return None, None, 0, len(pa), float("nan"), float("nan")
         n = int(mask.sum())
         if n < self.min_inliers:
+            return None, None, n, len(pa), float("nan"), float("nan")
+        if self.accept_ratio > 0 and n / max(1, len(pa)) < self.accept_ratio:
             return None, None, n, len(pa), float("nan"), float("nan")
         c = self.crop_px / 2.0
         p = H @ np.array([c, c, 1.0])

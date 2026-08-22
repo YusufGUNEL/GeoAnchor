@@ -339,6 +339,88 @@ this system's genuine limit.
 
 ---
 
+## The stronger matcher that made things worse
+
+The nine-flight analysis pointed at one bottleneck: match quality. So the
+obvious next move was a stronger matcher — RoMa, the current state of the art
+in dense matching, and far more robust to appearance change than LoFTR.
+
+**At first it looked like a clear win.** Measured at the known true position,
+on the same frames:
+
+| Flight | LoFTR inliers / match rate | RoMa inliers / match rate |
+|---|---|---|
+| 03 | 468 / 100% | 4342 / 100% |
+| 01 | 118 / 75% | 1766 / 96% |
+| 05 | 65 / 54% | 1658 / 100% |
+| 02 | 12 / 42% | 704 / **100%** |
+| 08 | 14 / 29% | 2935 / **100%** |
+| 10 | 0 / 12% | 160 / **96%** |
+
+All three failing flights jumped above the threshold. It fit in 2.7 GB VRAM.
+I was ready to report it as the fix.
+
+**Then the end-to-end run gave 1669 m on flight 01, where LoFTR gives 22 m.**
+
+The bake-off had asked the wrong question. It only ever showed each matcher
+the *correct* satellite tile. A localization system spends most of its effort
+on the opposite question — *is this the right place at all?* So I measured
+that: match each drone frame against a satellite crop from a random, unrelated
+part of the map.
+
+| | Inliers at the CORRECT place | Inliers at a WRONG place | Ratio |
+|---|---|---|---|
+| **LoFTR** | 709 | **0** | **709x** |
+| **RoMa** | 4598 | **341** | 13.5x |
+
+**LoFTR returns nothing on unrelated imagery. RoMa invents 341 matches.**
+RoMa's "100% match rate" was never a capability — it matches everything,
+including things that are not there. Its apparent advantage was an artifact of
+a metric that only ever measured the easy direction.
+
+Recalibrating the acceptance threshold for RoMa does not rescue it. Testing
+every criterion on correct-vs-wrong pairs:
+
+| Criterion | LoFTR | RoMa |
+|---|---|---|
+| Raw inlier count | **100% clean separation** | 98.1%, distributions overlap |
+| Inlier ratio | **100% clean separation** | 98.1%, distributions overlap |
+| Matcher confidence | 96.2% | 96.2% |
+
+LoFTR separates the two cases perfectly — there exists a threshold with zero
+errors. For RoMa no threshold exists that does: some wrong places outscore
+some correct ones.
+
+End-to-end, with thresholds tuned in RoMa's favour:
+
+| Flight | Config | Coverage | Median error |
+|---|---|---|---|
+| 01 | LoFTR | 100% | **21.82 m** |
+| 01 | RoMa, raw threshold 3050 | 99.5% | 39.71 m |
+| 01 | RoMa, ratio threshold 0.61 | 100% | 40.53 m |
+| 08 | LoFTR | **4.5%** | 582 m |
+| 08 | RoMa, raw threshold 3050 | 95.5% | **6250 m** |
+| 08 | RoMa, ratio threshold 0.61 | 95.5% | 3689 m |
+
+Flight 08 is the whole argument in one row. LoFTR produces a position on 4.5%
+of frames — it is *saying it does not know*. RoMa produces one on 95.5% of
+frames, and is on average **6 kilometres wrong**. In the air, the first system
+reports loss of fix and hands over to inertial navigation. The second flies
+the aircraft six kilometres off course and never mentions it.
+
+**RoMa stays out.** Not because it is a weaker matcher — by conventional
+metrics it is clearly stronger — but because this task needs something those
+metrics do not measure:
+
+> A matcher's value here is not how much it matches, but whether it can stay
+> silent where it should not match at all.
+
+The code keeps `RomaMatcher` and the `--matcher roma` switch so the result is
+reproducible, and `accept_ratio` was added to the localizer during this
+investigation. The default remains LoFTR.
+
+---
+
 ## Honest limitations
 
 Written down first, so nothing here is oversold.

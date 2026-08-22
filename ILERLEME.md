@@ -468,3 +468,67 @@ azaltmıyorsa **hiç uygulanmıyor**. İki uçuşta gerçekten devreye girdi.
 
 **Uçuş 07 dışlandı:** üstverisinde duruş/yönelim sütunları yok. Yükleyici artık
 sessizce yanlış sonuç üretmek yerine açık hatayla reddediyor.
+
+---
+
+## Faz 8 — Daha güçlü eşleyici denemesi: RoMa (2026-08-22)
+
+Dokuz uçuşluk çözümleme darboğazın eşleme kalitesi olduğunu göstermişti.
+Mantıklı sonraki adım: LoFTR yerine RoMa (yoğun eşlemede bugünün en iyisi).
+
+**İlk ölçüm heyecan vericiydi.** Gerçek konumda, aynı karelerde:
+uçuş 08'de eşleşme oranı %29 → %100, uçuş 10'da %12 → %96. Üç çöken uçuş da
+eşiğin üstüne çıkmıştı. 2,7 GB VRAM'e sığıyordu. Kullanıcıya "çözüm bulundu"
+diye yazdım.
+
+**Sonra uçtan uca çalıştırdım: uçuş 01'de 1669 m** (LoFTR 22 m veriyordu).
+
+**Hatam neydi:** Kıyaslamada her iki eşleyiciye de sadece DOĞRU uydu karosunu
+gösteriyordum. Oysa konumlandırma sistemi asıl mesaisini tersi soruya harcar —
+"burası doğru yer mi?". Onu ölçmemiştim.
+
+Ölçtüm — her kareyi haritanın rastgele bir köşesiyle eşledim:
+
+| | Doğru yerde | **Yanlış yerde** | Oran |
+|---|---|---|---|
+| LoFTR | 709 | **0** | 709 kat |
+| RoMa | 4598 | **341** | 13,5 kat |
+
+**RoMa her şeye eşleşiyor.** "%100 eşleşme oranı" bir yetenek değil, sadece
+kolay yönü ölçen bir ölçütün yan ürünüymüş.
+
+Eşik ayarı da kurtarmıyor. Doğru/yanlış ayrımı:
+
+| Ölçüt | LoFTR | RoMa |
+|---|---|---|
+| Ham iç nokta | **%100 temiz** | %98,1, örtüşme var |
+| İç nokta oranı | **%100 temiz** | %98,1, örtüşme var |
+| Eşleyici güveni | %96,2 | %96,2 |
+
+LoFTR için sıfır hatalı bir eşik VAR. RoMa için yok.
+
+**Uçtan uca, eşikler RoMa lehine ayarlıyken:**
+
+| Uçuş | Yapılandırma | Kapsama | Medyan |
+|---|---|---|---|
+| 01 | LoFTR | %100 | **21,82 m** |
+| 01 | RoMa (ham 3050) | %99,5 | 39,71 m |
+| 01 | RoMa (oran 0,61) | %100 | 40,53 m |
+| 08 | LoFTR | **%4,5** | 582 m |
+| 08 | RoMa (ham 3050) | %95,5 | **6250 m** |
+| 08 | RoMa (oran 0,61) | %95,5 | 3689 m |
+
+Uçuş 08 satırı her şeyi anlatıyor: LoFTR %4,5 karede konum üretiyor, yani
+**bilmediğini söylüyor**. RoMa %95,5'inde üretiyor ve 6 km yanılıyor.
+
+**Sonuç: RoMa elendi.** Daha zayıf olduğu için değil — daha güçlü. Bu görev
+o ölçütlerin ölçmediği bir şey istiyor:
+
+> Bir eşleyicinin buradaki değeri ne kadar eşleştirdiğiyle değil, hiç
+> eşleşmemesi gereken yerde susabilmesiyle ölçülür.
+
+Kod `RomaMatcher` ve `--matcher roma` anahtarını koruyor (sonuç yeniden
+üretilebilsin diye), `accept_ratio` ölçütü de bu sırada eklendi.
+
+**Ders:** Bir iyileştirmeyi duyurmadan önce uçtan uca ölç. Ara ölçüt (eşleşme
+oranı) yanlış yönü ölçüyordu ve neredeyse yanlış bir sonucu rapor ediyordum.

@@ -1,0 +1,60 @@
+{
+  "LoFTR": {
+    "ic_nokta": {
+      "dogru_medyan": 491.0,
+      "yanlis_medyan": 0.0,
+      "dogru_min": 17.0,
+      "yanlis_max": 0.0,
+      "en_iyi_esik": 17.0,
+      "dogruluk": 1.0,
+      "ortusme": false
+    },
+    "oran": {
+      "dogru_medyan": 0.8387070487573001,
+      "yanlis_medyan": 0.0,
+      "dogru_min": 0.3620689655172414,
+      "yanlis_max": 0.0,
+      "en_iyi_esik": 0.3620689655172414,
+      "dogruluk": 1.0,
+      "ortusme": false
+    },
+    "guven": {
+      "dogru_medyan": 0.7242131233215332,
+      "yanlis_medyan": 0.6132662296295166,
+      "dogru_min": 0.6291859149932861,
+      "yanlis_max": 0.6572445631027222,
+      "en_iyi_esik": 0.6518443822860718,
+      "dogruluk": 0.9615384615384616,
+      "ortusme": true
+    }
+  },
+  "RoMa": {
+    "ic_nokta": {
+      "dogru_medyan": 4657.5,
+      "yanlis_medyan": 272.0,
+      "dogru_min": 651.0,
+      "yanlis_max": 1244.0,
+      "en_iyi_esik": 3050.0,
+      "dogruluk": 0.9807692307692307,
+      "ortusme": true
+    },
+    "oran": {
+      "dogru_medyan": 0.9315,
+      "yanlis_medyan": 0.054400000000000004,
+      "dogru_min": 0.1302,
+      "yanlis_max": 0.2488,
+      "en_iyi_esik": 0.61,
+      "dogruluk": 0.9807692307692307,
+      "ortusme": true
+    },
+    "guven": {
+      "dogru_medyan": 0.9806490242481232,
+      "yanlis_medyan": 0.07772073149681091,
+      "dogru_min": 0.0831257775425911,
+      "yanlis_max": 0.8532029390335083,
+      "en_iyi_esik": 0.7802528142929077,
+      "dogruluk": 0.9615384615384616,
+      "ortusme": true
+    }
+  }
+}
