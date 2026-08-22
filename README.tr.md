@@ -22,10 +22,51 @@ metre seviyesi konum veriyorlar.
 
 ## Ana sonuç
 
-Gerçek bir İHA tarama uçuşu (UAV-VisLoc, uçuş 03): **768 kare, 74 km, 77
-dakika, 466 m irtifa**, Taizhou'nun 8,8 × 7,3 km'lik uydu ortofotosu üzerinde.
-Gerçek konum işlenmiş GNSS verisi — düz uçuş hatlarındaki ölçülen sapma
-**1,5 m**, yani referansın kendisi temiz.
+**Dokuz gerçek İHA tarama uçuşunda** değerlendirildi (UAV-VisLoc):
+**406 m ile 2572 m arasında irtifa**, uçuş başına 9-103 km, yedi arazi türü,
+2016'dan 2023'e yayılan çekim tarihleri. Gerçek konum işlenmiş GNSS verisi —
+düz uçuş hatlarındaki ölçülen sapma **1,5 m**, yani referansın kendisi temiz.
+Aşağıdaki her şey tam otomatik: ölçek ve kamera montaj açısı her uçuşta o
+uçuşun ilk %20'sinden kalibre edilip kalan %80'de ölçülüyor.
+
+| Uçuş | Kare | İrtifa | Yol | Eşleşme oranı | Kapsama | Medyan | %90 |
+|---|---|---|---|---|---|---|---|
+| 03 | 768 | 466 m | 74 km | %93 | %100,0 | **8,35 m** | 20,03 m |
+| 04 | 738 | 544 m | 83 km | %90 | %100,0 | **15,44 m** | 54,64 m |
+| 06 | 344 | 834 m | 24 km | %76 | %99,7 | **15,06 m** | 365,32 m |
+| 05 | 473 | 2313 m | 30 km | %50 | %99,8 | **16,69 m** | 182,51 m |
+| 01 | 817 | 406 m | 66 km | %77 | %100,0 | **22,51 m** | 114,60 m |
+| 11 | 590 | 2572 m | 84 km | %90 | %99,8 | **24,79 m** | 424,41 m |
+| 02 | 1071 | 406 m | 86 km | %37 | %99,7 | 53,45 m | 343,39 m |
+| 10 | 144 | 773 m | 9 km | %13 | %84,7 | 126,88 m | 324,98 m |
+| 08 | 1033 | 551 m | 103 km | %33 | %79,7 | 648,49 m | 3785,02 m |
+
+**Sonuçlar temiz biçimde ikiye ayrılıyor ve bir uçuşun hangi gruba düşeceğini
+tek bir ölçülebilir özellik önceden söylüyor.** O özellik *eşleşme oranı*:
+gerçek konum zaten biliniyorken uydu haritasıyla eşleşebilen kare oranı —
+yani algoritmanın değil, verinin bir özelliği.
+
+| | Uçuş | Medyan hata | Kapsama |
+|---|---|---|---|
+| Eşleşme oranı **≥ %50** | 6 | **8,35 – 24,79 m** (medyan 16,07 m) | ≥ %99,7 |
+| Eşleşme oranı **< %50** | 3 | 53 – 648 m | %80 – 85 |
+
+Eşleşme oranı ile logaritmik hata arasındaki korelasyon: **−0,765**.
+
+Ayırt edici olan irtifa *değil* — 2572 metredeki uçuş 11 çalışıyor (24,79 m),
+551 metredeki uçuş 08 çöküyor. Belirleyici olan, İHA görüntüsü ile uydu
+haritasının tanınabilir ölçüde aynı dünyayı gösterip göstermediği. Bunun
+kullanışlı bir sonucu var: **eşleşme oranı, planlanan rota üzerinde uçmadan
+önce ölçülebilir; yani sistemin orada işe yarayıp yaramayacağı önceden
+bilinebilir.**
+
+![Uçuş zorluğu](figures/15_ucus_zorlugu.png)
+
+### Ayrıntılı örnek olay: uçuş 03
+
+Belgenin geri kalanı uçuş 03'ü ayrıntısıyla inceliyor (768 kare, 74 km,
+77 dakika, 466 m irtifa, Taizhou'nun 8,8 × 7,3 km ortofotosu üzerinde).
+Montaj açısı otomatik değil elle kalibre edilmiş hâliyle:
 
 | | Kapsama | Medyan hata | %90 dilim | 10 m içinde | Kare başına eşleme |
 |---|---|---|---|---|---|
@@ -36,6 +77,11 @@ Gerçek konum işlenmiş GNSS verisi — düz uçuş hatlarındaki ölçülen sa
 Uydu eşlemesinin tamamen çöktüğü dört kesim hariç tutulduğunda (karelerin
 %5,7'si — bkz *Dürüst sınırlar*), füzyon **medyan 5,97 m, %90 dilim 11,97 m,
 20 m içinde %99,9** tutturuyor.
+
+Buradaki 6,20 m ile çok uçuşlu tablodaki 8,35 m arasındaki fark, tam
+otomasyonun bedeli: otomatik montaj kalibrasyonu elle ayarlanmış olandan
+yaklaşık 2 metre kötü. Bu dürüst maliyet, iyi olan sayıyı öne çıkarıp
+gizlenmek yerine yazılıyor.
 
 ![Hata dağılımı](figures/13_dagilim.png)
 
@@ -198,6 +244,93 @@ tek başına en büyük katkıyı veriyor** (17,13 → 6,62 m) ve **odometriyi
 
 ---
 
+## Dayanıklılık — 20 koşul
+
+İki soru: uydu eşlemesi kesilirse ne olur, görüntünün kendisi bozulursa ne
+olur. Koşul başına 300 kare.
+
+**Ölçüm kesintisi** (uydu düzeltmeleri zorla atılıyor):
+
+| Atılan ölçüm | Medyan | 10 m içinde | Eşleme çağrısı |
+|---|---|---|---|
+| %0 | 6,62 m | %73,3 | 1,73 |
+| %25 | 7,23 m | %70,7 | 1,26 |
+| %50 | 7,38 m | %66,7 | 0,85 |
+| %75 | 10,76 m | %46,7 | 0,45 |
+| %90 | 41,55 m | %17,0 | 0,22 |
+
+Harita düzeltmelerinin yarısı çöpe atılabiliyor ve bedeli sadece 0,8 metre.
+Hareket modelinin işini yaptığı yer burası.
+
+**Görüntü bozulması** — desen beklediğimden net çıktı:
+
+| Etkilemeyenler (hepsi 7 m civarı) | Sistemi kıranlar |
+|---|---|
+| Sis, en ağır ayarda bile — 7,21 m | Orta titreşim — 58,31 m |
+| Karenin üçte birini kapatan kapanma — 7,20 m | Ağır JPEG sıkıştırma — 186,71 m |
+| Çözünürlük kaybı — 7,54 m | Ağır titreşim — 500,19 m |
+| Orta JPEG, orta karanlık, hafif bulanıklık | Aşırı karanlık — **hiç başlayamıyor** |
+
+**Sistem parlaklığa ve karşıtlığa değil, dokuya bakıyor.** Sis karşıtlığı
+düşürüyor ama yolu yol, binayı bina olarak bırakıyor; eşleme yine tutuyor.
+Titreşim ve ağır sıkıştırma ise ince yapıyı siliyor, geriye eşleştirilecek bir
+şey kalmıyor.
+
+Aşırı karanlık satırını açıkça yazmak gerek: sistem hiçbir konum üretmiyor,
+çünkü daha ilk kare haritada bulunamıyor. Gece harekâtı için bu tasarım
+termal veya düşük ışık sensörü ister, yazılım düzeltmesi değil.
+
+![Dayanıklılık](figures/14_dayaniklilik.png)
+
+---
+
+## Bulanıklık zayıflığının giderilmesi
+
+Titreşim bulanıklığı tek gerçek kırılma noktasıydı, üstüne gittim. İki fikir,
+ayrı ayrı test edildi çünkü farklı durumlara çare oluyorlar.
+
+**Fikir 1 — keskinlik kapısı.** Komşularından belirgin biçimde bulanık kareyi
+eşlemeye hiç sokma, odometri taşısın. İşin ters köşesi şu: bulanık kare
+eşlemeyi basitçe *başaramamıyor* — **kendinden emin biçimde yanlış** eşleşme
+üretiyor. Bu, hiç eşleşme olmamasından kötü; çünkü süzgeç eksik ölçümü
+geçiştirebiliyor ama yanlış ölçüm onu yoldan çıkarıyor.
+
+**Fikir 2 — alan eşitleme.** Uydu karosunu da aynı kadar bulanıklaştır. Eşleme,
+iki taraf birbirine benzediğinde çalışır. Sorun "ben ne kadar bulanığım"
+sorusunu net bir referans olmadan cevaplamak — hiç net kare görmemiş bir
+kamera bulanık olduğunu bilemez. Referans zaten elimin altındaymış:
+**uydu karosunun kendisi net** ve aynı yeri aynı ölçekte gösteriyor, dolayısıyla
+aradaki keskinlik farkı doğrudan bulanıklığın ölçüsü.
+
+Sonuçlar (300 kare):
+
+| Her kare bulanık (orta şiddet) | Medyan | %90 | 20 m içinde |
+|---|---|---|---|
+| Düzeltmesiz | 44,47 m | 214,31 m | %22,7 |
+| Sadece keskinlik kapısı | 27,06 m | 208,08 m | %38,8 |
+| **Sadece alan eşitleme** | **20,00 m** | **90,88 m** | **%50,2** |
+| İkisi birden | 20,00 m | 90,88 m | %50,2 |
+
+| Arada bir bulanık (her 6. kare, ağır) | Medyan | Eşleme çağrısı |
+|---|---|---|
+| Düzeltmesiz | 6,83 m | 2,11 |
+| **Keskinlik kapısı** | 6,83 m | **1,46** |
+
+**Alan eşitleme gerçek çözüm**: medyan yarıya indi, %90 dilim 214 metreden
+91 metreye düştü. **Keskinlik kapısı ise tahminimi tutturmadı.** Arada bir
+bulanıklıkta doğruluğu artıracağını sanıyordum; artırmadı, çünkü süzgecin
+aykırı değer eleme mekanizması o kareleri zaten hallediyormuş. Yaptığı şey
+eşleme işini **%31 azaltmak** — eşleşemeyecek kareye boşuna uğraşmıyor.
+Gerçek bir kazanç, ama hedeflediğim kazanç değil.
+
+İkisi de temiz karede hiçbir şeye mal olmuyor (6,62 m'den 6,60 m'ye).
+
+Dürüst hüküm: bulanıklık **hafifletildi, çözülmedi.** 44 metreden 20 metreye
+inmek gerçek bir iyileşme ama temiz kare tabanı 6,6 metre. Ağır titreşim bu
+sistemin gerçek sınırı olarak kalıyor.
+
+---
+
 ## Dürüst sınırlar
 
 Hiçbir şey abartılmasın diye önce bunlar yazıldı.
@@ -216,8 +349,22 @@ Hiçbir şey abartılmasın diye önce bunlar yazıldı.
 - **Montaj kalibrasyonu uçuşun ilk %20'sini kullanıyor.** Gerçek sistemlerde
   bu kurulumda bir kez yapılır; burada veriden yapıldı ve raporlanan her şey
   ayrılan geri kalan kısımda ölçüldü.
-- **Tek uçuş, tek bölge, tek mevsim.** Taizhou düz bir nehir deltası. Burada
-  hiçbir şey dağlık arazide, gece veya kışın nasıl davranacağını göstermiyor.
+- **Dokuz uçuş, hepsi tek veri kümesinden, hepsi Çin'de.** İrtifa 406–2572 m,
+  tarihler 2016–2023 arasına yayılıyor; ama her uçuş aynı çekim sistemini ve
+  aynı sınıf uydu haritasını kullanıyor. Burada hiçbir şey dağlık arazide,
+  gece, kışın veya farklı bir sensörle nasıl davranacağını göstermiyor.
+- **Dokuz uçuşun üçü başarısız** (eşleşme oranı %50 altı: uçuş 02, 08, 10 —
+  medyan hata 53 m, 648 m, 127 m). Sebep ölçülüp yazıldı, dışlanmadı: o
+  uçuşların görüntüleri, gerçek konum bilindiği hâlde bile uydu haritasıyla
+  neredeyse hiç eşleşmiyor. Bu verinin özelliği ama aynı zamanda gerçek bir
+  harekât sınırı — haritanın ve sensörün o rotada uyuştuğu doğrulanmadan
+  sistem konuşlandırılamaz.
+- **Uçuş 07 tamamen dışlandı**: üstverisinde duruş ve yönelim sütunları yok,
+  bu sistem ise onlara ihtiyaç duyuyor. Yükleyici sessizce yanlış sayı üretmek
+  yerine açık bir hatayla reddediyor.
+- **Otomatik kalibrasyonun bedeli yaklaşık 2 metre** (uçuş 03'te elle 6,20 m,
+  otomatik 8,35 m). İki uçuşta ise hiç düzeltme uygulamadı, çünkü düzeltmenin
+  ayrılan karelerde işe yaradığını doğrulayamadı.
 - **Pusula sapma eğrisi sadece iki yönelimde uyduruldu**, çünkü tarama deseni
   sadece iki yön uçuyor. Fiziksel model (sert-demir hatası) yönelime bağlı bir
   sinüs öngörüyor ama bu uçuş onu belirleyemez — iki yönle bu, pratikte iki
@@ -252,6 +399,12 @@ python scripts/07_sequential.py       # FAZ 3 füzyon  ← ana sonuç
 python scripts/08_robustness.py       # FAZ 4 bozulma + ölçüm kesintisi
 python scripts/11_ablation.py         # FAZ 5 ablasyon
 python scripts/09_figures.py          # şekiller
+python scripts/12_robustness_figure.py
+python scripts/13_blur_fix.py             # blur mitigation
+python scripts/20_multiflight.py          # 9-flight evaluation
+python scripts/21_why_flights_differ.py   # why flights differ
+python scripts/23_difficulty_figure.py
+python scripts/22_summary.py
 python scripts/10_demo_video.py       # gösterim videosu
 ```
 

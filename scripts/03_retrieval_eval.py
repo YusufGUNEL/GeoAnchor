@@ -1,4 +1,11 @@
-"""Faz 1b — küresel getirme ne kadar iyi? Üç tanımlayıcı türü kıyaslanır.
+"""[TARIHSEL — KULLANMA, yerine 03c_retrieval_sweep.py]
+
+Bu betik IHA karesini gri tonlamaya cevirip uydunun RENKLI karolariyla
+kiyasliyordu; bu yapay alan farki getirmeyi cokertiyordu (R@1 %7,3).
+Hata bulunup duzeltildi. Depoda duruyor cunku ILERLEME.md o olcume atif
+yapiyor ve sonucun nasil duzeldigi ancak ikisi yan yana gorulunce anlasilir.
+
+Faz 1b — küresel getirme ne kadar iyi? Üç tanımlayıcı türü kıyaslanır.
 
 Karo gömmesi cls ve GeM parçalarının birleşimi olarak saklandı; buradan
 üçünü de (yalnız cls, yalnız GeM, birleşik) yeniden veritabanı kurmadan

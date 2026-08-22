@@ -29,6 +29,7 @@ class AttitudeModel:
     roll_bias_deg: float = 0.0
     pitch_sign: float = +1.0
     roll_sign: float = -1.0
+    height_scale: float = 1.0
 
     def offset_body(self, pitch_deg, roll_deg, height_m):
         """Görüntü merkezinin İHA'ya göre yerdeki kayması.
@@ -37,7 +38,7 @@ class AttitudeModel:
         """
         p = np.radians(np.asarray(pitch_deg, float) + self.pitch_bias_deg)
         r = np.radians(np.asarray(roll_deg, float) + self.roll_bias_deg)
-        h = np.asarray(height_m, float)
+        h = np.asarray(height_m, float) * self.height_scale
         return self.pitch_sign * h * np.tan(p), self.roll_sign * h * np.tan(r)
 
     def offset_ne(self, pitch_deg, roll_deg, height_m, yaw_deg):

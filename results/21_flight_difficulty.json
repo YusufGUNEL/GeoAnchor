@@ -1,0 +1,101 @@
+{
+  "01": {
+    "medyan_ic_nokta": 106.5,
+    "tutma_orani": 0.7666666666666667,
+    "medyan_eslesme": 174.0,
+    "tarih": "2018-09-17",
+    "n_ornek": 30,
+    "medyan_hata_m": 22.512180950056603,
+    "kapsama": 1.0,
+    "p90_m": 114.59793479438957,
+    "irtifa_m": 405.81090575275397
+  },
+  "02": {
+    "medyan_ic_nokta": 0.0,
+    "tutma_orani": 0.36666666666666664,
+    "medyan_eslesme": 27.5,
+    "tarih": "2018-09-18",
+    "n_ornek": 30,
+    "medyan_hata_m": 53.45002689595168,
+    "kapsama": 0.9971988795518207,
+    "p90_m": 343.38973952772074,
+    "irtifa_m": 405.7921568627451
+  },
+  "03": {
+    "medyan_ic_nokta": 544.5,
+    "tutma_orani": 0.9333333333333333,
+    "medyan_eslesme": 649.0,
+    "tarih": "2018-10-23",
+    "n_ornek": 30,
+    "medyan_hata_m": 8.350224233839402,
+    "kapsama": 1.0,
+    "p90_m": 20.033298153106657,
+    "irtifa_m": 466.13776041666665
+  },
+  "04": {
+    "medyan_ic_nokta": 490.5,
+    "tutma_orani": 0.9,
+    "medyan_eslesme": 589.5,
+    "tarih": "2018-10-24",
+    "n_ornek": 30,
+    "medyan_hata_m": 15.444855733238946,
+    "kapsama": 1.0,
+    "p90_m": 54.637445026596396,
+    "irtifa_m": 543.5101219512195
+  },
+  "05": {
+    "medyan_ic_nokta": 48.0,
+    "tutma_orani": 0.5,
+    "medyan_eslesme": 88.5,
+    "tarih": "2016-06-27",
+    "n_ornek": 30,
+    "medyan_hata_m": 16.68662921606837,
+    "kapsama": 0.9978858350951374,
+    "p90_m": 182.50912246236177,
+    "irtifa_m": 2312.951543340381
+  },
+  "06": {
+    "medyan_ic_nokta": 351.0,
+    "tutma_orani": 0.7586206896551724,
+    "medyan_eslesme": 543.0,
+    "tarih": "2022-10-09",
+    "n_ornek": 29,
+    "medyan_hata_m": 15.06178044186698,
+    "kapsama": 0.997093023255814,
+    "p90_m": 365.32088685004646,
+    "irtifa_m": 833.5320639534884
+  },
+  "08": {
+    "medyan_ic_nokta": 8.5,
+    "tutma_orani": 0.3333333333333333,
+    "medyan_eslesme": 36.5,
+    "tarih": "2019-06-14",
+    "n_ornek": 30,
+    "medyan_hata_m": 648.4850313532182,
+    "kapsama": 0.7967086156824782,
+    "p90_m": 3785.017318557335,
+    "irtifa_m": 551.4626234269118
+  },
+  "10": {
+    "medyan_ic_nokta": 0.0,
+    "tutma_orani": 0.13333333333333333,
+    "medyan_eslesme": 22.0,
+    "tarih": "2018-09-05",
+    "n_ornek": 30,
+    "medyan_hata_m": 126.88353260119513,
+    "kapsama": 0.8472222222222222,
+    "p90_m": 324.9813190460068,
+    "irtifa_m": 773.0564583333334
+  },
+  "11": {
+    "medyan_ic_nokta": 916.5,
+    "tutma_orani": 0.9,
+    "medyan_eslesme": 1018.0,
+    "tarih": "2023-10-19",
+    "n_ornek": 30,
+    "medyan_hata_m": 24.789847498440704,
+    "kapsama": 0.9983050847457627,
+    "p90_m": 424.4059697187126,
+    "irtifa_m": 2572.159203389831
+  }
+}

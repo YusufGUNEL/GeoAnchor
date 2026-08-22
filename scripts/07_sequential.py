@@ -117,6 +117,26 @@ def run(drop_rate=0.0, seed=0, n_particles=600, tag="ana", verbose=True,
                   flush=True)
 
     e = out["err"][np.isfinite(out["err"])]
+    if len(e) == 0:
+        # Sistem hic baslayamadi (or. asiri karanlik kare: ilk karede kuresel
+        # konumlanma tutmuyor). Bu bir cokme degil, GECERLI bir sonuc:
+        # "bu kosulda sistem calismiyor". Sayilarla degil, kapsama sifiriyla
+        # raporlanir.
+        summary = {"etiket": tag, "n": int(n), "drop_rate": drop_rate,
+                   "seed": seed, "n_particles": n_particles, "kapsama": 0.0,
+                   "medyan_m": float("nan"), "ortalama_m": float("nan"),
+                   "p90_m": float("nan"), "max_m": float("nan"),
+                   "ate_m": float("nan"),
+                   "loftr_per_frame": float(np.nanmean(out["n_loftr"])),
+                   "ms_per_frame": float(np.nanmean(out["ms"])),
+                   "yeniden_konumlanma": int(sum(1 for m in modes if m == "yeniden konumlanma")),
+                   "sadece_odometri": int(sum(1 for m in modes if m == "sadece odometri")),
+                   "basari_1m": 0.0, "basari_3m": 0.0, "basari_5m": 0.0,
+                   "basari_10m": 0.0, "basari_20m": 0.0, "basari_50m": 0.0}
+        np.savez(ROOT / "results" / f"07_sequential_{tag}.npz",
+                 modes=np.array(modes), **out)
+        sat.close()
+        return summary, out, modes
     summary = {
         "etiket": tag, "n": int(n), "drop_rate": drop_rate, "seed": seed,
         "n_particles": n_particles,

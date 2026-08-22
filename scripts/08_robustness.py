@@ -31,22 +31,48 @@ spec.loader.exec_module(seq07)
 N_FRAMES = 300
 
 
+OUT = ROOT / "results" / "08_robustness.json"
+
+
 def line(tag, s):
+    if s.get("kapsama", 1.0) == 0.0:
+        return f"  {tag:>26}  SISTEM HIC BASLAYAMADI (kapsama %0)"
     return (f"  {tag:>26}  medyan {s['medyan_m']:7.2f} m   "
             f"%90 {s['p90_m']:7.2f} m   en buyuk {s['max_m']:8.1f} m   "
             f"<=10m %{s['basari_10m']*100:5.1f}   LoFTR/kare {s['loftr_per_frame']:.2f}")
 
 
+def load_done():
+    """Onceki calistirmadan kalan sonuclari yukle (kaldigi yerden devam)."""
+    if OUT.exists():
+        try:
+            return json.loads(OUT.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    return {"olcum_kesintisi": {}, "bozulma": {}}
+
+
+def save(results):
+    OUT.write_text(json.dumps(results, indent=2, ensure_ascii=False),
+                   encoding="utf-8")
+
+
 def main():
-    results = {"olcum_kesintisi": {}, "bozulma": {}}
+    results = load_done()
     t0 = time.time()
 
     print("=== A. OLCUM KESINTISI (uydu eslemesi zorla atiliyor) ===")
     print(f"  {'atilan olcum orani':>26}  {'sonuc':>0}")
     for drop in [0.0, 0.25, 0.50, 0.75, 0.90]:
+        key = f"{int(drop*100)}%"
+        if key in results["olcum_kesintisi"]:
+            print(line(f"%{int(drop*100)} atildi (onceden)",
+                       results["olcum_kesintisi"][key]))
+            continue
         s, _, _ = seq07.run(drop_rate=drop, tag=f"drop{int(drop*100)}",
                             verbose=False, max_frames=N_FRAMES)
-        results["olcum_kesintisi"][f"{int(drop*100)}%"] = s
+        results["olcum_kesintisi"][key] = s
+        save(results)
         print(line(f"%{int(drop*100)} atildi", s))
         print(f"    -> gecen sure {(time.time()-t0)/60:.1f} dk", flush=True)
 
@@ -62,14 +88,17 @@ def main():
     for name, sevs in conds:
         for sev in sevs:
             tag = f"{name.replace(' ', '_')}_{int(sev*100)}"
+            if tag in results["bozulma"]:
+                print(line(f"{name} {sev:.1f} (onceden)", results["bozulma"][tag]))
+                continue
             s, _, _ = seq07.run(drop_rate=0.0, tag=tag, verbose=False,
                                 max_frames=N_FRAMES,
                                 degrade=make_degrader(name, sev))
             results["bozulma"][tag] = s
+            save(results)
             print(line(f"{name} {sev:.1f}", s), flush=True)
 
-    (ROOT / "results" / "08_robustness.json").write_text(
-        json.dumps(results, indent=2, ensure_ascii=False), encoding="utf-8")
+    save(results)
     print(f"\nToplam sure: {(time.time()-t0)/60:.1f} dk")
     print("results/08_robustness.json yazildi")
 

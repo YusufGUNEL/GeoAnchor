@@ -31,6 +31,7 @@ from .geometry import AttitudeModel
 from .localize import SingleFrameLocalizer
 from .particle_filter import (Candidate, ParticleFilter, PFConfig,
                               sigma_from_inliers, weight_from_inliers)
+from .quality import SharpnessGate
 
 
 @dataclass
@@ -44,6 +45,8 @@ class StepResult:
     inliers: int = 0
     relocalized: bool = False
     mode: str = ""
+    sharp: float = float("nan")
+    skipped_blurry: bool = False
     yaw_bias: float = float("nan")
     scale_corr: float = float("nan")
     meas_north: float = float("nan")   # ham olcum (suzgecten gecmemis) — teshis
@@ -68,6 +71,8 @@ class SequentialLocalizer:
                  yaw_window: int = 12,
                  use_online_yaw: bool = True,
                  use_online_scale: bool = True,
+                 use_sharpness_gate: bool = True,
+                 use_blur_matching: bool = True,
                  expected_scale: float = 0.75,
                  seed: int = 0):
         self.sat = sat
@@ -99,6 +104,9 @@ class SequentialLocalizer:
         self.last_speed = 96.0
         self.course_offset = 0.0
         self.disagree_count = 0          # ölçüm inanışla kaç karedir uyuşmuyor
+        self.gate_sharp = SharpnessGate(enabled=use_sharpness_gate)
+        self.use_blur_matching = use_blur_matching
+        self._blur_sigma = 0.0
         tn, te = latlon_to_local_m(loc.tile_lat, loc.tile_lon, lat0, lon0)
         self.tile_n, self.tile_e = np.asarray(tn), np.asarray(te)
 
@@ -169,7 +177,8 @@ class SequentialLocalizer:
     def _measure_at(self, qg, north, east, pitch, roll, height, yaw):
         """Belirli bir yerel konumda uydu eşlemesi dene."""
         lat, lon = self.to_latlon(north, east)
-        la, lo, n, _, sc, ang = self.loc.match_at(qg, float(lat), float(lon))
+        la, lo, n, _, sc, ang = self.loc.match_at(
+            qg, float(lat), float(lon), auto_blur=self.use_blur_matching)
         if la is None or n < self.local_min_inliers:
             return None, n, float("nan")
         self._note_scale(sc)
@@ -232,11 +241,32 @@ class SequentialLocalizer:
         # uzaktaki ölçümleri de kabul etmeli, yoksa kendini toparlayamaz.
         gate = float(np.clip(3.0 * self.pf.spread(), self.gate_m, 400.0))
 
+        # 2b) KESKİNLİK KAPISI — bulanık kareyi eşlemeye hiç sokma.
+        #
+        # Ölçüldü (results/08_robustness.json): ağır titreşim bulanıklığında
+        # medyan hata 6,6 m'den 58,3 m'ye fırlıyordu. Sebep "eşleme tutmuyor"
+        # değil, tam tersi: bulanık kare YANLIŞ eşleşme üretip süzgece güvenle
+        # veriliyordu. Yanlış ölçüm, hiç ölçüm olmamasından kötüdür — süzgeç
+        # ölçümsüz kareyi zaten odometriyle geçiştirebiliyor.
+        # Eşik sabit yazılmıyor, uçuşun ilk karelerinden öğreniliyor.
+        res.pred_north, res.pred_east = pn, pe
+        sharp_ok, sharp_val, blur_sigma = self.gate_sharp.check(qg)
+        res.sharp = sharp_val
+        self._blur_sigma = blur_sigma
+        if not sharp_ok:
+            res.skipped_blurry = True
+            res.measured = self.pf.update([])
+            res.mode = "bulanik - esleme atlandi"
+            res.north, res.east = self.pf.estimate()
+            res.spread = self.pf.spread()
+            res.yaw_bias = self.yaw_bias
+            res.scale_corr = self.scale_corr
+            return res
+
         # 3) olcum: once tam tahmin edilen yere bak (tek LoFTR cagrisi)
         cands = []
         c, n_in, ang = self._measure_at(qg, pn, pe, pitch, roll, height, yaw)
         res.n_loftr += 1
-        res.pred_north, res.pred_east = pn, pe
         if c is not None:
             res.meas_north, res.meas_east = c.north, c.east
         if c is not None and np.hypot(c.north - pn, c.east - pe) <= gate:

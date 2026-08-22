@@ -401,3 +401,70 @@ ucuz bir güvenlik ağı olarak kalıyor ama bu veride ölü ağırlık.
 En anlamlı iki satır: **boresight düzeltmesi tek başına en büyük katkı**
 (17,13 → 6,62 m) ve **odometriyi çıkarmak medyanı değil KUYRUĞU bozuyor**
 (%90 dilim 16 → 368 m) — hareket modelinin varlık sebebi tam olarak bu.
+
+---
+
+## Faz 7 — Çok uçuşlu genişletme (2026-08-22)
+
+Projenin en büyük zayıflığı "tek uçuş"tu. Tam veri kümesi indirilip aynı kod
+9 uçuşta çalıştırıldı.
+
+**Veriyi bulmak ayrı bir işti.** Google Drive günlük indirme kotasını
+doldurmuştu. Hugging Face'te aynalar arandı; `mvidem/UAV-VisLoc` 11 uçuşun
+hepsini klasör klasör tutuyordu. Hugging Face de IP'yi hız sınırına takınca
+bekleyip devam eden bir indirici yazıldı. **Bir tuzak:** `snapshot_download`
+bağlantı hatasında mevcut klasörü döndürüp "bitti" gibi görünüyor. İlk
+indirici buna kandı; tamamlanma artık kütüphanenin dönüşüne değil DOSYALARA
+bakılarak doğrulanıyor.
+
+### Uçuş başına sonuçlar (tam otomatik, her uçuş kendi ilk %20'sinde kalibre)
+
+| Uçuş | Kare | İrtifa | Yol | Eşleşme oranı | Kapsama | Medyan | %90 |
+|---|---|---|---|---|---|---|---|
+| 03 | 768 | 466 m | 74 km | %93 | %100,0 | **8,35 m** | 20,03 m |
+| 04 | 738 | 544 m | 83 km | %90 | %100,0 | **15,44 m** | 54,64 m |
+| 06 | 344 | 834 m | 24 km | %76 | %99,7 | **15,06 m** | 365,32 m |
+| 05 | 473 | 2313 m | 30 km | %50 | %99,8 | **16,69 m** | 182,51 m |
+| 01 | 817 | 406 m | 66 km | %77 | %100,0 | **22,51 m** | 114,60 m |
+| 11 | 590 | 2572 m | 84 km | %90 | %99,8 | **24,79 m** | 424,41 m |
+| 02 | 1071 | 406 m | 86 km | %37 | %99,7 | 53,45 m | 343,39 m |
+| 10 | 144 | 773 m | 9 km | %13 | %84,7 | 126,88 m | 324,98 m |
+| 08 | 1033 | 551 m | 103 km | %33 | %79,7 | 648,49 m | 3785,02 m |
+
+### Asıl bulgu: başarımı algoritma değil veri belirliyor
+
+Sonuçlar 8 m ile 648 m arasında dağıldı. Soru şuydu: sistem bazı uçuşlarda mı
+kötü çalışıyor, yoksa bazı uçuşların verisi mi eşlemeye elverişsiz?
+
+Ölçüt olarak **gerçek konum biliniyorken** elde edilen eşleşme oranı alındı —
+konum araması devrede değil, doğru yere bakılıyor; tutmuyorsa sebep veridir.
+
+| | Uçuş | Medyan hata | Kapsama |
+|---|---|---|---|
+| Eşleşme oranı ≥ %50 | 6 | **8,35 – 24,79 m** (medyan 16,07 m) | ≥ %99,7 |
+| Eşleşme oranı < %50 | 3 | 53 – 648 m | %80 – 85 |
+
+Korelasyon (eşleşme oranı ~ log hata): **−0,765**.
+
+**İrtifa ayırt edici değil** — 2572 m'deki uçuş 11 çalışıyor (24,79 m),
+551 m'deki uçuş 08 çöküyor. Belirleyici olan İHA görüntüsü ile uydu
+haritasının tanınabilir ölçüde aynı dünyayı gösterip göstermediği.
+
+Bunun kullanışlı bir sonucu var: eşleşme oranı **uçmadan önce** planlanan rota
+üzerinde ölçülebilir. Yani sistemin o görevde işe yarayıp yaramayacağı önceden
+bilinebilir. `figures/15_ucus_zorlugu.png`
+
+### Yol boyunca bulunan iki hata
+
+**1. Duruş düzeltmesi yüksek irtifada ters tepiyordu.** Model "yerdeki kayma =
+irtifa × tan(açı)" diyor ve kayıtlı yüksekliğe güveniyor. Uçuş 05'te (kayıtlı
+2313 m) düzeltme hatayı **27,8 m'den 131,2 m'ye çıkardı** — o yükseklik
+muhtemelen gerçek yerden yükseklik değil. Etkin irtifa artık veriden
+kestiriliyor; aynı uçuşta kalibrasyon şimdi 21,4 → 5,5 m.
+
+**2. Zarar verme kuralı eklendi.** Kalibrasyon kareleri ikiye bölünüyor:
+yarısında uyduruluyor, diğerinde sınanıyor. Düzeltme sınama yarısında hatayı
+azaltmıyorsa **hiç uygulanmıyor**. İki uçuşta gerçekten devreye girdi.
+
+**Uçuş 07 dışlandı:** üstverisinde duruş/yönelim sütunları yok. Yükleyici artık
+sessizce yanlış sonuç üretmek yerine açık hatayla reddediyor.

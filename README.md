@@ -22,10 +22,51 @@ GNSS of any kind**.
 
 ## Headline result
 
-Real UAV survey flight (UAV-VisLoc, flight 03): **768 frames, 74 km, 77
-minutes, 466 m AGL**, over an 8.8 × 7.3 km satellite orthophoto of Taizhou,
-China. Ground truth is post-processed GNSS (measured cross-track scatter on
-straight legs: **1.5 m**, so the reference itself is clean).
+Evaluated on **nine real UAV survey flights** (UAV-VisLoc) spanning
+**406 m to 2572 m altitude**, 9 to 103 km per flight, seven terrain types,
+and acquisition dates from 2016 to 2023. Ground truth is post-processed GNSS
+(measured cross-track scatter on straight legs: **1.5 m**, so the reference
+itself is clean). Everything below is fully automatic — scale and camera
+boresight are calibrated per flight from that flight's first 20%, and
+evaluated on the remaining 80%.
+
+| Flight | Frames | Altitude | Distance | Match rate | Coverage | Median | p90 |
+|---|---|---|---|---|---|---|---|
+| 03 | 768 | 466 m | 74 km | 93% | 100.0% | **8.35 m** | 20.03 m |
+| 04 | 738 | 544 m | 83 km | 90% | 100.0% | **15.44 m** | 54.64 m |
+| 06 | 344 | 834 m | 24 km | 76% | 99.7% | **15.06 m** | 365.32 m |
+| 05 | 473 | 2313 m | 30 km | 50% | 99.8% | **16.69 m** | 182.51 m |
+| 01 | 817 | 406 m | 66 km | 77% | 100.0% | **22.51 m** | 114.60 m |
+| 11 | 590 | 2572 m | 84 km | 90% | 99.8% | **24.79 m** | 424.41 m |
+| 02 | 1071 | 406 m | 86 km | 37% | 99.7% | 53.45 m | 343.39 m |
+| 10 | 144 | 773 m | 9 km | 13% | 84.7% | 126.88 m | 324.98 m |
+| 08 | 1033 | 551 m | 103 km | 33% | 79.7% | 648.49 m | 3785.02 m |
+
+**The results split cleanly into two groups, and a single measurable property
+predicts which group a flight falls into.** That property is the *match rate*:
+the fraction of frames that match the satellite map when the true position is
+already known — a property of the data, not of the algorithm.
+
+| | Flights | Median error | Coverage |
+|---|---|---|---|
+| Match rate **≥ 50%** | 6 | **8.35 – 24.79 m** (median 16.07 m) | ≥ 99.7% |
+| Match rate **< 50%** | 3 | 53 – 648 m | 80 – 85% |
+
+Correlation between match rate and log error: **−0.765**.
+
+Altitude is *not* the discriminator — flight 11 at 2572 m works (24.79 m)
+while flight 08 at 551 m fails. What matters is whether the drone imagery and
+the satellite basemap depict a recognisably similar world. This is
+operationally useful: **the match rate can be measured on a planned route
+before flying, so you know in advance whether the system will work there.**
+
+![Flight difficulty](figures/15_ucus_zorlugu.png)
+
+### Flight 03 as a detailed case study
+
+The rest of this document dissects flight 03 (768 frames, 74 km, 77 minutes,
+466 m AGL, over an 8.8 × 7.3 km orthophoto of Taizhou). With the boresight
+hand-calibrated rather than derived automatically:
 
 | | Coverage | Median error | p90 | Within 10 m | Match calls / frame |
 |---|---|---|---|---|---|
@@ -36,6 +77,11 @@ straight legs: **1.5 m**, so the reference itself is clean).
 Excluding the four segments where satellite matching collapses entirely
 (5.7% of frames — see *Honest limitations*), the fused system holds
 **median 5.97 m, p90 11.97 m, 99.9% within 20 m**.
+
+The gap between 6.20 m here and 8.35 m in the multi-flight table is the price
+of full automation: the automatic per-flight boresight calibration is about
+2 m worse than one tuned by hand. That is the honest cost, and it is reported
+rather than hidden by quoting the better number.
 
 ![Error CDF](figures/13_dagilim.png)
 
@@ -203,6 +249,94 @@ odometry does not hurt the median much but destroys the tail** (p90 goes from
 
 ---
 
+## Robustness — 20 conditions
+
+Two questions: what happens when satellite matching is unavailable, and what
+happens when the image itself degrades. 300 frames per condition.
+
+**Measurement outage** (satellite fixes forcibly discarded):
+
+| Fixes discarded | Median | Within 10 m | Match calls / frame |
+|---|---|---|---|
+| 0% | 6.62 m | 73.3% | 1.73 |
+| 25% | 7.23 m | 70.7% | 1.26 |
+| 50% | 7.38 m | 66.7% | 0.85 |
+| 75% | 10.76 m | 46.7% | 0.45 |
+| 90% | 41.55 m | 17.0% | 0.22 |
+
+Half the map fixes can be thrown away for a cost of 0.8 m. That is the motion
+model doing its job.
+
+**Image degradation** — the pattern is sharper than I expected:
+
+| Harmless (all around 7 m) | Breaks the system |
+|---|---|
+| Fog, even at maximum severity — 7.21 m | Motion blur, moderate — 58.31 m |
+| Occlusion covering a third of the frame — 7.20 m | Heavy JPEG compression — 186.71 m |
+| Resolution loss — 7.54 m | Motion blur, heavy — 500.19 m |
+| Moderate JPEG, moderate darkness, mild blur | Extreme darkness — **never initializes** |
+
+**The system does not care about brightness or contrast. It cares about
+texture.** Fog flattens contrast but leaves the road a road and the building a
+building, so matching still works. Motion blur and heavy compression destroy
+fine structure, and then there is nothing left to match against.
+
+The extreme-darkness row is worth stating plainly: the system produces no
+position at all, because the very first frame cannot be located on the map.
+For night operation this design needs a thermal or low-light sensor, not a
+software fix.
+
+![Robustness](figures/14_dayaniklilik.png)
+
+---
+
+## Fixing the blur weakness
+
+Motion blur was the one real failure mode, so I went after it. Two ideas,
+tested separately because they address different situations.
+
+**Idea 1 — a sharpness gate.** Skip matching entirely on frames much blurrier
+than their neighbours; let odometry carry them. The counter-intuitive part is
+that a blurry frame does not simply fail to match — it produces a
+*confidently wrong* match, which is worse than no match at all, because the
+filter can coast through a missing measurement but is dragged off by a wrong one.
+
+**Idea 2 — domain equalisation.** Blur the satellite tile by the same amount.
+Matching works when both sides look alike. The problem is measuring "how
+blurred am I" with no sharp reference — a camera that has only ever seen blur
+cannot know it is blurred. The reference turned out to be already in hand:
+**the satellite tile itself is sharp**, and it shows the same ground at the
+same scale, so the sharpness gap between them *is* the blur.
+
+Results (300 frames):
+
+| Every frame blurred (moderate) | Median | p90 | Within 20 m |
+|---|---|---|---|
+| Uncorrected | 44.47 m | 214.31 m | 22.7% |
+| Sharpness gate only | 27.06 m | 208.08 m | 38.8% |
+| **Domain equalisation only** | **20.00 m** | **90.88 m** | **50.2%** |
+| Both | 20.00 m | 90.88 m | 50.2% |
+
+| Occasional blur (every 6th frame, heavy) | Median | Match calls / frame |
+|---|---|---|
+| Uncorrected | 6.83 m | 2.11 |
+| **Sharpness gate** | 6.83 m | **1.46** |
+
+**Domain equalisation is the real fix**: median halved, p90 down from 214 m to
+91 m. **The sharpness gate did not do what I predicted.** I expected it to
+improve accuracy on intermittent blur; it did not, because the filter's
+outlier rejection was already handling those frames. What it does is cut
+matching work by 31% — it stops wasting effort on frames that cannot be
+matched. A real benefit, just not the one I was aiming for.
+
+Neither costs anything on clean frames (6.62 m to 6.60 m).
+
+Honest verdict: blur is **mitigated, not solved**. 44 m down to 20 m is a real
+improvement, but the clean-frame baseline is 6.6 m. Heavy vibration remains
+this system's genuine limit.
+
+---
+
 ## Honest limitations
 
 Written down first, so nothing here is oversold.
@@ -224,8 +358,22 @@ Written down first, so nothing here is oversold.
 - **The boresight calibration uses the first 20% of the flight.** Real systems
   do this once at installation; here it is done from data, and everything
   reported is evaluated on the held-out remainder.
-- **One flight, one region, one season.** Taizhou is flat river delta. Nothing
-  here demonstrates behaviour over mountains, at night, or in winter.
+- **Nine flights, all from one dataset, all in China.** Altitudes span
+  406–2572 m and dates span 2016–2023, but every flight uses the same capture
+  system and the same class of satellite basemap. Nothing here demonstrates
+  behaviour over mountains, at night, in winter, or with a different sensor.
+- **Three of the nine flights fail** (match rate below 50%: flights 02, 08,
+  10 — median error 53 m, 648 m, 127 m). The cause is measured and reported
+  rather than excluded: those flights' imagery barely matches the satellite
+  basemap even at the known true position. That is a data property, but it is
+  also a real operational limit — the system cannot be deployed on a route
+  without first checking that the map and the sensor agree there.
+- **Flight 07 was excluded outright**: its metadata contains no attitude or
+  heading columns, which this system requires. The loader rejects it with an
+  explicit error rather than silently producing wrong numbers.
+- **The automatic calibration costs about 2 m** versus hand tuning (8.35 m vs
+  6.20 m on flight 03), and on two flights it declined to apply any correction
+  at all because it could not verify the correction helped on held-out frames.
 - **The compass deviation curve is fitted at only two headings**, because the
   survey pattern only flies two. The physical model (hard-iron error) predicts
   a sinusoid in heading, but this flight cannot identify it — with two
@@ -260,6 +408,12 @@ python scripts/07_sequential.py       # PHASE 3 fusion  ← main result
 python scripts/08_robustness.py       # PHASE 4 degradation + outage
 python scripts/11_ablation.py         # PHASE 5 ablation
 python scripts/09_figures.py          # figures
+python scripts/12_robustness_figure.py
+python scripts/13_blur_fix.py             # blur mitigation
+python scripts/20_multiflight.py          # 9-flight evaluation
+python scripts/21_why_flights_differ.py   # why flights differ
+python scripts/23_difficulty_figure.py
+python scripts/22_summary.py
 python scripts/10_demo_video.py       # demo video
 ```
 

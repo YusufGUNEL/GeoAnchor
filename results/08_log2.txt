@@ -1,0 +1,27 @@
+=== A. OLCUM KESINTISI (uydu eslemesi zorla atiliyor) ===
+          atilan olcum orani  sonuc
+         %0 atildi (onceden)  medyan    6.62 m   %90   16.17 m   en buyuk    338.2 m   <=10m % 73.3   LoFTR/kare 1.73
+        %25 atildi (onceden)  medyan    7.23 m   %90   18.81 m   en buyuk    337.9 m   <=10m % 70.7   LoFTR/kare 1.26
+        %50 atildi (onceden)  medyan    7.38 m   %90   27.84 m   en buyuk    339.4 m   <=10m % 66.7   LoFTR/kare 0.85
+        %75 atildi (onceden)  medyan   10.76 m   %90   62.04 m   en buyuk    336.2 m   <=10m % 46.7   LoFTR/kare 0.45
+        %90 atildi (onceden)  medyan   41.55 m   %90  263.59 m   en buyuk    347.3 m   <=10m % 17.0   LoFTR/kare 0.22
+
+=== B. GORUNTU BOZULMASI ===
+  hareket bulanikligi 0.3 (onceden)  medyan    7.90 m   %90   50.26 m   en buyuk    339.9 m   <=10m % 61.7   LoFTR/kare 3.67
+  hareket bulanikligi 0.6 (onceden)  medyan   58.31 m   %90  184.80 m   en buyuk    285.6 m   <=10m %  2.7   LoFTR/kare 5.39
+  hareket bulanikligi 1.0 (onceden)  medyan  500.19 m   %90  736.24 m   en buyuk   1030.9 m   <=10m %  0.7   LoFTR/kare 6.12
+           sis 0.3 (onceden)  medyan    6.91 m   %90   15.78 m   en buyuk    337.9 m   <=10m % 72.7   LoFTR/kare 1.77
+           sis 0.6 (onceden)  medyan    7.10 m   %90   17.09 m   en buyuk    336.2 m   <=10m % 71.7   LoFTR/kare 1.96
+           sis 1.0 (onceden)  medyan    7.21 m   %90   18.41 m   en buyuk    336.5 m   <=10m % 72.3   LoFTR/kare 2.37
+    dusuk isik 0.3 (onceden)  medyan    7.20 m   %90   25.01 m   en buyuk    337.5 m   <=10m % 65.7   LoFTR/kare 2.58
+    dusuk isik 0.6 (onceden)  medyan   11.29 m   %90   87.49 m   en buyuk    324.2 m   <=10m % 44.0   LoFTR/kare 4.31
+              dusuk isik 1.0  SISTEM HIC BASLAYAMADI (kapsama %0)
+         jpeg sikistirma 0.5  medyan    7.21 m   %90   18.05 m   en buyuk    334.7 m   <=10m % 70.3   LoFTR/kare 1.91
+         jpeg sikistirma 1.0  medyan  186.71 m   %90  541.16 m   en buyuk    807.2 m   <=10m %  9.3   LoFTR/kare 5.39
+                 kapanma 0.3  medyan    7.08 m   %90   16.50 m   en buyuk    335.6 m   <=10m % 72.0   LoFTR/kare 2.05
+                 kapanma 0.6  medyan    7.20 m   %90   17.07 m   en buyuk    335.5 m   <=10m % 69.7   LoFTR/kare 2.25
+        cozunurluk kaybi 0.5  medyan    7.10 m   %90   18.19 m   en buyuk    337.4 m   <=10m % 71.7   LoFTR/kare 1.89
+        cozunurluk kaybi 1.0  medyan    7.54 m   %90   45.32 m   en buyuk    338.6 m   <=10m % 65.0   LoFTR/kare 3.37
+
+Toplam sure: 54.4 dk
+results/08_robustness.json yazildi

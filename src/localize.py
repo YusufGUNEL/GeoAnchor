@@ -68,7 +68,8 @@ class SingleFrameLocalizer:
         self.topk_pool, self.ransac_thr = topk_pool, ransac_thr
         self.m_lat, self.m_lon = meters_per_degree(sat.center_lat)
 
-    def match_at(self, query_gray: np.ndarray, lat: float, lon: float):
+    def match_at(self, query_gray: np.ndarray, lat: float, lon: float,
+                 blur_sigma: float = 0.0, auto_blur: bool = False):
         """Sorguyu verilen merkezdeki uydu kırpmasıyla eşler.
 
         Döndürür: (lat, lon, ic_nokta, eslesme_sayisi, olcek, aci) — görüntü
@@ -80,6 +81,22 @@ class SingleFrameLocalizer:
         """
         crop_rgb, x0, y0, _ = self.sat.crop_meters(lat, lon, self.crop_m, self.crop_px)
         crop = cv2.cvtColor(crop_rgb, cv2.COLOR_RGB2GRAY)
+        if auto_blur:
+            # ALAN ESITLEME, referansi uydudan alarak.
+            # Bulanikligi "mutlak" olcmek mumkun degil: hic net kare gormemis
+            # bir kamera ne kadar bulanik oldugunu bilemez. Ama elimizde her
+            # karede hazir bir NET referans var — uydu karosunun kendisi.
+            # Ikisi de ayni yeri ayni metre/piksel olceginde gosterdigi icin
+            # aradaki keskinlik farki dogrudan bulanikligin olcusudur.
+            from .quality import BlurCalibration, sharpness, match_blur
+            cal = BlurCalibration()
+            cal.fit(crop)
+            s_sat = sharpness(crop)
+            if s_sat > 0:
+                blur_sigma = cal.sigma_for(sharpness(query_gray) / s_sat)
+        if blur_sigma > 0.15:
+            from .quality import match_blur
+            crop = match_blur(crop, blur_sigma)
         pa, pb, _ = self.matcher.match(query_gray, crop)
         if len(pa) < self.min_inliers:
             return None, None, 0, len(pa), float("nan"), float("nan")

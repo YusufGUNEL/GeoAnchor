@@ -46,10 +46,27 @@ class Flight:
         )
 
 
+REQUIRED = ["filename", "lat", "lon", "height", "Omega", "Kappa", "Phi1"]
+
+
+class MissingMetadata(Exception):
+    """Ucusun ustverisinde duruş/yonelim sutunlari yok."""
+
+
 def load_flight(data_root: str | Path, flight_id: str = "03") -> Flight:
-    """UAV-VisLoc uçuş klasörünü yükler ve türetilmiş sütunları ekler."""
+    """UAV-VisLoc uçuş klasörünü yükler ve türetilmiş sütunları ekler.
+
+    Bazi ucuslarda (or. 07) duruş ve yonelim sutunlari hic yok — sadece
+    enlem/boylam/yukseklik var. Bu sistem kareyi kuzeye cevirmek icin yonelime,
+    goruntu merkezini ucak konumuna cevirmek icin duruşa ihtiyac duyuyor;
+    dolayisiyla o ucuslar sessizce yanlis sonuc uretmek yerine acikca reddedilir.
+    """
     root = Path(data_root) / flight_id
     df = pd.read_csv(root / f"{flight_id}.csv")
+    eksik = [c for c in REQUIRED if c not in df.columns]
+    if eksik:
+        raise MissingMetadata(
+            f"ucus {flight_id}: ustveride su sutunlar yok: {', '.join(eksik)}")
     df["date"] = pd.to_datetime(df["date"])
     df = df.sort_values("num").reset_index(drop=True)
 
