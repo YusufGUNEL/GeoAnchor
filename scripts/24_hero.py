@@ -79,7 +79,7 @@ def main():
     # --- panel 2: harita ---
     ax = fig.add_axes([0.272, 0.055, 0.41, 0.755])
     ax.imshow(ov)
-    ax.plot(gx, gy, "-", lw=3.6, color="#ffffff", alpha=0.85)
+    ax.plot(gx, gy, "-", lw=5.0, color="#ffffff", alpha=0.95)
     ax.plot(vx, vy, "-", lw=1.5, color=C_VO, alpha=0.9)
     ax.plot(px, py, "-", lw=1.5, color=C_PF)
     ax.plot(px[FRAME], py[FRAME], "o", ms=11, color=C_PF, mec="k", mew=0.8, zorder=6)

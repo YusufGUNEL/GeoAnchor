@@ -87,10 +87,11 @@ def fig_trajectories(D):
 
     ax = axes[0]
     ax.imshow(ov, alpha=0.5)
-    ax.plot(gx, gy, "-", lw=2.4, color=C_GT, label="gercek yorunge (dogru cevap)", zorder=5)
+    ax.plot(gx, gy, "-", lw=3.4, color="#ffffff", alpha=0.95,
+            label="GERCEK yorunge (drone gercekte buradaydi)", zorder=5)
     if "vo" in D:
         vx, vy = to_px(D["vo"]["north"], D["vo"]["east"])
-        lbl = "sistem OLMADAN: 74 km sonra {:.0f} m sapma".format(
+        lbl = "sistem OLMADAN nerede sandigi: 74 km sonra {:.0f} m sapma".format(
             D["vo"]["err"][-1])
         ax.plot(vx, vy, "-", lw=1.8, color=C_VO, alpha=0.95, zorder=4, label=lbl)
         ax.plot(vx[-1], vy[-1], "X", ms=14, color=C_VO, mec="k", mew=0.8, zorder=6)
@@ -102,22 +103,22 @@ def fig_trajectories(D):
     ax = axes[1]
     ax.imshow(ov)
     ax.plot(gx, gy, "-", lw=5.0, color="#ffffff", alpha=0.9,
-            label="GERCEK yorunge (kalin beyaz)", zorder=4)
+            label="GERCEK yorunge (drone gercekte buradaydi)", zorder=4)
     if "sf" in D:
         m = np.isfinite(D["sf"]["north"])
         sxp, syp = to_px(D["sf"]["north"][m], D["sf"]["east"][m])
         ax.plot(sxp, syp, ".", ms=4.5, color=C_SF, alpha=0.95, zorder=5,
-                label="tek kare - sadece %{:.0f} karede sonuc".format(m.mean() * 100))
+                label="tek kare yontemi - sadece %{:.0f} karede sonuc".format(m.mean() * 100))
     if "pf" in D:
         px, py = to_px(D["pf"]["north"], D["pf"]["east"])
         e = D["pf"]["err"]
         ax.plot(px, py, "-", lw=1.5, color=C_PF, alpha=0.95, zorder=6,
-                label="BU SISTEM - %100 kare, medyan {:.1f} m".format(
+                label="BU SISTEM nerede sandigi - %100 kare, medyan {:.1f} m".format(
                     np.nanmedian(e)))
         bad = e > 50
         if bad.any():
             ax.plot(px[bad], py[bad], ".", ms=6, color="#ff2d55", zorder=7,
-                    label="eslemenin coktugu kesimler (%{:.1f})".format(
+                    label="eslemenin coktugu yerler - burada beyaz aciga cikiyor (%{:.1f})".format(
                         bad.mean() * 100))
     ax.set_title(T_SAG, fontsize=13)
     ax.legend(loc="upper right", fontsize=10, framealpha=0.9)
