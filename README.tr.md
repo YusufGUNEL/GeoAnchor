@@ -2,6 +2,8 @@
 
 *[English version: **[README.md](README.md)**]*
 
+![GeoAnchor](figures/00_hero.png)
+
 GPS'i karıştırılan bir İHA nerede olduğunu bilmez. Görsel odometri bağıl
 hareketi verir ama **sürüklenir** — bu 74 km'lik uçuşta sonunda **2,8 km**
 şaşıyor. Kamerayı uydu haritasıyla eşlemek mutlak konum verir ama **kare kare

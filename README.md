@@ -2,6 +2,8 @@
 
 *[Türkçe sürüm için: **[README.tr.md](README.tr.md)**]*
 
+![GeoAnchor](figures/00_hero.png)
+
 A UAV whose GPS is jammed does not know where it is. Visual odometry gives
 relative motion but **drifts** — on this 74 km flight it ends up **2.8 km**
 off. Matching the camera against a satellite map gives absolute position but
