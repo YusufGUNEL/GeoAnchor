@@ -2,7 +2,6 @@
 \IEEEoverridecommandlockouts
 \usepackage{cite}
 \usepackage{amsmath,amssymb,amsfonts}
-\usepackage{algorithmic}
 \usepackage{graphicx}
 \usepackage{textcomp}
 \usepackage{xcolor}
@@ -234,29 +233,30 @@ with LoFTR.
 \section{Results}
 \label{sec:results}
 
-\begin{table}[t]
-\caption{Per-flight results, fully automatic}
+\begin{table*}[t]
+\caption{Per-flight results, fully automatic. The seven flights above the
+rule have a match rate of at least 50\%; the three below do not.}
 \label{tab:flights}
 \centering
-\small
-\begin{tabular}{lrrrrrr}
+\begin{tabular}{lrrrrrrr}
 \toprule
-Flight & Frames & Alt.\,(m) & Dist.\,(km) & Match & Cover. & Median \\
+Flight & Frames & Altitude (m) & Distance (km) & Match rate & Coverage &
+Median error (m) & 90th pct.\ (m) \\
 \midrule
-03 & 768  & 466  & 74  & 93\% & 100.0\% & \textbf{8.35\,m} \\
-09 & 766  & 546  & 77  & 70\% & 100.0\% & \textbf{14.94\,m} \\
-06 & 344  & 834  & 24  & 76\% & 99.7\%  & \textbf{15.06\,m} \\
-04 & 738  & 544  & 83  & 90\% & 100.0\% & \textbf{15.44\,m} \\
-05 & 473  & 2313 & 30  & 50\% & 99.8\%  & \textbf{16.69\,m} \\
-01 & 817  & 406  & 66  & 77\% & 100.0\% & \textbf{22.51\,m} \\
-11 & 590  & 2572 & 84  & 90\% & 99.8\%  & \textbf{24.79\,m} \\
+03 & 768  & 466  & 74  & 93\% & 100.0\% & \textbf{8.35}  & 20.03 \\
+09 & 766  & 546  & 77  & 70\% & 100.0\% & \textbf{14.94} & 59.33 \\
+06 & 344  & 834  & 24  & 76\% & 99.7\%  & \textbf{15.06} & 365.32 \\
+04 & 738  & 544  & 83  & 90\% & 100.0\% & \textbf{15.44} & 54.64 \\
+05 & 473  & 2313 & 30  & 50\% & 99.8\%  & \textbf{16.69} & 182.51 \\
+01 & 817  & 406  & 66  & 77\% & 100.0\% & \textbf{22.51} & 114.60 \\
+11 & 590  & 2572 & 84  & 90\% & 99.8\%  & \textbf{24.79} & 424.41 \\
 \midrule
-02 & 1071 & 406  & 86  & 37\% & 99.7\%  & 53.45\,m \\
-10 & 144  & 773  & 9   & 13\% & 84.7\%  & 126.88\,m \\
-08 & 1033 & 551  & 103 & 33\% & 79.7\%  & 648.49\,m \\
+02 & 1071 & 406  & 86  & 37\% & 99.7\%  & 53.45  & 343.39 \\
+10 & 144  & 773  & 9   & 13\% & 84.7\%  & 126.88 & 324.98 \\
+08 & 1033 & 551  & 103 & 33\% & 79.7\%  & 648.49 & 3785.02 \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
 
 Table~\ref{tab:flights} gives per-flight results. Seven flights localise with
 median error between 8.4\,m and 24.8\,m and coverage at or above 99.7\%. Three

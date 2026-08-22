@@ -26,3 +26,10 @@ figures/*.mp4
 # isletim sistemi
 Thumbs.db
 .DS_Store
+
+# LaTeX ara dosyalari (pdf depoda kalir)
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.synctex.gz
+paper/_*.png
