@@ -1,0 +1,3 @@
+gradio>=6.0
+numpy>=1.24
+plotly>=6.0

@@ -1,0 +1,38 @@
+[
+  {
+    "temsil": "clahe+dog",
+    "dogru_konum_orani": 0.16,
+    "kesinlik": 0.16,
+    "medyan_ic_nokta": 461.5,
+    "kabul_orani": 1.0,
+    "medyan_hata_px": 283.1474363140586,
+    "sn_kare": 2.3
+  },
+  {
+    "temsil": "dog",
+    "dogru_konum_orani": 0.12,
+    "kesinlik": 0.12,
+    "medyan_ic_nokta": 355.0,
+    "kabul_orani": 1.0,
+    "medyan_hata_px": 262.84414771974116,
+    "sn_kare": 2.27
+  },
+  {
+    "temsil": "sobel",
+    "dogru_konum_orani": 0.1,
+    "kesinlik": 0.1,
+    "medyan_ic_nokta": 357.0,
+    "kabul_orani": 1.0,
+    "medyan_hata_px": 239.97095061904975,
+    "sn_kare": 2.18
+  },
+  {
+    "temsil": "ham",
+    "dogru_konum_orani": 0.02,
+    "kesinlik": 0.02,
+    "medyan_ic_nokta": 351.5,
+    "kabul_orani": 1.0,
+    "medyan_hata_px": 440.60029250910213,
+    "sn_kare": 2.48
+  }
+]

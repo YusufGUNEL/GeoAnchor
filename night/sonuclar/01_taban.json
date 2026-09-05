@@ -1,0 +1,35 @@
+[
+  {
+    "kol": "uydu->uydu  (tavan, LoFTR)",
+    "cift": 100,
+    "tutma_orani": 1.0,
+    "medyan_ic_nokta": 4940.0,
+    "ic_nokta_p10": 4940.0,
+    "dogru_konum_orani": 1.0,
+    "medyan_hata_px": 0.09939527211088685,
+    "sn_kare": 0.72,
+    "not": "tutma_orani = yeterli ic nokta uretip KABUL edilen kare orani. Yogun eslestiricide bu bir gecerlilik kaniti degil; olcut dogru_konum_orani."
+  },
+  {
+    "kol": "termal->uydu (LoFTR)",
+    "cift": 100,
+    "tutma_orani": 0.0,
+    "medyan_ic_nokta": 0.0,
+    "ic_nokta_p10": 0.0,
+    "dogru_konum_orani": 0.0,
+    "medyan_hata_px": null,
+    "sn_kare": 0.46,
+    "not": "tutma_orani = yeterli ic nokta uretip KABUL edilen kare orani. Yogun eslestiricide bu bir gecerlilik kaniti degil; olcut dogru_konum_orani."
+  },
+  {
+    "kol": "termal->uydu (RoMa)",
+    "cift": 100,
+    "tutma_orani": 1.0,
+    "medyan_ic_nokta": 339.5,
+    "ic_nokta_p10": 118.9,
+    "dogru_konum_orani": 0.02,
+    "medyan_hata_px": 414.2311952513306,
+    "sn_kare": 2.66,
+    "not": "tutma_orani = yeterli ic nokta uretip KABUL edilen kare orani. Yogun eslestiricide bu bir gecerlilik kaniti degil; olcut dogru_konum_orani."
+  }
+]

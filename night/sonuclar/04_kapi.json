@@ -1,0 +1,21 @@
+{
+  "yon_uyumu": null,
+  "ic_nokta": {
+    "kesinlik": 1.0,
+    "duyarlilik": 0.45454545454545453,
+    "esik": 2958.0,
+    "kabul_edilen": 5
+  },
+  "-ncc_dog": {
+    "kesinlik": 1.0,
+    "duyarlilik": 0.2727272727272727,
+    "esik": 0.0858145152546421,
+    "kabul_edilen": 3
+  },
+  "yon x ic_nokta": {
+    "kesinlik": 1.0,
+    "duyarlilik": 0.45454545454545453,
+    "esik": 0.29691706629410464,
+    "kabul_edilen": 5
+  }
+}

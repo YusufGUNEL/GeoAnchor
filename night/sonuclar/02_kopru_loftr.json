@@ -1,0 +1,65 @@
+[
+  {
+    "temsil": "sobel",
+    "dogru_konum_orani": 0.12,
+    "kesinlik": 0.8571428571428571,
+    "medyan_ic_nokta": 5.0,
+    "kabul_orani": 0.14,
+    "medyan_hata_px": 13.061122861303781,
+    "sn_kare": 0.51
+  },
+  {
+    "temsil": "dog",
+    "dogru_konum_orani": 0.06,
+    "kesinlik": 1.0,
+    "medyan_ic_nokta": 4.0,
+    "kabul_orani": 0.06,
+    "medyan_hata_px": 14.753744267960823,
+    "sn_kare": 0.52
+  },
+  {
+    "temsil": "clahe+dog",
+    "dogru_konum_orani": 0.04,
+    "kesinlik": 1.0,
+    "medyan_ic_nokta": 4.0,
+    "kabul_orani": 0.04,
+    "medyan_hata_px": 16.204302429461592,
+    "sn_kare": 0.52
+  },
+  {
+    "temsil": "canny",
+    "dogru_konum_orani": 0.02,
+    "kesinlik": 0.2,
+    "medyan_ic_nokta": 0.0,
+    "kabul_orani": 0.1,
+    "medyan_hata_px": 39.88426737458408,
+    "sn_kare": 0.48
+  },
+  {
+    "temsil": "ham",
+    "dogru_konum_orani": 0.0,
+    "kesinlik": null,
+    "medyan_ic_nokta": 0.0,
+    "kabul_orani": 0.0,
+    "medyan_hata_px": null,
+    "sn_kare": 0.49
+  },
+  {
+    "temsil": "clahe",
+    "dogru_konum_orani": 0.0,
+    "kesinlik": null,
+    "medyan_ic_nokta": 3.0,
+    "kabul_orani": 0.0,
+    "medyan_hata_px": null,
+    "sn_kare": 0.47
+  },
+  {
+    "temsil": "ters+clahe",
+    "dogru_konum_orani": 0.0,
+    "kesinlik": null,
+    "medyan_ic_nokta": 3.0,
+    "kabul_orani": 0.0,
+    "medyan_hata_px": null,
+    "sn_kare": 0.47
+  }
+]

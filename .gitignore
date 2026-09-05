@@ -33,3 +33,10 @@ paper/*.log
 paper/*.out
 paper/*.synctex.gz
 paper/_*.png
+
+# gece calismasi: veri kumesi lisansi yeniden dagitimi yasakliyor, ornekler dahil
+night/veri/
+night/ornekler/
+
+# HF Space varliklari: results/ ve figures/'dan uretiliyor (space/hazirla.py)
+space/assets/
