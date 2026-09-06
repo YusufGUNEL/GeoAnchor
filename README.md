@@ -437,9 +437,10 @@ sensor, not a software fix. That is easy to write and easy to leave there, so I
 went and measured it, on a **different dataset**:
 [Boson-nighttime](https://huggingface.co/datasets/xjh19972/boson-nighttime) —
 26,568 aligned thermal/satellite pairs, 512×512 over desert, farmland and
-roads, ground truth by construction.
-The dataset forbids redistribution, so `night/veri/` is gitignored; the scripts
-are all here and download it themselves.
+roads, ground truth by construction. It is gated, granted instantly, and its
+terms restrict use to non-commercial research. The 85 GB is not in this
+repository — the scripts download it, and access is something each user accepts
+at the source.
 
 **The daylight system does not degrade at night. It stops.** LoFTR on raw
 thermal returns zero inliers on 100 frames out of 100. Not a worse position — no
@@ -638,7 +639,18 @@ Written down first, so nothing here is oversold.
 - **Ten flights, all from one dataset, all in China.** Altitudes span
   406–2572 m and dates span 2016–2023, but every flight uses the same capture
   system and the same class of satellite basemap. Nothing here demonstrates
-  behaviour over mountains, at night, in winter, or with a different sensor.
+  behaviour over mountains or in winter. The night section does use a
+  different sensor, country and terrain, but it is a second single dataset,
+  not a survey.
+- **The night results are per-frame, never sequential.** Every night number
+  above — the gate, the law, the operating point — is measured one frame at a
+  time. The thermal dataset is a grid of aligned tiles from several regions
+  and nights, not a trajectory, so there is nothing for a motion model to
+  integrate over and the particle filter was never run on it. That matters
+  more here than it would elsewhere, because this project's own central claim
+  is that per-frame results do not predict sequential ones. The night work
+  therefore establishes a predictor and an operating point; it does not show
+  a UAV flying at night.
 - **Three of the ten flights fail** (match rate below 50%: flights 02, 08,
   10 — median error 53 m, 648 m, 127 m). The cause is measured and reported
   rather than excluded: those flights' imagery barely matches the satellite
@@ -752,9 +764,11 @@ UAV-VisLoc (Xu et al., 2024, arXiv:2405.11936) — released for non-commercial
 research. Satellite basemaps ship with the dataset.
 
 The night section uses Boson-nighttime v1 (`xjh19972/boson-nighttime` on
-Hugging Face), gated but granted instantly, non-commercial research only and
-**redistribution is not permitted** — so nothing from it is committed here,
-not even sample frames.
+Hugging Face), released by Xiao et al. with the STHN paper (arXiv:2405.20470).
+It is gated but granted instantly; the terms accepted at the gate restrict use
+to non-commercial research and education, and the satellite half is Bing
+imagery under Microsoft's own terms. The data itself is not committed here —
+only the figures needed to show what the measurements mean.
 
 ## Licence
 

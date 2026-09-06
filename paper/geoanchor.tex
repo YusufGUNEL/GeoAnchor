@@ -470,6 +470,14 @@ planar homography assumption holds for near-nadir frames and degrades with
 obliquity; building relief displacement is the dominant residual error source
 and is why the achievable floor is near 6\,m rather than near 1\,m.
 
+The thermal evidence in Section~\ref{sec:night} carries a limitation of its
+own that we want to state rather than leave implied: it is entirely per-frame.
+That dataset is a grid of aligned tiles from several regions and nights, not a
+trajectory, so there is no motion to integrate and the filter was never run on
+it. Given that this paper's central claim is precisely that per-frame results
+do not predict sequential ones, the night section should be read as evidence
+that the deployability predictor generalises --- and as nothing more.
+
 \section{Conclusion}
 
 Treating GNSS-denied visual localization as sequential estimation rather than

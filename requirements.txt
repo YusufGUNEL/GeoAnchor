@@ -9,3 +9,11 @@ pandas>=2.0
 matplotlib>=3.8
 gdown>=5.0
 imageio>=2.34
+
+# night/ only: the thermal dataset ships as HDF5 and is fetched from the Hub.
+# romatch is also what src/matching.py's RomaMatcher needs for the daylight
+# matcher bake-off, but nothing in the main pipeline imports it at run time.
+h5py>=3.11
+huggingface_hub>=0.24
+pillow>=10.0
+romatch>=0.1.2

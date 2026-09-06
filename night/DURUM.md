@@ -25,8 +25,12 @@ Yine de bu çalışan bir gece sistemi değil: gündüz çapa oranı %70-100'dü
 ## Veri
 
 - **Boson-nighttime v1**, Hugging Face (`xjh19972/boson-nighttime`), kapılı ama
-  anlık kabul. **Ticari olmayan araştırma kullanımı**, yeniden dağıtım yasak —
-  bu yüzden `night/veri/` ve `night/ornekler/` gitignore'da.
+  anlık kabul. Hub'da MIT olarak listeli; kapıda kabul edilen şart **ticari
+  olmayan araştırma ve eğitim kullanımı**. Veri Bing uydu görüntüsü içeriyor,
+  o kısım Microsoft'un kendi telif şartlarına tabi.
+- `night/veri/` ve `night/ornekler/` gitignore'da: 85 GB depoya konmaz, ve
+  şartları zaten her kullanıcının kaynağında kendisi kabul etmesi gerekiyor.
+  Betikler veriyi kendileri indiriyor.
 - Arazi: **çöl, tarla ve yollar**; 33 km² termal, 216 km² uydu. Gece
   uçuşları (21:00-04:00), Boson termal kamera, Bing uydu haritası.
   Kaynak makale: STHN, Xiao vd., IEEE RA-L 2024 (arXiv:2405.20470).

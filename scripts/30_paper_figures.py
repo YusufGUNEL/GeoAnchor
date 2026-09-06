@@ -55,6 +55,11 @@ plt.rcParams.update({
     "savefig.pad_inches": 0.01,
 })
 
+# Matplotlib stamps a creation date into every PDF, so rebuilding identical
+# figures still shows up as a change in git. Dropping it makes the output a
+# function of the data alone: if the file differs, a number differed.
+PDF_META = {"CreationDate": None}
+
 
 def fig1_trajectory() -> bool:
     """Ground truth, odometry and fusion over the flight 03 orthophoto."""
@@ -134,7 +139,7 @@ def fig1_trajectory() -> bool:
         ax.text(x0 + km_px / 2, y0 - 0.015 * (hi_y - lo_y), "1 km", ha="center",
                 va="bottom", fontsize=6.5, zorder=7)
     fig.tight_layout(pad=0.2)
-    fig.savefig(OUT / "fig1_trajectory.pdf", dpi=400)
+    fig.savefig(OUT / "fig1_trajectory.pdf", dpi=400, metadata=PDF_META)
     plt.close(fig)
     sat.close()
     print("  fig1_trajectory.pdf")
@@ -173,7 +178,7 @@ def fig2_cdf() -> None:
     ax.set_ylabel("frames below this error (%)")
     ax.grid(alpha=0.25, which="both", lw=0.4)
     fig.tight_layout(pad=0.2)
-    fig.savefig(OUT / "fig2_cdf.pdf")
+    fig.savefig(OUT / "fig2_cdf.pdf", metadata=PDF_META)
     plt.close(fig)
     print("  fig2_cdf.pdf")
 
@@ -218,7 +223,7 @@ def fig3_law() -> None:
     ax.grid(alpha=0.25, which="both", lw=0.4)
     ax.legend(loc="lower left", framealpha=0.9, borderpad=0.3, handlelength=1.6)
     fig.tight_layout(pad=0.2)
-    fig.savefig(OUT / "fig3_law.pdf")
+    fig.savefig(OUT / "fig3_law.pdf", metadata=PDF_META)
     plt.close(fig)
     print("  fig3_law.pdf")
 

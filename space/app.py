@@ -28,6 +28,11 @@ DIFFICULTY = json.loads((ASSETS / "21_flight_difficulty.json").read_text(encodin
 MULTI = json.loads((ASSETS / "20_multiflight.json").read_text(encoding="utf-8"))
 FLIGHTS = sorted(f.stem.split("_")[-1] for f in ASSETS.glob("20_flight_[0-9][0-9].npz"))
 
+# Built by hazirla.py from night/sonuclar/. Absent if the night runs were never
+# made, in which case the page simply does not show that section.
+_gece = ASSETS / "30_gece.json"
+GECE = json.loads(_gece.read_text(encoding="utf-8")) if _gece.exists() else None
+
 INK = "#0f172a"
 GOOD = "#0ea5e9"
 BAD = "#ef4444"
@@ -170,6 +175,74 @@ def table() -> str:
     )
 
 
+def night_decile() -> go.Figure:
+    """Correct-fix rate against how much structure the satellite tile holds.
+
+    The x axis is a decile rank rather than the score itself: the score is a
+    standardised composite and its units mean nothing to a reader, while the
+    ranking is exactly the question a mission planner asks -- is this stretch
+    of map in the good tenth or the bad one.
+    """
+    rate = GECE["decile"]
+    base = GECE["taban_dogru_orani"] * 100
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=list(range(1, 11)), y=rate,
+        marker_color=[GOOD if r >= base else BAD for r in rate],
+        hovertemplate="decile %{x}<br>%{y:.0f}% of frames located<extra></extra>",
+        showlegend=False,
+    ))
+    fig.add_hline(y=base, line=dict(color=INK, dash="dash"),
+                  annotation_text=f"overall {base:.1f}%")
+    return _layout(fig, "Night: the emptiest tenth of tiles locates nothing, "
+                        "the richest locates 43%",
+                   "satellite tile ranked by structure content (decile)",
+                   "frames correctly located (%)")
+
+
+def night_auc() -> go.Figure:
+    """What each score is worth, split by whether it needs the match first."""
+    rows = sorted(GECE["auc"].items(), key=lambda kv: kv[1]["v"])
+    fig = go.Figure()
+    for when, colour, name in (("before", GOOD, "measurable before matching"),
+                               ("after", "#94a3b8", "only after matching")):
+        sel = [(k, v["v"]) for k, v in rows if v["ne"] == when]
+        fig.add_trace(go.Bar(
+            y=[k for k, _ in sel], x=[v for _, v in sel], orientation="h",
+            marker_color=colour, name=name,
+            text=[f"{v:.3f}" for _, v in sel], textposition="outside",
+            hovertemplate="%{y}<br>AUC %{x:.3f}<extra></extra>",
+        ))
+    fig.add_vline(x=0.5, line=dict(color=INK, dash="dot"),
+                  annotation_text="coin flip")
+    fig.update_xaxes(range=[0.45, 1.0])
+    return _layout(fig, "A number read off the map beats one measured after the match",
+                   "AUC — telling a correct fix from a wrong one", "")
+
+
+def night_table() -> str:
+    ops = GECE["calisma_noktalari"]
+    eski = GECE["eski_kapi"]
+    # Derived, never typed: the old gate's share of frames is its held-out
+    # recall times the fraction of frames that hold a correct fix at all.
+    rows = [("tuned single-score gate (no pre-filter)",
+             eski["kesinlik_medyan"], eski["duyarlilik_medyan"],
+             eski["duyarlilik_medyan"] * GECE["taban_dogru_orani"], 1.0)]
+    for label, key in (("agreement only", "yok"), ("agreement + top 50% of tiles", "%50"),
+                       ("agreement + top 30% of tiles", "%30")):
+        o = ops.get(key)
+        if o:
+            rows.append((label, o["kesinlik"], o["duyarlilik"],
+                         o["dogru_kare_orani"], o["roma_cagrisi_kare_basina"]))
+    body = "\n".join(
+        f"| {name} | {prec * 100:.0f}% | "
+        f"{'—' if rec is None else f'{rec * 100:.0f}%'} | "
+        f"**{frames * 100:.1f}%** | {cost:.1f}× |"
+        for name, prec, rec, frames, cost in rows)
+    return ("| Gate | Precision | Recall | Frames with a trustworthy fix | Matcher cost |\n"
+            "|---|---|---|---|---|\n" + body)
+
+
 INTRO = f"""
 # GeoAnchor — a UAV that finds itself with no GNSS
 
@@ -220,6 +293,44 @@ with gr.Blocks(title="GeoAnchor — GNSS-denied UAV localization") as demo:
         "the 2572 m flight works, a 551 m one does not."
     )
     gr.Plot(difficulty_scatter())
+
+    if GECE:
+        gr.Markdown(
+            "## What happens at night, with a thermal camera\n"
+            "The robustness study says extreme darkness needs a different sensor, not a "
+            "software fix. So we measured that, on a separate dataset: 26,568 aligned "
+            "nighttime thermal/satellite pairs over desert, farmland and roads.\n\n"
+            "**The daylight system does not degrade at night, it stops.** LoFTR on raw "
+            "thermal returns zero inliers on 100 frames out of 100. Throwing away "
+            "appearance and keeping structure recovers a correct fix on "
+            f"{GECE['taban_dogru_orani'] * 100:.1f}% of frames.\n\n"
+            + "\n".join(f"- **{k['ad']}** — {k['dogru'] * 100:.0f}% correctly located"
+                         for k in GECE["kollar"])
+        )
+        kanit = ASSETS / "31_gece_kanit.png"
+        if kanit.exists():
+            gr.Image(str(kanit), show_label=False, container=False)
+        gr.Markdown(
+            "The same law that decides the daylight flights decides these frames too, "
+            "and here it is even cheaper to check: a structure score computed from the "
+            "satellite tile alone — no flight, no thermal frame, no matching — predicts "
+            "which frames will localise better than the inlier count measured *after* "
+            "the match."
+        )
+        with gr.Row():
+            gr.Plot(night_decile())
+        with gr.Row():
+            gr.Plot(night_auc())
+        gr.Markdown(
+            "Because it is known before matching, it is also a filter. Combined with a "
+            "second check — accept a fix only where two band-passed representations "
+            "independently agree — it beats the tuned gate on every axis at once:\n\n"
+            + night_table() +
+            "\n\nMatcher cost is model calls per frame of flight; one representation on "
+            "every frame is 1.0×. This is a predictor and an operating point, **not a "
+            "working night system**: the thermal data is a grid of tiles, not a "
+            "trajectory, so the particle filter was never run on it."
+        )
 
     gr.Markdown("## Every flight, measured\n" + table())
     gr.Markdown(

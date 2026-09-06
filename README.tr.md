@@ -429,9 +429,9 @@ sensör gerekir" diyerek bitiyor. Bunu yazmak kolay ve orada bırakmak da kolay,
 o yüzden gidip ölçtüm — **ayrı bir veri kümesiyle**:
 [Boson-nighttime](https://huggingface.co/datasets/xjh19972/boson-nighttime),
 26 568 hizalı termal/uydu çifti, 512×512; çöl, tarla ve yollar; gerçek konum
-tanım gereği biliniyor.
-Veri kümesi yeniden dağıtımı yasaklıyor, bu yüzden `night/veri/` gitignore'da;
-betikler burada ve veriyi kendileri indiriyor.
+tanım gereği biliniyor. Kapılı ama anında onaylanıyor, şartları kullanımı
+ticari olmayan araştırmayla sınırlıyor. 85 GB bu depoda değil — betikler
+indiriyor, erişimi her kullanıcı kaynağında kendisi kabul ediyor.
 
 **Gündüz sistemi gecede bozulmuyor, duruyor.** LoFTR ham termalde 100 karenin
 100'ünde sıfır iç nokta veriyor. Daha kötü bir konum değil — konum yok.
@@ -623,8 +623,17 @@ Hiçbir şey abartılmasın diye önce bunlar yazıldı.
   ayrılan geri kalan kısımda ölçüldü.
 - **On uçuş, hepsi tek veri kümesinden, hepsi Çin'de.** İrtifa 406–2572 m,
   tarihler 2016–2023 arasına yayılıyor; ama her uçuş aynı çekim sistemini ve
-  aynı sınıf uydu haritasını kullanıyor. Burada hiçbir şey dağlık arazide,
-  gece, kışın veya farklı bir sensörle nasıl davranacağını göstermiyor.
+  aynı sınıf uydu haritasını kullanıyor. Burada hiçbir şey dağlık arazide veya
+  kışın nasıl davranacağını göstermiyor. Gece bölümü farklı bir sensör, ülke ve
+  arazi kullanıyor ama o da ikinci bir tek veri kümesi, bir tarama değil.
+- **Gece sonuçları kare bazında, hiç sıralı değil.** Yukarıdaki her gece
+  rakamı — kapı, yasa, çalışma noktası — tek tek karelerde ölçüldü. Termal veri
+  kümesi birkaç bölge ve geceden hizalı karolardan oluşan bir ızgara, bir
+  yörünge değil; yani hareket modelinin bütünleştireceği bir şey yok ve
+  parçacık süzgeci o veride hiç çalıştırılmadı. Bu, başka bir yerde olacağından
+  daha önemli, çünkü bu projenin kendi ana iddiası kare bazında sonuçların
+  sıralı sonuçları yordamadığı. Gece çalışması bu yüzden bir yordayıcı ve bir
+  çalışma noktası ortaya koyuyor; gece uçan bir İHA göstermiyor.
 - **On uçuşun üçü başarısız** (eşleşme oranı %50 altı: uçuş 02, 08, 10 —
   medyan hata 53 m, 648 m, 127 m). Sebep ölçülüp yazıldı, dışlanmadı: o
   uçuşların görüntüleri, gerçek konum bilindiği hâlde bile uydu haritasıyla
@@ -738,9 +747,11 @@ UAV-VisLoc (Xu vd., 2024, arXiv:2405.11936) — ticari olmayan araştırma için
 yayımlandı. Uydu haritaları veri kümesiyle birlikte geliyor.
 
 Gece bölümü Boson-nighttime v1 kullanıyor (Hugging Face'te
-`xjh19972/boson-nighttime`); kapılı ama anında onaylanıyor, yalnızca ticari
-olmayan araştırma için ve **yeniden dağıtımına izin verilmiyor** — bu yüzden
-ondan hiçbir şey burada tutulmuyor, örnek kare bile.
+`xjh19972/boson-nighttime`); Xiao vd. tarafından STHN makalesiyle yayımlandı
+(arXiv:2405.20470). Kapılı ama anında onaylanıyor; kapıda kabul edilen şartlar
+kullanımı ticari olmayan araştırma ve eğitimle sınırlıyor, uydu tarafı ise
+Microsoft'un kendi şartlarına tabi Bing görüntüsü. Verinin kendisi burada
+tutulmuyor — yalnızca ölçümlerin ne demek olduğunu gösteren şekiller var.
 
 ## Lisans
 
