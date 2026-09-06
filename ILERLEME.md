@@ -722,3 +722,165 @@ kullanılamaz — ve bu fazın dersi tam olarak buydu.
 
 **Ders (tekrar):** Küçük örneklemde seçilen eşik, kendi verisinde her zaman
 iyi görünür. Ayırmadan ölçme.
+
+---
+
+## Faz 12 — Gecede de yasa var (2026-09-06)
+
+Faz 11 şunu bırakmıştı: her temsil **aynı** %89'da başarısız. Bunun iki okuması
+var ve maliyetleri bambaşka.
+
+- *Eşleyici sorunu*: ortak yapı orada, LoFTR/RoMa kipler arası bulamıyor →
+  eğitimli cross-modal eşleyici, günlerce GPU.
+- *İçerik sorunu*: o karelerde bulunacak ortak yapı yok → eğitim de kurtarmaz.
+
+Günlerce eğitmeden önce bir saatlik CPU ölçümü bunu ayırt eder. `07_yasa.py`:
+her kareyi, eşleşme ve gerçek konum gerektirmeyen ölçütlerle puanla, doğru/
+yanlış etiketiyle AUC'ye sok.
+
+| ölçüt | AUC | ne zaman ölçülüyor |
+|---|---|---|
+| yapı skoru, zayıf taraf | **0,872** | eşleşmeden ÖNCE |
+| **yapı skoru, sadece uydu karosu** | **0,852** | **eşleşmeden ÖNCE** |
+| uydu yüksek frekans oranı (ters) | 0,799 | eşleşmeden ÖNCE |
+| iç nokta sayısı | 0,803 | eşleşmeden sonra |
+| yön uyumu | 0,878 | eşleşmeden sonra |
+
+**Sadece haritadan okunan bir sayı, eşleşme yapıldıktan sonra ölçülen iç nokta
+sayısından daha iyi yorduyor.** Decile'lara bölününce en yapısız onda birde
+hiç doğru fix yok, en yapılıda %43.
+
+Yani **içerik sorunu**, ve gündüzdeki yasanın gece karşılığı. Hatta daha güçlü
+biçimde: gündüz yordayıcı (eşleşme oranı) planlanan rotada deneme eşleşmesi
+istiyor, gecede sadece harita yetiyor.
+
+**Kendi varsayımım ters çıktı.** Yüksek frekans enerjisini "yapı" sanıp öyle
+kodladım; AUC 0,201 geldi — yani ters yönde güçlü bir yordayıcı. Kum benekleri
+ve çalı ince dokudur, yapı değil: karoyu doldurur, eşleyiciye tutunacak bir şey
+vermez. Betiğin ilk sürümü ham AUC'ye göre sıraladığı için **kendi en güçlü
+sonucunu gömüyordu**; sıralama işaret duyarlı hâle getirildi.
+
+### Yasa bir bileşen de oluyor (`08_birlesik.py`)
+
+Ön ölçüt eşleşmeden önce hesaplandığı için maliyeti kesebilir, ve termal kareyi
+hiç görmediğinden eşleyicinin söylediği her şeyden bağımsız.
+
+| geçen kare | korunan doğru fix | elenen eşleşme |
+|---|---|---|
+| %70 | %98 | %30 |
+| **%50** | **%90** | **%50** |
+| %30 | %77 | %70 |
+
+Aynı ayrık-küme protokolüyle kapılar:
+
+| kapı | kesinlik | duyarlılık |
+|---|---|---|
+| sonra (04) | %92 | %28 |
+| önce (sadece karo) | %90'a ulaşamıyor | — |
+| **çarpım** | **%93** | **%34** |
+
+Çarpım kapısı 04'ünkini kesin olarak geçiyor: aynı kesinlikte %21 fazla
+duyarlılık, ön bileşen bedava. Güvenilir çapa %2,4 → %2,9.
+
+Tek başına ön-kapının %90'a ulaşamaması beklenen: yapı içeriği hangi karenin
+*tutabileceğini* söyler, hangisinin *tuttuğunu* değil.
+
+### Makaleye girdi
+
+Bulgu makalenin 3. katkısını doğrudan güçlendiriyor — yordayıcı ikinci bir
+sensöre taşınıyor. `paper/geoanchor.tex`'e yarım sütunluk bir alt bölüm
+eklendi (V-C), sistem olarak değil **yordayıcının kanıtı** olarak sunuluyor:
+%3'lük güvenilir çapa oranı, tek veri kümesi ve %93/%34 kapı açıkça yazılıyor.
+Makale 5 → 6 sayfa. Atıf: STHN (Xiao vd., IEEE RA-L 2024, arXiv:2405.20470) —
+Boson-nighttime'ın kaynak makalesi.
+
+### Mekân planı yanlışmış
+
+Depo "arXiv ön baskısı, aynı metin şubatta SİU'ya" diyordu. SİU bildiri
+çağrısına bakıldı: **en fazla 4 sayfa ve Türkçe** (yazarlardan biri Türkçe
+anadilli değilse İngilizce kabul ediliyor — burada geçerli değil). Elimizdeki
+6 sayfa ve İngilizce, yani "aynı metin" hiçbir zaman mümkün değildi.
+
+SİU için ayrı bir Türkçe 4 sayfalık sürüm gerekiyor. Bu bir çeviri işi değil
+editoryal karar: iki ikincil katkıdan biri (öz-kalibrasyon ya da eşleyici
+çalışması) çıkarılırsa kalan metin tutarlı kalıyor. `paper/README.md`'de yazılı.
+
+Ayrıca bir olgu düzeltildi: veri kümesi sadece çöl değil, **çöl + tarla + yol**
+(33 km² termal, 216 km² uydu, 21:00-04:00 gece uçuşları).
+
+---
+
+## Faz 13 — Gece kolunun kapanışı (2026-09-06)
+
+### Uzlaşma kapısı 1000 kareyle doğrulandı
+
+Faz 11'in izi n=11'e dayanıyordu. `06_uzlasma.py 1000 dog,sobel`:
+
+| | n=150 | **n=1000** |
+|---|---|---|
+| kesinlik | %82 (9/11) | **%82** (76/93) |
+| duyarlılık | %56 | **%57** |
+
+Sekiz kat veriyle neredeyse birebir tekrarladı.
+
+**Ama aynı koşu kendi eski cümlemi çürüttü.** Faz 11'de "150 karenin sadece
+4'ü tek bir temsile özgü, aynı kareleri buluyorlar" yazmıştım. 1000 karede:
+dog 103, sobel 101 doğru, **ikisinde birden 71**, birleşim 133 — yani 62 kare
+tek temsile özgü, örtüşme yarı yarıya. O "4" küçük örneklem artefaktıymış (ve
+üç temsil arasında teklik arandığı için daha da sıkı bir ölçüttü).
+
+Tavan iddiası ayakta kalıyor ama gerekçesi değişti: birleşim %13,3, en iyi tek
+temsil %10,3. Her temsilin kazandığı özgün kareler ötekinin kaybettikleriyle
+takas oluyor. Sınırlayan şey temsil değil, **eşleşebilir kare havuzu** — ve 07
+havuzu neyin belirlediğini söylüyor.
+
+### En iyi çalışma noktası
+
+Uzlaşmanın sorunu kesinlikti (%82), ön-kapının sorunu tek başına karar
+verememesiydi. Ön-kapı termal kareyi hiç görmediği için uzlaşmanın hatalarıyla
+ilintisiz; ikisi birleşince:
+
+| ön-kapı geçişi | kabul | kesinlik | duyarlılık | doğru çıkan kare | maliyet |
+|---|---|---|---|---|---|
+| yok | 93 | %82 | %57 | %7,6 | 2,0× |
+| %50 | 78 | %91 | %53 | %7,1 | 1,0× |
+| **%30** | 65 | **%95** | %47 | **%6,2** | **0,6×** |
+
+Maliyet, kare başına RoMa çağrısı; taban çizgisi 1,0×. Uzlaşma baktığı her kare
+için iki çağrı ister, ön-kapı kaç kareye bakılacağını belirler — bu yüzden %30
+geçişte toplam maliyet taban çizgisinin **altına** düşüyor.
+
+**Faz 11'in başlangıcına göre:** %92 → %95 kesinlik, %2,4 → %6,2 güvenilir
+çapa, 1,0× → 0,6× hesap. 2,6 kat çapa, üç puan kesinlik, %40 az hesap. Ve iki
+bileşenin de etiketlere uydurulmuş eşiği yok: 20 px doğruluk toleransının
+kendisi, ön-kapı ise sabit bir yüzdelik.
+
+### `scripts/32_tutarlilik.py`
+
+README "buradaki her sayı `results/`'tan geliyor" diyor, makale de aynısını.
+Bunu **doğrulayan** bir şey yoktu. Sayılar dört yerde alıntılanıyor
+(README.md, README.tr.md, geoanchor.tex, night/DURUM.md) ve bir yeniden koşu
+üçünü eskitip kendinden emin bırakıyor.
+
+Betik sayıları JSON/NPZ'den yeniden türetip her belgede **o belgenin kendi
+yazımıyla** arıyor. Üç yazım kuralını bilmesi gerekti, yoksa kendi biçimini
+hata olarak raporluyor:
+
+- ondalık ayracı: Türkçe 8,35 / İngilizce 8.35
+- yüzde işareti: Türkçe %95 / İngilizce 95%
+- LaTeX kaçışları: `95\%` ve `8.35\,m`
+
+İlk koşuşta üçünü de yanlış yaptım ve betik kendi hatalarını gösterdi.
+Şu an: **30 iddia, 57 dosya kontrolü, hepsi tutuyor.** Hata koduyla çıkıyor,
+yani commit öncesi kapı olarak kullanılabilir.
+
+### Makale
+
+Gece bulgusu makaleye V-C olarak girdi ve son çalışma noktasıyla güncellendi:
+%95 kesinlik, karelerin %6,2'si, kare başına 0,6 eşleyici çağrısı — ayarlanmış
+tek-ölçüt kapısının %92 / %2,4 / 1,0×'ine karşı. Sistem olarak değil,
+**yordayıcının kanıtı** olarak sunuluyor.
+
+**Durum:** 6 sayfa, 3 şekil, 2 tablo, temiz dizinde derleniyor, arXiv paketi
+hazır. Gece kolu: ölçülmüş bir yasa, ondan türetilmiş bir çalışma noktası ve
+nereye bakılmayacağını söyleyen bir tavan.

@@ -100,7 +100,10 @@ correcting for it reduces odometry drift by a factor of 4.4
 match the basemap at a known position separates working from failing flights
 with $\rho = -0.764$ against log error and a threshold near 50\%. Because it
 requires no flight, it turns ``will this work here?'' into a measurement
-(Section~\ref{sec:law}).
+(Section~\ref{sec:law}). The same predictor transfers to a thermal sensor at
+night, where a structure score read off the basemap alone separates
+localisable frames from the rest at $\mathrm{AUC}=0.852$
+(Section~\ref{sec:night}).
 \item A negative result on matcher choice, with the mechanism identified: a
 stronger dense matcher degrades localization because it lacks the ability to
 refuse (Section~\ref{sec:matcher}).
@@ -332,6 +335,44 @@ This is practically useful because match rate needs no flight. Given a planned
 route and a basemap, it can be measured in advance, converting deployability
 from a question into a measurement.
 
+\subsection{Does the predictor transfer to another sensor?}
+\label{sec:night}
+The claim behind the match rate is that performance is set by whether camera
+and basemap depict a recognisably similar world. Nothing in that is specific
+to visible light, so we tested it on a thermal dataset with a different
+sensor, terrain and country: Boson-nighttime~\cite{sthn}, 26{,}568 aligned
+nighttime thermal/satellite pairs over desert, farmland and roads.
+
+The daylight pipeline does not degrade there, it stops. LoFTR on raw thermal
+returns zero inliers on 100 frames out of 100 --- not a worse position, no
+position. Discarding appearance and keeping structure, by applying CLAHE and a
+difference-of-Gaussians band-pass identically to both sides, recovers a
+correct fix on 8.6\% of 1000 frames with RoMa.
+
+Which 8.6\%? We score each satellite tile for structure using the basemap
+alone: Canny edge density minus the fraction of spectral energy above an
+eighth of Nyquist, both standardised. The second term matters because fine
+texture is not structure --- sand speckle and scrub raise the edge count
+without giving a matcher anything to hold. That score separates the frames
+that localise from the ones that do not at $\mathrm{AUC}=0.852$, higher than
+the inlier count measured \emph{after} matching (0.803). Sorted into deciles,
+the least structured tenth of tiles produces no correct fix at all; the most
+structured tenth produces 43\%. Used as a pre-filter it also pays for itself
+in compute: discarding the lower half of tiles before matching retains 90\% of
+the correct fixes.
+
+The predictor therefore survives a change of sensor, and at night it takes a
+stronger form --- it needs only the basemap, not a trial match. It is also
+worth its place as a component. Combining it with a matcher-side check ---
+accept a fix only where two band-passed representations independently agree to
+within the tolerance, on tiles in the top 30\% by structure --- yields 95\%
+precision on 6.2\% of frames while issuing 0.6 matcher calls per frame, against
+92\% precision on 2.4\% of frames at 1.0 calls for the tuned single-score gate.
+
+We report this as evidence for the predictor rather than as a night system. A
+trustworthy fix on 6\% of frames is still far below what the daylight flights
+supply, and the measurements come from a single dataset.
+
 \subsection{Ablation}
 Removing components one at a time (300 frames, fixed seed): the boresight
 correction is by far the largest single contributor (17.13\,m without it
@@ -474,6 +515,9 @@ matching,'' in \textit{CVPR}, 2024.
 features without supervision,'' \textit{TMLR}, 2024.
 \bibitem{uavvisloc} W. Xu \textit{et al.}, ``UAV-VisLoc: A large-scale dataset
 for UAV visual localization,'' arXiv:2405.11936, 2024.
+\bibitem{sthn} J. Xiao, N. Zhang, D. Tortei, and G. Loianno, ``STHN: Deep
+homography estimation for UAV thermal geo-localization with satellite
+imagery,'' \textit{IEEE Robotics and Automation Letters}, 2024.
 \end{thebibliography}
 
 \end{document}

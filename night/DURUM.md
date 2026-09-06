@@ -4,19 +4,32 @@
 
 ## Tek cümle
 
-Gündüz sistemi gecede tamamen çöküyor (%0); yapısal temsil + yeniden ayarlanmış
-kapı ile **güvenilir ama seyrek** fix üretiliyor — 1000 kareyle ölçülen dürüst
-rakam **%92 kesinlik / %28 duyarlılık**, yani karelerin ancak **~%2,4'ünde**
-güvenilebilir bir çapa var. İki temsilin uzlaşmasını kapı olarak kullanmak bunu
-%6'ya çıkarıyor (%82 kesinlikle, n=11 — doğrulanması gerek). Temsil ailesinin
-tavanı ölçüldü: birleşim %11, en iyi tek temsil %9, yani sıradaki gerçek adım
-eğitimli cross-modal eşleyici.
+Gündüz sistemi gecede tamamen çöküyor (%0); yapısal temsil ile karelerin
+%8,6'sında doğru fix çıkıyor ve **hangi karelerde çıkacağı önceden belli**:
+uydu karosunun yapı içeriği, eşleşme daha denenmeden, doğru fix'i yanlıştan
+**AUC 0,852** ile ayırıyor — eşleşme *sonrası* ölçülen iç nokta sayısından
+(0,803) daha iyi. Yani gündüzdeki yasanın gece karşılığı var ve daha güçlü
+biçimde: uçuş da, termal görüntü de, eşleşme de gerekmiyor, sadece harita.
+
+Bu bir açıklama olmakla kalmıyor, bileşen olarak da işe yarıyor: ön-kapı ile
+birleşik kapı **%93 kesinlik / %34 duyarlılık** veriyor (tek başına sonraki
+kapı %92 / %28) ve karelerin yarısı eşleşme denenmeden eleniyor, doğru
+fix'lerin %90'ı korunarak.
+
+En iyi çalışma noktası bunların birleşimi: iki temsilin uzlaşması + ön-kapı,
+**%95 kesinlik, karelerin %6,2'sinde doğru fix**, üstelik taban çizgisinin
+**0,6 katı** hesapla. Başlangıç %92 / %2,4 / 1,0× idi.
+
+Yine de bu çalışan bir gece sistemi değil: gündüz çapa oranı %70-100'dü.
 
 ## Veri
 
 - **Boson-nighttime v1**, Hugging Face (`xjh19972/boson-nighttime`), kapılı ama
   anlık kabul. **Ticari olmayan araştırma kullanımı**, yeniden dağıtım yasak —
   bu yüzden `night/veri/` ve `night/ornekler/` gitignore'da.
+- Arazi: **çöl, tarla ve yollar**; 33 km² termal, 216 km² uydu. Gece
+  uçuşları (21:00-04:00), Boson termal kamera, Bing uydu haritası.
+  Kaynak makale: STHN, Xiao vd., IEEE RA-L 2024 (arXiv:2405.20470).
 - 74 GB indirildi, 85 GB açıldı: `night/veri/thermal_dataset/*.h5`
 - Test kümesi: 26 568 **hizalı** termal/uydu çifti, 512x512.
   `test_queries.h5` termal, `test_database.h5` uydu, **aynı indeks = aynı yer**.
@@ -99,9 +112,10 @@ gelinmişti, satır kendi metnini yalanlıyordu.
 
 ## Darboğaz ve sıradaki hamle
 
-Güvenilir çapa oranı **~%2,4** (karelerin %8,6'sında doğru fix, kapı %28'ini
-alıyor). GeoAnchor gündüz %70-100 ile çalışıyordu. Sıradaki iş kapıyı
-iyileştirmek değil, **doğru fix sayısını artırmak**.
+Güvenilir çapa oranı **~%2,4** (karelerin %8,6'sında doğru fix, 04'ün kapısı
+%28'ini alıyor); aşağıdaki ön-kapıyla **%2,9**. GeoAnchor gündüz %70-100 ile
+çalışıyordu. Sıradaki iş kapıyı iyileştirmek değil, **doğru fix sayısını
+artırmak** — ve 07 bunun nerede mümkün olduğunu söylüyor.
 
 ### Temsiller aynı karelerde mi başarılı? (`06_uzlasma.py`, 150 kare)
 
@@ -116,10 +130,18 @@ uyumluydu. Kare bazında kayıt tutunca ayrıldı:
 | **birleşim** | **%11 (16/150)** | — |
 | kesişim | %6 | — |
 
-**Temsiller aynı kareleri buluyor.** Birleşim en iyi tek temsilin ancak iki
-puan üstünde, 150 karenin sadece 4'ü tek bir temsile özgü. Yani bu yöntem
-ailesi tavanına gelmiş: temsil eklemek darboğazı açmaz. Sıradaki adım
-**eğitimli cross-modal eşleyici** olmak zorunda.
+Birleşim en iyi tek temsilin ancak iki puan üstünde: bu yöntem ailesi
+tavanına gelmiş, temsil eklemek darboğazı açmaz.
+
+**Düzeltme (n=1000):** "150 karenin sadece 4'ü tek bir temsile özgü" küçük
+örneklem artefaktıymış. 1000 karede dog+sobel ile: dog 103, sobel 101 doğru,
+**ikisinde birden 71**, birleşim 133 — yani başarılar yalnızca yarı yarıya
+örtüşüyor, 62 kare tek temsile özgü.
+
+Tavan iddiası yine de ayakta ama gerekçesi farklı: birleşim %13,3, en iyi tek
+temsil %10,3. Her temsilin kazandığı özgün kareler ötekinin kaybettikleriyle
+takas oluyor; sınırlayan şey temsil değil, **eşleşebilir kare havuzu**. 07 bunun
+nedenini söylüyor: havuzu belirleyen karo içeriği ve temsil onu değiştirmiyor.
 
 ### Beklenmedik: uzlaşma, ayarlanmış kapıdan iyi bir kapı
 
@@ -134,22 +156,105 @@ gösteriyorsa fix kabul edilsin (kabul edilen cevap ikisinin ortalaması):
 
 `dog + sobel` **%82 kesinlik / %56 duyarlılık** veriyor; 04'ün ayarlanmış
 tek-ölçüt kapısı %92 / %28. Duyarlılık iki katı, kesinlik on puan düşük.
-Güvenilir çapa oranı %2,4 → **%6**'ya çıkıyor.
 
 Uzlaşmanın ayrı bir üstünlüğü var: **ayarlanacak eşiği yok.** 20 px zaten
 doğruluk toleransı, veriye uydurulmuş bir sayı değil — 04'ün ayrık kümede
 kaybettiği payı uzlaşma en baştan ödemiyor.
 
-**Ama n=11.** 9/11'in Wilson alt sınırı ~%52. Bu rakama şu hâliyle
-güvenilmez; 1000 karelik koşu gerekiyor. Ve süzgecin kaldıramadığı şey tam
-olarak kendinden emin yanlış fix, yani %82 muhtemelen yetmez.
+**n=11'di, 1000 kareyle doğrulandı:** %82 kesinlik / %57 duyarlılık, 93 kabul
+edilmiş kare (76 doğru). Sekiz kat veriyle rakam neredeyse birebir tekrarladı.
+Yine de %82, süzgecin kaldıramadığı şey olan kendinden emin yanlış fix için
+yüksek; kesinliği yükseltmek gerekiyordu ve ön-kapı tam onu yaptı (aşağıda).
+
+### Yasa: başarısızlık eşleyici sorunu değil, içerik sorunu (`07_yasa.py`, 1000 kare)
+
+06 "hepsi aynı karelerde başarısız" dedi. Bunun iki okuması var ve bambaşka
+işlere çıkıyor: *ortak yapı orada ama eşleyici bulamıyor* (→ eğitim gerekir)
+ya da *o karelerde bulunacak ortak yapı yok* (→ eğitim de kurtarmaz).
+
+Ayırt etmek için her kare, eşleşme ve gerçek konum gerektirmeyen ölçütlerle
+puanlandı. Sonuç:
+
+| ölçüt | AUC | yön |
+|---|---|---|
+| zayıf taraf yapı skoru | **0,872** | yüksek=iyi |
+| **uydu karosu yapı skoru** | **0,852** | yüksek=iyi |
+| uydu yüksek frekans oranı | 0,799 | **DÜŞÜK=iyi** |
+| uydu kenar yoğunluğu | 0,746 | yüksek=iyi |
+| *(karşılaştırma)* iç nokta — eşleşme SONRASI | 0,803 | |
+| *(karşılaştırma)* yön uyumu — eşleşme SONRASI | 0,878 | |
+
+**Sadece haritadan okunan bir sayı (0,852), eşleşme yapıldıktan sonra ölçülen
+iç nokta sayısından (0,803) daha iyi yorduyor.** Decile'lara bölününce: en
+yapısız onda birde **hiç** doğru fix yok, en yapılıda **%43**.
+
+Bir varsayımım ters çıktı: yüksek frekans enerjisini "yapı" sanmıştım, AUC
+0,201 verdi — yani **ters** yönde güçlü bir yordayıcı (0,799). Kum benekleri ve
+çalı ince doku üretiyor, yapı değil; karoyu doldurup tutunacak bir şey
+bırakmıyor. `yapi_skoru` bu yüzden kenar yoğunluğu **eksi** yüksek frekans.
+
+![Gece yasası](../figures/32_gece_yasa.png)
+
+### Ön-kapı: karo kötüyse eşleştirme (`08_birlesik.py`)
+
+Yasa açıklama olmakla kalmıyor, bileşen de oluyor. Ön ölçüt eşleşmeden önce
+hesaplandığı için maliyeti kesebilir ve termal kareyi hiç görmediğinden
+eşleyicinin söylediği her şeyden istatistiksel olarak bağımsız.
+
+| geçen kare | korunan doğru fix | elenen eşleşme |
+|---|---|---|
+| %70 | %98 | %30 |
+| **%50** | **%90** | **%50** |
+| %30 | %77 | %70 |
+| %10 | %50 | %90 |
+
+Kapı karşılaştırması (aynı ayrık-küme protokolü, 400 bölme):
+
+| kapı | kesinlik | p10 | duyarlılık |
+|---|---|---|---|
+| sonra (04'ün kapısı) | %92 | %76 | %28 |
+| önce (sadece karo) | %90'a ulaşamıyor | — | — |
+| **çarpım (önce × sonra)** | **%93** | %75 | **%34** |
+| önce VE sonra (%50 geçiş) | %89 | %80 | %36 |
+
+**Çarpım kapısı 04'ünkinden kesin olarak iyi:** aynı kesinlikte %21 daha fazla
+duyarlılık, üstelik ön bileşen bedava. Güvenilir çapa %2,4 → %2,9.
+
+Tek başına ön-kapı %90 kesinliğe ulaşamıyor — beklenen: yapı içeriği hangi
+karelerin *tutabileceğini* söylüyor, hangisinin *tuttuğunu* değil.
+
+### En iyi çalışma noktası: uzlaşma + ön-kapı
+
+Uzlaşmanın sorunu kesinlikti (%82), ön-kapının sorunu tek başına karar
+verememesiydi. İkisi birbirini tamamlıyor: ön-kapı termal kareyi hiç görmediği
+için uzlaşmanın hatalarıyla ilintisiz.
+
+| ön-kapı geçişi | kabul | kesinlik | duyarlılık | doğru çıkan kare | maliyet |
+|---|---|---|---|---|---|
+| yok | 93 | %82 | %57 | %7,6 | 2,0× |
+| %70 | 84 | %89 | %56 | %7,5 | 1,4× |
+| %50 | 78 | %91 | %53 | %7,1 | 1,0× |
+| **%30** | **65** | **%95** | %47 | **%6,2** | **0,6×** |
+
+Maliyet = kare başına RoMa çağrısı; taban çizgisi (tek temsil, her kare) 1,0×.
+Uzlaşma kare başına iki çağrı ister, ön-kapı kaç kareye bakılacağını belirler.
+
+**Başlangıçla karşılaştırma:**
+
+| | kesinlik | doğru çıkan kare | maliyet |
+|---|---|---|---|
+| 04'ün kapısı | %92 | %2,4 | 1,0× |
+| **uzlaşma + ön-kapı (%30)** | **%95** | **%6,2** | **0,6×** |
+
+2,6 kat çapa, 3 puan fazla kesinlik, %40 az hesap.
 
 ### Sıradaki
 
-1. `06_uzlasma.py 1000` — uzlaşma kapısının kesinliği gerçekten %82 mi.
+1. ~~Uzlaşma kapısını 1000 kareyle doğrula~~ — yapıldı, %82/%57.
 2. Eğitimli cross-modal eşleştirme (STHN/UASTHN hattı bu veriyle homografi ağı
-   eğitiyor; train bölümü diskte). Temsil tavanı ölçüldüğü için bu artık bir
-   tahmin değil, ölçüme dayanan tek yol.
+   eğitiyor; train bölümü diskte). Ama 07'den sonra beklenti düştü: eğitim de
+   olmayan yapıyı bulamaz. Ölçülebilir hedef, yapı skoru yüksek karelerdeki
+   %43'ü yukarı çekmek — düşük skorluları değil.
 3. Temsil taramasını genişletmek (phase congruency, yapı tensörü) — 06'nın
    sonucundan sonra **düşük öncelik**: yeni temsil de aynı kareleri bulacak.
 
@@ -164,5 +269,7 @@ night/03_dogrulama.py  dogru fix'i yanlistan ayiran olcut arayisi
 night/04_kapi.py       calisma noktasi: ayrik kumede esik secimi
 night/05_kanit.py      kanit figurleri (figures/30_*, figures/31_*)
 night/06_uzlasma.py    temsiller ayni karelerde mi basarili?
+night/07_yasa.py       basarisizlik esleyici sorunu mu, icerik sorunu mu?
+night/08_birlesik.py   on-kapi + sonraki kapi birlikte ne veriyor?
 night/sonuclar/*.json  her kosunun ciktisi
 ```

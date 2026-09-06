@@ -1,0 +1,104 @@
+{
+  "n": 1000,
+  "dogru": 86,
+  "once_olcut": "uydu_yapi_skoru",
+  "on_kapi_gecis": 0.5,
+  "on_kapi_korunan_dogru": 0.8953488372093024,
+  "kapilar": {
+    "sonra (04'un kapisi)": {
+      "ornek_ici": {
+        "kesinlik": 0.9310344827586207,
+        "duyarlilik": 0.313953488372093,
+        "esik": 0.2822196511422771,
+        "kabul_edilen": 29
+      },
+      "ayrik": {
+        "bolme": 400,
+        "sessiz_bolme": 0,
+        "kesinlik_medyan": 0.9230769230769231,
+        "kesinlik_p10": 0.7607142857142858,
+        "duyarlilik_medyan": 0.2841614906832298,
+        "esik_medyan": 0.2822196511422771
+      }
+    },
+    "once (sadece karo)": {
+      "ornek_ici": null,
+      "ayrik": {
+        "bolme": 204,
+        "sessiz_bolme": 0,
+        "kesinlik_medyan": 0.6666666666666666,
+        "kesinlik_p10": 0.5,
+        "duyarlilik_medyan": 0.0898989898989899,
+        "esik_medyan": 7.833704537126406
+      }
+    },
+    "carpim (once x sonra)": {
+      "ornek_ici": {
+        "kesinlik": 0.9375,
+        "duyarlilik": 0.3488372093023256,
+        "esik": 0.18797414214044644,
+        "kabul_edilen": 32
+      },
+      "ayrik": {
+        "bolme": 400,
+        "sessiz_bolme": 0,
+        "kesinlik_medyan": 0.9333333333333333,
+        "kesinlik_p10": 0.75,
+        "duyarlilik_medyan": 0.3409090909090909,
+        "esik_medyan": 0.18797414214044644
+      }
+    },
+    "once VE sonra (%50 gecis)": {
+      "ornek_ici": {
+        "kesinlik": 0.9,
+        "duyarlilik": 0.4675324675324675,
+        "esik": 0.25013954396075827,
+        "kabul_edilen": 40
+      },
+      "ayrik": {
+        "bolme": 400,
+        "sessiz_bolme": 0,
+        "kesinlik_medyan": 0.8867521367521367,
+        "kesinlik_p10": 0.8,
+        "duyarlilik_medyan": 0.4068287037037037,
+        "esik_medyan": 0.25018507305290194
+      },
+      "on_kapi_esigi": -0.5600204123955339,
+      "on_kapi_korunan_dogru": 0.8953488372093024
+    }
+  },
+  "uzlasma": {
+    "yok": {
+      "kabul": 93,
+      "dogru": 76,
+      "kesinlik": 0.8172043010752689,
+      "duyarlilik": 0.5714285714285714,
+      "dogru_kare_orani": 0.076,
+      "roma_cagrisi_kare_basina": 2.0
+    },
+    "%70": {
+      "kabul": 84,
+      "dogru": 75,
+      "kesinlik": 0.8928571428571429,
+      "duyarlilik": 0.5639097744360902,
+      "dogru_kare_orani": 0.075,
+      "roma_cagrisi_kare_basina": 1.4
+    },
+    "%50": {
+      "kabul": 78,
+      "dogru": 71,
+      "kesinlik": 0.9102564102564102,
+      "duyarlilik": 0.5338345864661654,
+      "dogru_kare_orani": 0.071,
+      "roma_cagrisi_kare_basina": 1.0
+    },
+    "%30": {
+      "kabul": 65,
+      "dogru": 62,
+      "kesinlik": 0.9538461538461539,
+      "duyarlilik": 0.46616541353383456,
+      "dogru_kare_orani": 0.062,
+      "roma_cagrisi_kare_basina": 0.6
+    }
+  }
+}

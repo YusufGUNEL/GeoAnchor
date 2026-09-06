@@ -55,7 +55,20 @@ submission form is in `ARXIV.md`.
 
 ## Venue status
 
+**arXiv takes this manuscript as it is.** Six pages, English, no length limit
+on their side.
+
+**SİU does not, and the earlier plan in this repository was wrong about that.**
+The call for papers caps submissions at **four pages** and requires them to be
+**in Turkish** unless one of the authors is not a native Turkish speaker, which
+does not apply here. So "the same manuscript goes to SİU" was never possible:
+SİU needs a separate, Turkish, four-page version.
+
+Cutting six English pages to four Turkish ones is an editorial decision, not a
+translation job. The plausible cut is one of the two secondary contributions —
+the self-calibration section (III-E and V-C) or the matcher study (VI) — since
+each is self-contained and either one alone leaves a coherent paper around the
+sequential-fusion result and the deployability predictor.
+
 SİU 2026 (July 2026) has passed; SİU 2027 opens for submission around
-February. ELECO is biennial and next runs in 2027. An arXiv preprint is
-therefore the sensible first step, with the same manuscript going to SİU
-afterwards.
+February. ELECO is biennial and next runs in 2027.

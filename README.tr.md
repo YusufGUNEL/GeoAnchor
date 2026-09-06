@@ -428,7 +428,8 @@ Dayanıklılık bölümü "aşırı karanlık için yazılım düzeltmesi değil
 sensör gerekir" diyerek bitiyor. Bunu yazmak kolay ve orada bırakmak da kolay,
 o yüzden gidip ölçtüm — **ayrı bir veri kümesiyle**:
 [Boson-nighttime](https://huggingface.co/datasets/xjh19972/boson-nighttime),
-26 568 hizalı termal/uydu çifti, 512×512, gerçek konum tanım gereği biliniyor.
+26 568 hizalı termal/uydu çifti, 512×512; çöl, tarla ve yollar; gerçek konum
+tanım gereği biliniyor.
 Veri kümesi yeniden dağıtımı yasaklıyor, bu yüzden `night/veri/` gitignore'da;
 betikler burada ve veriyi kendileri indiriyor.
 
@@ -488,25 +489,115 @@ düzeltildi: 1000 kare, ve eşik karelerin yarısında seçilip diğer yarısın
 | ilk raporlanan (n=5, örneklem-içi) | %100 | %45 |
 | **ayrık kümede, 1000 kare** | **%92** | **%28** |
 
+### Hangi %8,6? Gündüzdeki yasa, yeniden
+
+Geriye asıl darboğaz kalıyor: kapı değil, kapıya girecek doğru fix'in azlığı.
+Peki hangi kareler doğru fix üretiyor?
+
+Önce seçenekleri daraltan bir ölçüm. Temsiller aynı karelerde mi başarılı,
+farklı karelerde mi? 150 karede kare bazında kayıt: Sobel %9, CLAHE+DoG %9,
+DoG %7, **birleşim %11**. 1000 kareyle DoG ve Sobel üzerinde tekrarlandı: 103
+ve 101 doğru, bunların 71'i aynı kareler, **birleşim %13, en iyi tek temsil
+%10**. Başarılar yalnızca yarı yarıya örtüşüyor ama her temsilin kazandığı
+özgün kareler kaybettikleriyle takas oluyor, birleşim yerinden kıpırdamıyor.
+**Bu yöntem ailesi tavanına gelmiş.** Ya ortak yapı orada ve eğitimsiz hiçbir
+eşleyici onu göremiyor, ya da o karelerde bulunacak ortak bir şey yok.
+
+İkisinin maliyeti bambaşka, o yüzden ayırt etmeye bir saat değer. Her kareyi
+eşleşme ve gerçek konum gerektirmeyen ölçütlerle puanlayıp sonucu yordayıp
+yordamadığına bakalım:
+
+![Gece yasası](figures/32_gece_yasa.png)
+
+| Ölçüt | AUC | |
+|---|---|---|
+| yapı skoru, iki taraftan zayıf olanı | **0,872** | eşleşmeden önce |
+| **yapı skoru, sadece uydu karosu** | **0,852** | **eşleşmeden önce** |
+| yüksek frekans oranı, uydu | 0,799 | eşleşmeden önce, *ters* |
+| Canny kenar yoğunluğu, uydu | 0,746 | eşleşmeden önce |
+| iç nokta sayısı | 0,803 | eşleşmeden sonra |
+| gradyan yönü uyumu | 0,878 | eşleşmeden sonra |
+
+**Sadece haritadan okunan bir sayı — uçuş yok, termal kare yok, eşleşme yok —
+gece konumlanabilirliği, eşleşmeden sonra ölçülen iç nokta sayısından daha iyi
+yorduyor.** Decile'lara bölününce: en yapısız onda bir hiç doğru fix üretmiyor,
+en yapılı onda bir %43 üretiyor.
+
+Bir varsayımım ters çıktı ve veri bunu açıkça söyledi. Yüksek frekans
+enerjisinin yapı demek olmasını bekliyordum; AUC 0,201 verdi, yani ters yönde
+güçlü bir yordayıcı. Kum benekleri ve çalı ince dokudur, yapı değil: karoyu
+doldurur ama eşleyiciye tutunacak bir şey vermez. Yapı skoru bu yüzden kenar
+yoğunluğu *eksi* yüksek frekans oranı.
+
+Yani gündüzdeki yasa gecede de geçerli, hatta daha güçlü biçimde. Gündüz
+yordayıcı eşleşme oranı ve planlanan rotada deneme eşleşmesi istiyor; gecede
+sadece harita yetiyor.
+
+### Yasa aynı zamanda bir bileşen
+
+Eşleşmeden önce hesaplanan bir skor, maliyet ödenmeden reddedebilir; üstelik
+termal kareyi hiç görmediği için eşleyicinin söylediği her şeyden istatistiksel
+olarak bağımsızdır.
+
+| Ön-süzgeç geçiriyor | Korunan doğru fix | Elenen eşleşme |
+|---|---|---|
+| karoların %70'i | %98 | %30 |
+| **karoların %50'si** | **%90** | **%50** |
+| karoların %30'u | %77 | %70 |
+
+| Kapı (ayrık kümede) | Kesinlik | Duyarlılık |
+|---|---|---|
+| sadece eşleşme sonrası | %92 | %28 |
+| sadece eşleşme öncesi | %90'a ulaşamıyor | — |
+| **ikisinin çarpımı** | **%93** | **%34** |
+
+Eşleyicinin işinin yarısı, fix'lerin %10'u karşılığında atlanabiliyor; birleşik
+kapı da ayarlanmış tek-ölçüt kapısını kesin olarak geçiyor: aynı kesinlikte
+beşte bir fazla duyarlılık, ve öndeki yarısı bedava.
+
+### En iyi çalışma noktası: uzlaşma, haritayla süzülmüş
+
+Bir sinyal daha var ve hiç eşik istemiyor: iki bant-geçiren temsil birbirinden
+bağımsız olarak 20 px içinde aynı yeri gösterdiğinde fix'i kabul et — 20 px
+zaten doğruluk toleransının kendisi, veriye uydurulmuş bir sayı değil. 1000
+karede DoG + Sobel uzlaşması **%82 kesinlik / %57 duyarlılık** veriyor (93
+kabul, 76 doğru). Bu ilk olarak 11 kabul edilmiş karede görülmüştü ve sekiz kat
+veriyle neredeyse birebir tekrarladı.
+
+%82 tek başına yetmez: parçacık süzgecinin sindiremediği tek şey kendinden emin
+yanlış fix. Ama eşleşme öncesi karo skoru termal kareyi hiç görmediği için
+hataları eşleyicininkiyle ilintisiz, ve kesinliği tam da uzlaşmanın zayıf
+kaldığı yerde yükseltiyor:
+
+| Ön-süzgeç geçirir | Kabul | Kesinlik | Duyarlılık | Doğru fix çıkan kare | Maliyet |
+|---|---|---|---|---|---|
+| — | 93 | %82 | %57 | %7,6 | 2,0× |
+| en iyi %70 | 84 | %89 | %56 | %7,5 | 1,4× |
+| en iyi %50 | 78 | %91 | %53 | %7,1 | 1,0× |
+| **en iyi %30** | 65 | **%95** | %47 | **%6,2** | **0,6×** |
+
+Maliyet, uçuşun kare başına RoMa çağrısı; taban çizgisi — tek temsil, her kare
+— 1,0×. Uzlaşma baktığı her kare için iki çağrı ister, ön-süzgeç kaç kareye
+bakılacağını belirler.
+
+| | Kesinlik | Doğru fix çıkan kare | Maliyet |
+|---|---|---|---|
+| ayarlanmış tek-ölçüt kapısı | %92 | %2,4 | 1,0× |
+| **uzlaşma + ön-süzgeç (en iyi %30)** | **%95** | **%6,2** | **0,6×** |
+
+**2,6 kat güvenilir çapa oranı, üç puan fazla kesinlik, %40 az hesap** — ve iki
+bileşenin de etiketlere uydurulmuş bir eşiği yok.
+
 ### Nerede duruyor
 
-Karelerin kabaca **%2,4'ünde** güvenilir çapa; gündüz bu %70-100'dü. Bu
-çalışan bir gece sistemi değil, ölçülmüş bir bulgu — ve darboğazın adı kondu:
-kapı değil, kapıya girecek doğru fix'in azlığı.
+Karelerin **%6,2'sinde** güvenilir çapa; gündüz bu %70-100'dü. Bu ölçülmüş bir
+bulgu ve bir yordayıcı — çalışan bir gece sistemi değil, ve tek bir veri
+kümesinden geliyor.
 
-Bir ölçüm daha hangi yönün değdiğini söylüyor. Temsiller aynı karelerde mi
-başarılı, farklı karelerde mi? 150 karede kare bazında kayıt: sobel %9,
-CLAHE+DoG %9, DoG %7, **birleşim %11** — 150 karenin yalnızca 4'ü tek bir
-temsile özgü. **Aynı kareleri buluyorlar.** Bu aile tavanına gelmiş; temsil
-eklemek darboğazı açmaz, sıradaki gerçek adım eğitimli cross-modal eşleyici.
-
-Aynı koşu planlanmamış bir şey de üretti. İki temsil birbirinden bağımsız
-olarak 20 px içinde aynı yeri gösterdiğinde fix'i kabul etmek, DoG + Sobel için
-**%82 kesinlik / %56 duyarlılık** veriyor; ayarlanmış tek-ölçüt kapısı %92/%28.
-Duyarlılık iki katı ve *ayarlanacak eşik yok*, çünkü 20 px zaten doğruluk
-toleransının kendisi. Güvenilir çapa oranını %2,4'ten %6'ya çıkarır. 11 kabul
-edilmiş kareye dayanıyor, yani doğrulanacak bir iz — alıntılanacak bir sonuç
-değil.
+Yasanın değiştirdiği şey, emeğin nereye gideceği. Başarısızlık bir eşleyici
+sorunu gibi göründüğü sürece eğitimli cross-modal eşleyici bariz sonraki
+adımdı; artık ölçülebilir hedef daha dar — yapı *içeren* karolardaki %43'ü
+yukarı çekmek, hiç içermeyenlerin peşinden koşmak değil.
 
 `night/DURUM.md` projenin bu yarısının çalışma günlüğü.
 
@@ -591,6 +682,9 @@ python scripts/10_demo_video.py       # gösterim videosu
 # makale: IEEE sütun ölçüsünde İngilizce şekiller, ardından arXiv paketi
 python scripts/30_paper_figures.py
 python scripts/31_arxiv_bundle.py
+
+# belgeler hâlâ results/'un dediğini mi söylüyor?
+python scripts/32_tutarlilik.py
 ```
 
 Gece kolu kendi veri kümesini istiyor (74 GB) ve ayrı koşuyor:
@@ -604,6 +698,8 @@ python night/03_dogrulama.py 1000 # doğruyu yanlıştan hangi ölçüt ayırıy
 python night/04_kapi.py           # çalışma noktası, ayrık kümede
 python night/05_kanit.py          # kanıt şekilleri
 python night/06_uzlasma.py 150    # temsiller aynı kareleri mi buluyor?
+python night/07_yasa.py           # başarısızlık içerik sorunu mu, eşleyici mi?
+python night/08_birlesik.py       # ön-süzgeç + eşleşme sonrası kapı
 ```
 
 Kullanılan donanım: Windows 11 dizüstü, **NVIDIA RTX 3050 Ti, 4 GB VRAM**.

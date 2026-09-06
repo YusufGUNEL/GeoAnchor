@@ -61,7 +61,15 @@ AGREE_PX = 20.0
 N_PAIRS = int(sys.argv[1]) if len(sys.argv) > 1 else 150
 # The three that scored above zero with RoMa in 02. "ham" is left out: at 2%
 # it contributes nothing to a union and would cost a third of the runtime.
-REPS = ["clahe+dog", "dog", "sobel"]
+# A second argument narrows the list -- confirming one agreeing pair at 1000
+# frames costs two RoMa passes rather than three, and by then the ceiling
+# question the third arm answers is already settled.
+REPS = (sys.argv[2].split(",") if len(sys.argv) > 2
+        else ["clahe+dog", "dog", "sobel"])
+if bad := [r for r in REPS if r not in kopru.REPS]:
+    raise SystemExit(f"bilinmeyen temsil: {bad}; secenekler: {list(kopru.REPS)}")
+if len(REPS) < 2:
+    raise SystemExit("uzlasma icin en az iki temsil gerekiyor")
 
 
 def evaluate(matcher, rep, thermal, satellite) -> dict:

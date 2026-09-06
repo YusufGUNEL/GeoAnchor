@@ -33,7 +33,7 @@ platform, hence the robotics cross-list.
 
 **Comments field**
 
-    5 pages, 3 figures, 2 tables. Code, data preparation and every reported
+    6 pages, 3 figures, 2 tables. Code, data preparation and every reported
     measurement: https://github.com/YusufGUNEL/GeoAnchor
 
 **License:** CC BY 4.0. The paper reports on public data (UAV-VisLoc) and the
@@ -67,7 +67,7 @@ useful in proportion to its ability to stay silent, not to match.
 
 ## Before submitting
 
-- [ ] `latexmk -pdf geoanchor.tex` from a clean checkout produces 5 pages with
+- [ ] `latexmk -pdf geoanchor.tex` from a clean checkout produces 6 pages with
       no undefined references.
 - [ ] The tarball extracts to `geoanchor.tex` + `figures/` at the top level,
       not inside an extra directory.
@@ -75,6 +75,8 @@ useful in proportion to its ability to stay silent, not to match.
 
 ## After submitting
 
-Put the arXiv ID in the repository README and in `../ILERLEME.md`. The same
-manuscript goes to SİU 2027 (submissions open around February); ELECO is
-biennial and next runs in 2027.
+Put the arXiv ID in the repository README and in `../ILERLEME.md`.
+
+SİU 2027 needs a **different** manuscript, not this one: four pages, in
+Turkish. See the venue note in `README.md`. ELECO is biennial and next runs
+in 2027.

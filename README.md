@@ -436,7 +436,8 @@ The robustness study ends by saying the extreme-darkness case needs a different
 sensor, not a software fix. That is easy to write and easy to leave there, so I
 went and measured it, on a **different dataset**:
 [Boson-nighttime](https://huggingface.co/datasets/xjh19972/boson-nighttime) —
-26,568 aligned thermal/satellite pairs, 512×512, ground truth by construction.
+26,568 aligned thermal/satellite pairs, 512×512 over desert, farmland and
+roads, ground truth by construction.
 The dataset forbids redistribution, so `night/veri/` is gitignored; the scripts
 are all here and download it themselves.
 
@@ -498,26 +499,116 @@ fitted on half and measured on the other half over 400 random splits.
 | as first reported (n=5, in-sample) | 100% | 45% |
 | **held-out, 1000 frames** | **92%** | **28%** |
 
+### Which 8.6%? The daylight law, again
+
+That leaves the real bottleneck: not the gate, but how few correct fixes exist
+to gate. So which frames produce one?
+
+First, a measurement that narrows the options. Do the representations succeed
+on the same frames or on different ones? Per-frame records over 150 frames:
+Sobel 9%, CLAHE+DoG 9%, DoG 7%, **union 11%**. Repeated on 1000 frames with
+DoG and Sobel: 103 and 101 correct, 71 of them the same frames, **union 13%
+against 10% for the best single one**. The successes overlap only about half
+the time, but each representation's unique wins are traded against its unique
+losses, so the union barely moves. **This family of methods is at its
+ceiling.** Either the shared structure is there and no untrained matcher can
+see it, or on those frames there is nothing shared to find.
+
+Those two have very different price tags, so it is worth an hour to tell them
+apart. Score each frame for structure using measures that need no matching and
+no ground truth, and see whether that predicts the verdict:
+
+![The night law](figures/32_gece_yasa.png)
+
+| Measure | AUC | |
+|---|---|---|
+| structure score, weaker of the two sides | **0.872** | before matching |
+| **structure score, satellite tile alone** | **0.852** | **before matching** |
+| high-frequency energy fraction, satellite | 0.799 | before matching, *inverted* |
+| Canny edge density, satellite | 0.746 | before matching |
+| inlier count | 0.803 | after matching |
+| gradient orientation agreement | 0.878 | after matching |
+
+**A number read off the basemap alone — no flight, no thermal frame, no
+matching — predicts night localizability better than the inlier count measured
+after the match.** Sorted into deciles, the least structured tenth of tiles
+produces no correct fix at all; the most structured tenth produces 43%.
+
+One assumption of mine was backwards, and the data said so plainly. I expected
+high-frequency energy to mean structure; it scored AUC 0.201, which is a strong
+predictor pointing the other way. Sand speckle and scrub are fine texture, not
+structure: they fill a tile without giving a matcher anything to hold. The
+structure score is therefore edge density *minus* high-frequency fraction.
+
+So the daylight law holds at night too, in a stronger form. In daylight the
+predictor is the match rate, which needs a trial match along the planned route.
+At night it needs only the map.
+
+### The law is also a component
+
+A score computed before matching can decline before the cost is paid, and it is
+statistically independent of everything the matcher reports — it never saw the
+thermal frame.
+
+| Pre-filter passes | Correct fixes kept | Matching skipped |
+|---|---|---|
+| 70% of tiles | 98% | 30% |
+| **50% of tiles** | **90%** | **50%** |
+| 30% of tiles | 77% | 70% |
+
+| Gate (held-out) | Precision | Recall |
+|---|---|---|
+| post-match only | 92% | 28% |
+| pre-match only | cannot reach 90% | — |
+| **product of the two** | **93%** | **34%** |
+
+Half the matcher's work can be skipped for 10% of the fixes, and the combined
+gate strictly beats the tuned single-score one: same precision, a fifth more
+recall, and the pre-match half costs nothing.
+
+### The best operating point: agreement, filtered by the map
+
+One more signal, and it needs no threshold at all: accept a fix when two
+band-passed representations independently land within 20 px of each other — 20
+px being the accuracy tolerance itself, not a number fitted to anything. On
+1000 frames DoG + Sobel agreeing gives **82% precision at 57% recall** (93
+accepted, 76 correct). That first showed up on 11 accepted frames and
+reproduced almost exactly with eight times the data.
+
+82% is not enough on its own: a confident wrong fix is the one thing a particle
+filter cannot absorb. But the pre-match tile score never saw the thermal frame,
+so its mistakes are uncorrelated with the matcher's, and it lifts precision
+exactly where agreement is weak:
+
+| Pre-filter passes | Accepted | Precision | Recall | Frames with a correct fix | Cost |
+|---|---|---|---|---|---|
+| — | 93 | 82% | 57% | 7.6% | 2.0× |
+| top 70% | 84 | 89% | 56% | 7.5% | 1.4× |
+| top 50% | 78 | 91% | 53% | 7.1% | 1.0× |
+| **top 30%** | 65 | **95%** | 47% | **6.2%** | **0.6×** |
+
+Cost is RoMa calls per frame of flight; the baseline — one representation, every
+frame — is 1.0×. Agreement needs two calls per frame it looks at, and the
+pre-filter decides how many frames that is.
+
+| | Precision | Frames with a correct fix | Cost |
+|---|---|---|---|
+| tuned single-score gate | 92% | 2.4% | 1.0× |
+| **agreement + pre-filter (top 30%)** | **95%** | **6.2%** | **0.6×** |
+
+**2.6× the reliable anchor rate, three points more precision, 40% less
+compute** — and neither component has a threshold fitted to the labels.
+
 ### Where it stands
 
-A trustworthy anchor on roughly **2.4%** of frames, against 70–100% in
-daylight. That is a measured finding, not a working night system, and the
-bottleneck is named: not the gate, but how few correct fixes exist to gate.
+A trustworthy anchor on **6.2%** of frames, against 70–100% in daylight. That
+is a measured finding and a predictor, not a working night system, and it comes
+from one dataset.
 
-One more measurement says which direction is worth taking. Do the
-representations succeed on the same frames or on different ones? Per-frame
-records over 150 frames: sobel 9%, CLAHE+DoG 9%, DoG 7%, **union 11%** — only
-4 frames of 150 are unique to a single representation. **They find the same
-frames.** This family is at its ceiling, so adding representations will not
-open the bottleneck; a trained cross-modal matcher is the next real step.
-
-The same run produced something unplanned. Accepting a fix when two
-representations independently land within 20 px of each other gives **82%
-precision at 56% recall** for DoG + Sobel, against 92%/28% for the tuned
-single-score gate — twice the recall, and with *no threshold to tune*, since
-20 px is the accuracy tolerance itself. That would take the reliable anchor
-rate from 2.4% to 6%. It rests on 11 accepted frames, so it is a lead to
-confirm, not a result to quote.
+What the law changes is where effort should go. A trained cross-modal matcher
+was the obvious next step while the failure looked like a matcher problem; now
+the measurable target is narrower — raise the 43% on tiles that *do* hold
+structure, rather than chase the tiles that hold none.
 
 `night/DURUM.md` is the working log for this half of the project.
 
@@ -605,6 +696,9 @@ python scripts/10_demo_video.py       # demo video
 # manuscript: English figures at IEEE column width, then the arXiv tarball
 python scripts/30_paper_figures.py
 python scripts/31_arxiv_bundle.py
+
+# do the documents still say what results/ says?
+python scripts/32_tutarlilik.py
 ```
 
 The night half needs its own dataset (74 GB) and runs separately:
@@ -618,6 +712,8 @@ python night/03_dogrulama.py 1000 # which measure separates right from wrong
 python night/04_kapi.py           # operating point, held-out
 python night/05_kanit.py          # evidence figures
 python night/06_uzlasma.py 150    # do the representations find the same frames?
+python night/07_yasa.py           # is the failure content or matcher?
+python night/08_birlesik.py       # pre-match filter plus post-match gate
 ```
 
 Hardware used: Windows 11 laptop, **NVIDIA RTX 3050 Ti, 4 GB VRAM**. Peak
