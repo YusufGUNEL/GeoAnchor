@@ -4,6 +4,13 @@
 actually produce stars and inbound messages: Reddit, Hacker News, X, and the
 indexes. Read each one before posting and change the wording to sound like you.
 
+There is a second story now, and on the technical channels it is the stronger
+one: the same project was pointed at a thermal camera at night, the daylight
+matcher scored a flat zero, and the property that predicts where the system
+works turned out to hold there too — measurable from the satellite map alone,
+before any matching. Lead with that on r/computervision and Hacker News if you
+want the comments to be about the finding rather than about the demo.
+
 Two rules that decide whether these land:
 
 1. **Lead with the failure, not the result.** "I got 15 m error" is a claim
@@ -165,10 +172,14 @@ not post both on the same day.
 - **Hugging Face Space** — the folder `space/` is ready. Create a Space
   (Gradio SDK), push the folder, put the resulting link everywhere `<SPACE_LINK>`
   appears above.
-- **arXiv** — `paper/geoanchor.tex` already exists. First submission to cs.CV
-  needs an endorsement from someone who has published there; ask a supervisor or
-  a co-author. Category cs.CV, cross-list cs.RO. Without an endorsement the
-  fallback is a technical report on Zenodo, which gives a DOI and is citable.
+- **arXiv** — the manuscript is finished and the upload is built by
+  `python scripts/31_arxiv_bundle.py`; the submission form's metadata is in
+  `paper/ARXIV.md`. Category cs.CV, cross-list cs.RO. A first submission to
+  cs.CV needs an endorsement from someone who has published there; ask a
+  supervisor or a co-author. Without one the fallback is a technical report on
+  Zenodo, which gives a DOI and is citable.
+- **SİU is a separate manuscript, not this one.** Its call caps papers at four
+  pages and requires Turkish. See the venue note in `paper/README.md`.
 - **Papers with Code** — add the repo against the "Visual Localization" and
   "Image Retrieval" tasks. Free, indexed by Google, and it is where people
   looking for a baseline actually search.

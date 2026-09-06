@@ -25,6 +25,7 @@ data, which is the situation this is meant to prevent.
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -41,8 +42,16 @@ EN = ROOT / "README.md"
 TR = ROOT / "README.tr.md"
 TEX = ROOT / "paper" / "geoanchor.tex"
 DURUM = ROOT / "night" / "DURUM.md"
-FILES = (EN, TR, TEX, DURUM)
-TURKISH = {TR, DURUM}          # comma decimals, percent sign leading
+SHARE_EN = ROOT / "PAYLASIM-EN.md"
+SHARE_TR = ROOT / "PAYLASIM.md"
+FILES = (EN, TR, TEX, DURUM, SHARE_EN, SHARE_TR)
+TURKISH = {TR, DURUM, SHARE_TR}     # comma decimals, percent sign leading
+
+# The sharing drafts spell counts out, and a stale one there is worse than a
+# stale one in the README: those texts get pasted into a public post. The
+# mapping only has to cover counts a flight set realistically reaches.
+WORDS_EN = {6: "six", 7: "seven", 8: "eight", 9: "nine", 10: "ten", 11: "eleven"}
+WORDS_TR = {6: "altı", 7: "yedi", 8: "sekiz", 9: "dokuz", 10: "on", 11: "on bir"}
 
 
 def load(p: Path):
@@ -63,9 +72,14 @@ class Claims:
 
     def __init__(self):
         self.rows: list[tuple[str, float, int, bool, list[Path]]] = []
+        self.words: list[tuple[str, int, list[Path]]] = []
 
     def add(self, label, value, digits, files, pct=False):
         self.rows.append((label, value, digits, pct, list(files)))
+
+    def add_word(self, label, count, files):
+        """A count the prose spells out rather than writing in digits."""
+        self.words.append((label, int(count), list(files)))
 
 
 def build() -> Claims:
@@ -120,6 +134,11 @@ def build() -> Claims:
     uz = load(NIGHT / "06_uzlasma_1000.json")["ozet"]["uzlasma"]["dog+sobel"]
     c.add("uzlasma ham kesinlik", uz["kesinlik"] * 100, 0, [EN, TR, DURUM], pct=True)
     c.add("uzlasma ham duyarlilik", uz["duyarlilik"] * 100, 0, [EN, TR, DURUM], pct=True)
+
+    # --- the sharing drafts, where counts are spelled out -------------------
+    calisan = sum(1 for i in zorluk.values() if i["tutma_orani"] >= 0.5)
+    c.add_word("degerlendirilen ucus", ozet["n_ucus"], [SHARE_EN, SHARE_TR])
+    c.add_word("calisan ucus", calisan, [SHARE_EN, SHARE_TR])
     return c
 
 
@@ -136,10 +155,19 @@ def main() -> int:
         for f in files:
             if needle(value, digits, f, pct) not in texts[f]:
                 missing.append((label, needle(value, digits, f, pct), f))
+    for label, count, files in claims.words:
+        for f in files:
+            w = (WORDS_TR if f in TURKISH else WORDS_EN).get(count, str(count))
+            # Word boundaries, not substring: Turkish "on" sits inside konum,
+            # once and orani, so a plain `in` would pass no matter what the
+            # document said.
+            if not re.search(r"\b" + re.escape(w) + r"\b", texts[f].lower()):
+                missing.append((label, w, f))
 
-    checks = sum(len(r[4]) for r in claims.rows)
+    checks = (sum(len(r[4]) for r in claims.rows)
+              + sum(len(w[2]) for w in claims.words))
     width = max(len(r[0]) for r in claims.rows) + 2
-    print(f"{len(claims.rows)} iddia, {checks} dosya kontrolu\n")
+    print(f"{len(claims.rows) + len(claims.words)} iddia, {checks} dosya kontrolu\n")
     if missing:
         for label, n, f in missing:
             print(f"  EKSIK  {label:{width}s} '{n}' -> {f.relative_to(ROOT)}")
@@ -151,6 +179,9 @@ def main() -> int:
     for label, value, digits, pct, files in claims.rows:
         shown = needle(value, digits, EN, pct)
         print(f"  ok  {label:{width}s} {shown:>9s}  "
+              f"{', '.join(f.name for f in files)}")
+    for label, count, files in claims.words:
+        print(f"  ok  {label:{width}s} {WORDS_EN.get(count, count):>9s}  "
               f"{', '.join(f.name for f in files)}")
     print("\nHepsi tutuyor.")
     return 0

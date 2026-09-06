@@ -26,10 +26,10 @@ kamera ve önceden indirilmiş bir uydu haritası.
   güvenilmez. Aynı uçuşta karelerin dörtte birinde hiç tutmadı.
 
 İkisini bir parçacık süzgecinde birleştirdim. Sonra en önemli kısmı yaptım:
-tek uçuşta durmadım, **dokuz gerçek uçuşta** denedim — 406 metreden 2572
+tek uçuşta durmadım, **on gerçek uçuşta** denedim — 406 metreden 2572
 metreye irtifa, 2016'dan 2023'e tarih, uçuş başına 9 ile 103 kilometre.
 
-Sonuçlar ikiye ayrıldı. Altı uçuşta 8 ile 25 metre arası, karelerin
+Sonuçlar ikiye ayrıldı. Yedi uçuşta 8 ile 25 metre arası, karelerin
 %99,7'sinde konum. Üç uçuşta ise sistem çöktü.
 
 İlginç olan kısım şu: **hangi uçuşun hangi gruba düşeceğini önceden söyleyen
@@ -57,9 +57,16 @@ Yol boyunca üç şey buldum, hiçbiri bana söylenmemişti:
 
 Hepsi 4 GB'lık bir dizüstü ekran kartında çalışıyor.
 
-Çalışmayan üç uçuşu da, ağır titreşimde sistemin kırıldığını da depoda
-yazdım. Bir sistemin nerede çalışmadığını bilmek, nerede çalıştığını
-bilmek kadar önemli.
+Sonra aynı soruyu geceye taşıdım: termal kamerayla, ayrı bir veri kümesinde.
+Gündüz sistemi gecede bozulmuyor, **duruyor** — LoFTR 100 karenin 100'ünde
+sıfır iç nokta veriyor. Ama aynı yasa orada da geçerli çıktı, hatta daha
+güçlü biçimde: bir karonun konumlanabilir olup olmadığını, **sadece haritaya
+bakarak**, eşleşme hiç denenmeden söyleyebiliyorsunuz. Bu ölçü, eşleşme
+yapıldıktan *sonra* hesaplanan iç nokta sayısından daha iyi yorduyor.
+
+Çalışmayan üç uçuşu da, ağır titreşimde sistemin kırıldığını da, gecenin
+hâlâ çalışan bir sistem olmadığını da depoda yazdım. Bir sistemin nerede
+çalışmadığını bilmek, nerede çalıştığını bilmek kadar önemli.
 
 #bilgisayarlıgörü #İHA #seyrüsefer #yapayzeka
 
@@ -68,6 +75,7 @@ bilmek kadar önemli.
 ## İlk yorum
 
 Depo: github.com/YusufGUNEL/GeoAnchor
+Makale (IEEE konferans biçimi, 6 sayfa): depoda `paper/geoanchor.pdf`
 
 Veri: UAV-VisLoc (arXiv:2405.11936) — 9 gerçek tarama uçuşu. Gerçek konum
 işlenmiş GNSS; düz uçuş hatlarındaki sapması 1,5 m ölçüldü, yani referansın
