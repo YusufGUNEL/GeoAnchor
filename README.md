@@ -22,6 +22,14 @@ GNSS of any kind**.
 
 ---
 
+A manuscript covering this work is in [`paper/`](paper/) —
+*Knowing When You Do Not Know: Sequential Map-Anchored Visual Localization for
+GNSS-Denied UAV Flight*, IEEE conference format, built from the same result
+files quoted below. See [`paper/ARXIV.md`](paper/ARXIV.md) for submission
+metadata.
+
+---
+
 ## Headline result
 
 Evaluated on **ten real UAV survey flights** (UAV-VisLoc) spanning
@@ -422,6 +430,99 @@ investigation. The default remains LoFTR.
 
 ---
 
+## Night: what happens when you actually bring a thermal sensor
+
+The robustness study ends by saying the extreme-darkness case needs a different
+sensor, not a software fix. That is easy to write and easy to leave there, so I
+went and measured it, on a **different dataset**:
+[Boson-nighttime](https://huggingface.co/datasets/xjh19972/boson-nighttime) —
+26,568 aligned thermal/satellite pairs, 512×512, ground truth by construction.
+The dataset forbids redistribution, so `night/veri/` is gitignored; the scripts
+are all here and download it themselves.
+
+**The daylight system does not degrade at night. It stops.** LoFTR on raw
+thermal returns zero inliers on 100 frames out of 100. Not a worse position — no
+position.
+
+The reason is visible in one picture. Thermal and optical share almost nothing
+about brightness, and almost everything about structure:
+
+![Why night matching fails](figures/30_gece_neden.png)
+
+So the fix is to throw appearance away. A CLAHE + difference-of-Gaussians
+band-pass, applied identically to both sides, is enough to move the needle off
+zero. Same pair, three configurations:
+
+![Night evidence](figures/31_gece_kanit.png)
+
+| Arm | Correctly located | Precision |
+|---|---|---|
+| LoFTR, raw | **0%** | — |
+| RoMa, raw | 2% | 2% — accepts every frame |
+| LoFTR, Sobel | 12% | 86% |
+| **RoMa, CLAHE+DoG** | **16%** | 16% |
+
+Note the RoMa row repeats the daylight lesson exactly: it answers on every
+frame and is wrong on almost all of them.
+
+### The real problem at night is not matching. It is knowing.
+
+The correct answer is already found on 9–16% of frames. What was missing was a
+way to tell those from the rest. Four verification measures, scored by AUC over
+**1000 frames** (0.5 is a coin flip):
+
+| Measure | AUC |
+|---|---|
+| gradient orientation agreement, cos 2Δ | **0.878** |
+| inlier count | 0.803 |
+| −NCC of band-passed images | 0.781 |
+| mutual information | 0.489 — useless |
+
+The inlier count is worth a note. I had written that it stops working at night;
+my own measurement refuted that. What broke was the daylight *threshold*, not
+the signal.
+
+### Turning that into a gate, honestly
+
+A particle filter survives silence — GeoAnchor already coasts through 23% of
+daylight frames. It does not survive a confident wrong fix. So the operating
+point is chosen for precision.
+
+The first version of this gate reported **100% precision at 45% recall**, on
+five accepted frames, with the threshold chosen on the very frames it was
+scored against. Both problems are now fixed: 1000 frames, and the threshold is
+fitted on half and measured on the other half over 400 random splits.
+
+| | Precision | Recall |
+|---|---|---|
+| as first reported (n=5, in-sample) | 100% | 45% |
+| **held-out, 1000 frames** | **92%** | **28%** |
+
+### Where it stands
+
+A trustworthy anchor on roughly **2.4%** of frames, against 70–100% in
+daylight. That is a measured finding, not a working night system, and the
+bottleneck is named: not the gate, but how few correct fixes exist to gate.
+
+One more measurement says which direction is worth taking. Do the
+representations succeed on the same frames or on different ones? Per-frame
+records over 150 frames: sobel 9%, CLAHE+DoG 9%, DoG 7%, **union 11%** — only
+4 frames of 150 are unique to a single representation. **They find the same
+frames.** This family is at its ceiling, so adding representations will not
+open the bottleneck; a trained cross-modal matcher is the next real step.
+
+The same run produced something unplanned. Accepting a fix when two
+representations independently land within 20 px of each other gives **82%
+precision at 56% recall** for DoG + Sobel, against 92%/28% for the tuned
+single-score gate — twice the recall, and with *no threshold to tune*, since
+20 px is the accuracy tolerance itself. That would take the reliable anchor
+rate from 2.4% to 6%. It rests on 11 accepted frames, so it is a lead to
+confirm, not a result to quote.
+
+`night/DURUM.md` is the working log for this half of the project.
+
+---
+
 ## Honest limitations
 
 Written down first, so nothing here is oversold.
@@ -500,6 +601,23 @@ python scripts/21_why_flights_differ.py   # why flights differ
 python scripts/23_difficulty_figure.py
 python scripts/22_summary.py
 python scripts/10_demo_video.py       # demo video
+
+# manuscript: English figures at IEEE column width, then the arXiv tarball
+python scripts/30_paper_figures.py
+python scripts/31_arxiv_bundle.py
+```
+
+The night half needs its own dataset (74 GB) and runs separately:
+
+```bash
+python night/indir.py             # download + stream-extract Boson-nighttime
+python night/00_olcek.py          # grid unit in pixels, same-modality ceiling
+python night/01_taban.py          # three arms: ceiling / LoFTR / RoMa
+python night/02_kopru.py roma     # representation sweep
+python night/03_dogrulama.py 1000 # which measure separates right from wrong
+python night/04_kapi.py           # operating point, held-out
+python night/05_kanit.py          # evidence figures
+python night/06_uzlasma.py 150    # do the representations find the same frames?
 ```
 
 Hardware used: Windows 11 laptop, **NVIDIA RTX 3050 Ti, 4 GB VRAM**. Peak
@@ -521,13 +639,26 @@ src/sequential.py       the fused sequential system + online calibration
 src/degrade.py          six realistic image degradations
 ```
 
+```
+scripts/                every measurement, numbered in the order it was run
+night/                  thermal night localization (separate dataset, see night/DURUM.md)
+paper/                  the manuscript, its figures and the arXiv bundle
+space/                  Hugging Face Space that serves the results interactively
+results/                the JSON and NPZ every number in this README comes from
+```
+
 `ILERLEME.md` is the full working log — every measurement, every dead end,
 every bug found and what it cost. Written as the work happened, in Turkish.
 
 ## Data
 
-UAV-VisLoc (Xu et al., 2024, arXiv:2405.11936) — flight 03, released for
-non-commercial research. Satellite basemap ships with the dataset.
+UAV-VisLoc (Xu et al., 2024, arXiv:2405.11936) — released for non-commercial
+research. Satellite basemaps ship with the dataset.
+
+The night section uses Boson-nighttime v1 (`xjh19972/boson-nighttime` on
+Hugging Face), gated but granted instantly, non-commercial research only and
+**redistribution is not permitted** — so nothing from it is committed here,
+not even sample frames.
 
 ## Licence
 

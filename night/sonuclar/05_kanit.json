@@ -1,0 +1,18 @@
+{
+  "tarama_indeksi": 5,
+  "taranan": 60,
+  "kollar": {
+    "loftr_ham": {
+      "ic_nokta": 0,
+      "hata_px": null
+    },
+    "roma_ham": {
+      "ic_nokta": 196,
+      "hata_px": 444.28321473852765
+    },
+    "roma_dog": {
+      "ic_nokta": 1219,
+      "hata_px": 8.225261842576181
+    }
+  }
+}

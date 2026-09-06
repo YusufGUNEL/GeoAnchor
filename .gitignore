@@ -32,7 +32,12 @@ paper/*.aux
 paper/*.log
 paper/*.out
 paper/*.synctex.gz
+paper/*.fls
+paper/*.fdb_latexmk
 paper/_*.png
+
+# arXiv paketi: scripts/31_arxiv_bundle.py ile yeniden uretiliyor
+paper/arxiv-submission.tar.gz
 
 # gece calismasi: veri kumesi lisansi yeniden dagitimi yasakliyor, ornekler dahil
 night/veri/

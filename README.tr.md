@@ -22,6 +22,13 @@ metre seviyesi konum veriyorlar.
 
 ---
 
+Bu çalışmanın makalesi [`paper/`](paper/) altında —
+*Knowing When You Do Not Know: Sequential Map-Anchored Visual Localization for
+GNSS-Denied UAV Flight*, IEEE konferans biçimi, aşağıdaki sonuçların çıktığı
+dosyalardan üretiliyor. Gönderim üstverisi: [`paper/ARXIV.md`](paper/ARXIV.md).
+
+---
+
 ## Ana sonuç
 
 **On gerçek İHA tarama uçuşunda** değerlendirildi (UAV-VisLoc):
@@ -415,6 +422,96 @@ Varsayılan LoFTR olarak kalıyor.
 
 ---
 
+## Gece: gerçekten termal sensör taktığında ne oluyor
+
+Dayanıklılık bölümü "aşırı karanlık için yazılım düzeltmesi değil, farklı
+sensör gerekir" diyerek bitiyor. Bunu yazmak kolay ve orada bırakmak da kolay,
+o yüzden gidip ölçtüm — **ayrı bir veri kümesiyle**:
+[Boson-nighttime](https://huggingface.co/datasets/xjh19972/boson-nighttime),
+26 568 hizalı termal/uydu çifti, 512×512, gerçek konum tanım gereği biliniyor.
+Veri kümesi yeniden dağıtımı yasaklıyor, bu yüzden `night/veri/` gitignore'da;
+betikler burada ve veriyi kendileri indiriyor.
+
+**Gündüz sistemi gecede bozulmuyor, duruyor.** LoFTR ham termalde 100 karenin
+100'ünde sıfır iç nokta veriyor. Daha kötü bir konum değil — konum yok.
+
+Nedeni tek bir görselde duruyor. Termal ile optik parlaklık konusunda neredeyse
+hiçbir şeyi, yapı konusunda neredeyse her şeyi paylaşıyor:
+
+![Gece eşleşmesi neden çöküyor](figures/30_gece_neden.png)
+
+Yani çözüm görünümü atmak. Her iki tarafa aynı biçimde uygulanan CLAHE +
+Gauss-farkı bant-geçireni ibreyi sıfırdan kaldırmaya yetiyor. Aynı çift, üç
+yapılandırma:
+
+![Gece kanıtı](figures/31_gece_kanit.png)
+
+| Kol | Doğru konum | Kesinlik |
+|---|---|---|
+| LoFTR, ham | **%0** | — |
+| RoMa, ham | %2 | %2 — her kareyi kabul ediyor |
+| LoFTR, Sobel | %12 | %86 |
+| **RoMa, CLAHE+DoG** | **%16** | %16 |
+
+RoMa satırı gündüzdeki dersi birebir tekrarlıyor: her karede cevap veriyor ve
+neredeyse hepsinde yanılıyor.
+
+### Gecenin asıl sorunu eşleştirmek değil, bilmek
+
+Doğru cevap karelerin %9-16'sında zaten bulunuyor. Eksik olan, onları
+gerisinden ayırmanın yoluydu. Dört doğrulama ölçütü, **1000 kare** üzerinde
+AUC ile (0,5 yazı tura demek):
+
+| Ölçüt | AUC |
+|---|---|
+| gradyan yönü uyumu, cos 2Δ | **0,878** |
+| iç nokta sayısı | 0,803 |
+| bant-geçirenlerin −NCC'si | 0,781 |
+| karşılıklı bilgi | 0,489 — işe yaramıyor |
+
+İç nokta satırı not düşmeye değer. "Gecede işe yaramıyor" diye yazmıştım;
+kendi ölçümüm çürüttü. Bozulan şey sinyal değil, gündüzden kalma **eşikti**.
+
+### Bunu dürüstçe bir kapıya çevirmek
+
+Parçacık süzgeci suskunluğa dayanır — GeoAnchor gündüz karelerinin %23'ünü
+zaten odometriyle geçiyor. Dayanamadığı şey kendinden emin yanlış fix. Bu
+yüzden çalışma noktası kesinliğe göre seçiliyor.
+
+Bu kapının ilk sürümü **%100 kesinlik / %45 duyarlılık** diyordu; kabul edilen
+kare sayısı beş ve eşik, sınandığı karelerin üstünde seçilmişti. İkisi de
+düzeltildi: 1000 kare, ve eşik karelerin yarısında seçilip diğer yarısında
+ölçülüyor, 400 rastgele bölmeyle.
+
+| | Kesinlik | Duyarlılık |
+|---|---|---|
+| ilk raporlanan (n=5, örneklem-içi) | %100 | %45 |
+| **ayrık kümede, 1000 kare** | **%92** | **%28** |
+
+### Nerede duruyor
+
+Karelerin kabaca **%2,4'ünde** güvenilir çapa; gündüz bu %70-100'dü. Bu
+çalışan bir gece sistemi değil, ölçülmüş bir bulgu — ve darboğazın adı kondu:
+kapı değil, kapıya girecek doğru fix'in azlığı.
+
+Bir ölçüm daha hangi yönün değdiğini söylüyor. Temsiller aynı karelerde mi
+başarılı, farklı karelerde mi? 150 karede kare bazında kayıt: sobel %9,
+CLAHE+DoG %9, DoG %7, **birleşim %11** — 150 karenin yalnızca 4'ü tek bir
+temsile özgü. **Aynı kareleri buluyorlar.** Bu aile tavanına gelmiş; temsil
+eklemek darboğazı açmaz, sıradaki gerçek adım eğitimli cross-modal eşleyici.
+
+Aynı koşu planlanmamış bir şey de üretti. İki temsil birbirinden bağımsız
+olarak 20 px içinde aynı yeri gösterdiğinde fix'i kabul etmek, DoG + Sobel için
+**%82 kesinlik / %56 duyarlılık** veriyor; ayarlanmış tek-ölçüt kapısı %92/%28.
+Duyarlılık iki katı ve *ayarlanacak eşik yok*, çünkü 20 px zaten doğruluk
+toleransının kendisi. Güvenilir çapa oranını %2,4'ten %6'ya çıkarır. 11 kabul
+edilmiş kareye dayanıyor, yani doğrulanacak bir iz — alıntılanacak bir sonuç
+değil.
+
+`night/DURUM.md` projenin bu yarısının çalışma günlüğü.
+
+---
+
 ## Dürüst sınırlar
 
 Hiçbir şey abartılmasın diye önce bunlar yazıldı.
@@ -490,6 +587,23 @@ python scripts/21_why_flights_differ.py   # why flights differ
 python scripts/23_difficulty_figure.py
 python scripts/22_summary.py
 python scripts/10_demo_video.py       # gösterim videosu
+
+# makale: IEEE sütun ölçüsünde İngilizce şekiller, ardından arXiv paketi
+python scripts/30_paper_figures.py
+python scripts/31_arxiv_bundle.py
+```
+
+Gece kolu kendi veri kümesini istiyor (74 GB) ve ayrı koşuyor:
+
+```bash
+python night/indir.py             # Boson-nighttime indir + akış halinde aç
+python night/00_olcek.py          # grid biriminin piksel karşılığı, aynı-kip tavanı
+python night/01_taban.py          # üç kol: tavan / LoFTR / RoMa
+python night/02_kopru.py roma     # temsil taraması
+python night/03_dogrulama.py 1000 # doğruyu yanlıştan hangi ölçüt ayırıyor
+python night/04_kapi.py           # çalışma noktası, ayrık kümede
+python night/05_kanit.py          # kanıt şekilleri
+python night/06_uzlasma.py 150    # temsiller aynı kareleri mi buluyor?
 ```
 
 Kullanılan donanım: Windows 11 dizüstü, **NVIDIA RTX 3050 Ti, 4 GB VRAM**.
@@ -511,13 +625,26 @@ src/sequential.py       birleşik sıralı sistem + çevrimiçi kalibrasyon
 src/degrade.py          altı gerçekçi görüntü bozulması
 ```
 
+```
+scripts/                her ölçüm, çalıştırıldığı sırayla numaralı
+night/                  gece termal konumlandırma (ayrı veri kümesi, bkz night/DURUM.md)
+paper/                  makale, şekilleri ve arXiv paketi
+space/                  sonuçları etkileşimli sunan Hugging Face Space
+results/                bu README'deki her sayının çıktığı JSON ve NPZ dosyaları
+```
+
 `ILERLEME.md` tam çalışma günlüğü: her ölçüm, her çıkmaz sokak, bulunan her
 hata ve neye mal olduğu. İş yapılırken yazıldı.
 
 ## Veri
 
-UAV-VisLoc (Xu vd., 2024, arXiv:2405.11936) — uçuş 03, ticari olmayan
-araştırma için yayımlandı. Uydu haritası veri kümesiyle birlikte geliyor.
+UAV-VisLoc (Xu vd., 2024, arXiv:2405.11936) — ticari olmayan araştırma için
+yayımlandı. Uydu haritaları veri kümesiyle birlikte geliyor.
+
+Gece bölümü Boson-nighttime v1 kullanıyor (Hugging Face'te
+`xjh19972/boson-nighttime`); kapılı ama anında onaylanıyor, yalnızca ticari
+olmayan araştırma için ve **yeniden dağıtımına izin verilmiyor** — bu yüzden
+ondan hiçbir şey burada tutulmuyor, örnek kare bile.
 
 ## Lisans
 

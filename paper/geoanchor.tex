@@ -3,6 +3,7 @@
 \usepackage{cite}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{graphicx}
+\graphicspath{{figures/}}
 \usepackage{textcomp}
 \usepackage{xcolor}
 \usepackage{booktabs}
@@ -11,8 +12,9 @@
 
 \begin{document}
 
-\title{Knowing When You Do Not Know: Sequential Map-Anchored\\
-Visual Localization for GNSS-Denied UAV Flight}
+\title{Knowing When You Do Not Know:\\
+Sequential Map-Anchored Visual Localization\\
+for GNSS-Denied UAV Flight}
 
 \author{\IEEEauthorblockN{Yusuf G\"unel}
 \IEEEauthorblockA{\textit{Independent Researcher} \\
@@ -97,7 +99,7 @@ correcting for it reduces odometry drift by a factor of 4.4
 \item A pre-flight predictor of deployability. The fraction of frames that
 match the basemap at a known position separates working from failing flights
 with $\rho = -0.764$ against log error and a threshold near 50\%. Because it
-requires no flight, it turns "will this work here?" into a measurement
+requires no flight, it turns ``will this work here?'' into a measurement
 (Section~\ref{sec:law}).
 \item A negative result on matcher choice, with the mechanism identified: a
 stronger dense matcher degrades localization because it lacks the ability to
@@ -210,6 +212,31 @@ changes.
 
 \section{Experimental Setup}
 
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{fig1_trajectory.pdf}
+\caption{Flight 03 (768 frames, 74\,km, 466\,m AGL) over its
+8.8$\times$7.3\,km orthophoto. Both panels share one frame of reference.
+(a) Visual odometry alone accumulates heading and scale error until it leaves
+the basemap entirely, ending 2803\,m from truth ($\times$). (b) The same
+odometry anchored by map matches stays on the true track for every frame; the
+marked frames are the four segments where matching collapses and the filter
+coasts on the motion model alone until it re-anchors.}
+\label{fig:trajectory}
+\end{figure*}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig2_cdf.pdf}
+\caption{Error distribution on flight 03. The denominator is every frame of
+the flight, not every frame a method chose to answer, so a curve that stops
+short is a method that declined: single-frame matching ends at 77\% because
+it produces nothing on the rest. Fusion converts that shortfall into coverage
+without giving up the accuracy of the frames matching does solve.}
+\label{fig:cdf}
+\end{figure}
+
+
 We use UAV-VisLoc~\cite{uavvisloc}, which pairs real survey flights with
 georeferenced basemaps and post-processed GNSS. We verified the reference
 quality independently: on straight survey legs the cross-track scatter is
@@ -232,6 +259,17 @@ with LoFTR.
 
 \section{Results}
 \label{sec:results}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig3_law.pdf}
+\caption{Match rate against final accuracy across the ten flights. Match rate
+is measured with the true position given, so it describes the data rather than
+the algorithm, and it can be evaluated on a planned route before flying.
+Colour encodes altitude, which does not separate the groups: the 2572\,m
+flight (11) succeeds and the 551\,m flight (08) fails.}
+\label{fig:law}
+\end{figure}
 
 \begin{table*}[t]
 \caption{Per-flight results, fully automatic. The seven flights above the
@@ -263,6 +301,9 @@ median error between 8.4\,m and 24.8\,m and coverage at or above 99.7\%. Three
 fail.
 
 \subsection{Component comparison}
+
+Fig.~\ref{fig:trajectory} shows the two failure regimes on the map itself and
+Fig.~\ref{fig:cdf} the resulting error distributions.
 On flight 03, comparing the three approaches directly: visual odometry alone
 covers every frame but drifts to 2803\,m; single-frame map matching achieves
 5.46\,m median but only on the 76.6\% of frames it can solve, at 3.80 matching
@@ -280,7 +321,8 @@ unmatched\-able. We measure the latter directly: with the true position given,
 what fraction of frames match the basemap at all? This is a property of the
 data, since no search is involved.
 
-The answer separates the two groups. Flights with match rate $\geq 50\%$ give
+The answer separates the two groups (Fig.~\ref{fig:law}).
+Flights with match rate $\geq 50\%$ give
 median errors of 8.35--24.79\,m (median 15.44\,m) at coverage $\geq$99.7\%;
 those below give 53--648\,m at 80--85\% coverage. The correlation between match
 rate and log error is $-0.764$. Altitude is not the discriminator: the 2572\,m

@@ -579,4 +579,146 @@ Boşluk net: modern dedektörsüz eşleyici + sıralı süzgeç + uçak + metrik
 **Hedef:** SİU 2026 temmuzda geçti, SİU 2027 şubat civarı, ELECO iki yılda bir
 (sonraki 2027). Bu yüzden **önce arXiv ön baskısı**, aynı metin şubatta SİU'ya.
 
-**Not:** LaTeX kurulu değil. Overleaf'e yüklenip derlenebilir.
+**Not:** LaTeX kurulu değil sanılmıştı; Faz 10'da yanlış olduğu görüldü (TinyTeX kurulu, yerelde derleniyor).
+
+---
+
+## Faz 10 — Makale yayına hazır (2026-09-06)
+
+Faz 9'un taslağı derleniyordu ama **içinde tek bir şekil yoktu**. Bir görsel
+konumlandırma makalesinin dört sayfa düz metin olması, depoda on iki hazır
+şekil dururken, savunulacak bir tercih değil.
+
+**LaTeX aslında kuruluydu.** Faz 9'un "LaTeX yok, Overleaf'e yükle" notu
+yanlıştı: TinyTeX `~/AppData/Roaming/TinyTeX` altında duruyor, `latexmk` ile
+yerelde derleniyor. Not düzeltildi.
+
+### Şekiller
+
+`figures/` altındakiler Türkçe etiketli ve README ölçüsünde — makaleye
+giremezler. `scripts/30_paper_figures.py` yazıldı: aynı `results/` dosyalarını
+okuyup İngilizce ve IEEE sütun ölçüsünde (tek sütun 3,5", metin bloğu 7,16")
+vektör PDF üretiyor. Şekillerin metinden ayrı düşmesi böylece imkânsız.
+
+| şekil | ne gösteriyor |
+|---|---|
+| `fig1_trajectory.pdf` | uçuş 03, ortofoto üstünde: odometri haritayı terk ediyor, füzyon gerçeğin üstünde kalıyor |
+| `fig2_cdf.pdf` | hata birikimli dağılımı, payda **uçuşun her karesi** |
+| `fig3_law.pdf` | on uçuşta eşleşme oranı ↔ nihai hata |
+
+İki tasarım kararı ölçüldükten sonra değişti:
+
+1. **İki panel tek çerçeveye alındı.** Başta her panel kendi içeriğine göre
+   ölçekleniyordu; okur iki farklı haritayı karşılaştırıyordu. Sürüklenmenin
+   büyüklüğü ancak füzyonun çizildiği çerçevede okunur.
+2. **CDF'in göstergesi kaldırıldı, eğriler doğrudan etiketlendi.** Tek sütun
+   genişliğinde okunacak kadar büyük bir gösterge kutusu, tam da savı taşıyan
+   bölgeyi kapatıyordu.
+
+### arXiv paketi
+
+`scripts/31_arxiv_bundle.py`. Klasörü sıkıştırmıyor; gönderimi bozan üç şeyi
+tek tek denetliyor: arşivde kalmış `.aux`, metinde geçip diskte olmayan şekil,
+ve her göreli yolu kıran fazladan üst dizin. Önce makaleyi baştan derliyor —
+yerelde derlenmeyen kaynak sunucuda da derlenmez.
+
+**Sınandı:** paket temiz bir dizine açıldı ve sıfırdan derlendi → 5 sayfa,
+çözülmemiş referans yok. 4,9 MB (arXiv sınırı 50 MB).
+
+Üstveri `paper/ARXIV.md`'de: `cs.CV` birincil, `cs.RO` çapraz liste, CC BY 4.0.
+
+### Dizgi
+
+- Başlık üç dengesiz satıra bölünüyordu; satır sonları elle ayarlandı.
+- `"will this work here?"` düz tırnakla yazılmıştı, LaTeX ikisini de kapanış
+  tırnağı basıyordu → `` ``...'' ``.
+
+**Durum:** 5 sayfa, 3 şekil, 2 tablo. Gönderilmeye hazır; kalan tek iş
+arXiv formunu doldurmak.
+
+---
+
+## Faz 11 — Gece: taban çizgisinin dürüst rakamları (2026-09-06)
+
+05 Eylül'de gece termal kolunun taban çizgisi bir günde çıkarılmıştı
+(`night/DURUM.md`). Elde bir bulgu vardı ama iki tanesi **güvenilemez**
+sayıya dayanıyordu. Bu faz onları ölçtü.
+
+### Kapı n=5 üstüne kuruluydu
+
+`04_kapi.py` "%100 kesinlik / %45 duyarlılık" diyordu; kabul edilen kare
+sayısı **beş**. DURUM'un kendi notu şüpheliydi: 5/5'in Wilson alt sınırı ~%57.
+
+1000 karelik doğrulama koşuldu (~37 dk, RTX 3050 Ti). Sıralama değişmedi,
+değerler biraz düştü:
+
+| ölçüt | AUC n=1000 | AUC n=120 |
+|---|---|---|
+| yön uyumu | **0,878** | 0,885 |
+| iç nokta | 0,803 | 0,854 |
+| -ncc (dog) | 0,781 | 0,807 |
+| karşılıklı bilgi | 0,489 | 0,521 |
+
+1000 karenin 86'sında (%8,6) doğru fix var.
+
+### Eşik ölçtüğü verinin üstünde seçiliyordu
+
+Asıl sorun örneklem büyüklüğü değildi. `best_at_precision` eşiği, kesinliği
+**ölçtüğü** karelerde arıyordu — az sayıda doğru fix varken geriye dönüp
+bakınca hep kusursuz görünen bir eşik bulunur. Faz 7'deki "zarar verme
+kuralı"nın aynısı burada eksikti.
+
+`04_kapi.py` artık eşiği karelerin yarısında seçip diğer yarısında ölçüyor,
+400 rastgele bölmeyle, medyan ve %10'luk dilim raporlanıyor.
+
+**Dürüst rakam: %92 kesinlik / %28 duyarlılık** (eski: %100 / %45).
+
+Aynı düzeltme ikinci bir hatayı açığa çıkardı: kazanan **yalnızca duyarlılığa**
+göre seçiliyordu, yani en çok aşırı-uyan ölçüt kazanıyordu. 120 karelik koşuda
+bu `-ncc_dog`'du — üç ölçüt içinde en yüksek duyarlılık, en düşük kesinlik.
+Kapının bütün amacı kesinlik olduğu için sıralama düzeltildi: önce kesinlik
+hedefini ayrık kümede tutturanlar süzülüyor.
+
+### Kanıt figürü kendi metnini yalanladı
+
+`night/05_kanit.py` üç kolu tek çift üzerinde gösteriyor. İlk çıktıda 2. satırın
+başlığı "kendinden emin ve YANLIŞ" diyordu, altındaki ölçüm ise 16 px — yani
+**doğru**. Seçim ölçütüm eksikti: "LoFTR kör + clahe+dog doğru" arıyordu, ama
+RoMa ham karelerin %2'sinde doğru ve tam öyle bir çifte denk gelinmişti.
+
+Ölçüt üçe çıkarıldı (RoMa ham *yanlış* da olmalı) ve satır başlıklarındaki
+oranlar artık `night/sonuclar/` dosyalarından okunuyor, elle yazılmıyor.
+Ayrıca ayak izi kutuları uydu panelinin dışına taşıyordu; kare merkezi +
+hata oku ile değiştirildi.
+
+Üretilenler: `figures/30_gece_neden.png`, `figures/31_gece_kanit.png`.
+
+### Temsil ailesinin tavanı ölçüldü
+
+02 her temsili tek tek ölçmüştü: sobel %12, dog %12, clahe+dog %16. Bu iki
+bambaşka dünyayla uyumlu — aynı kolay kareler mi başarılı, farklı kareler mi?
+Birincisiyse %16 tavana yakın; ikincisiyse birleşim çok daha büyük.
+
+`night/06_uzlasma.py` kare bazında kayıt tutuyor. 150 kare, üç temsil:
+
+| | doğru | sadece bu temsil |
+|---|---|---|
+| clahe+dog | %9 | 1 |
+| sobel | %9 | 3 |
+| dog | %7 | 0 |
+| **birleşim** | **%11** | — |
+
+**Aynı kareler.** 150 karenin 4'ü tek bir temsile özgü. Temsil eklemek
+darboğazı açmaz — sıradaki adım eğitimli cross-modal eşleyici olmak zorunda.
+Bu artık bir tahmin değil, ölçüm.
+
+**Yan ürün:** iki temsil 20 px içinde aynı yeri gösteriyorsa kabul etmek,
+`dog + sobel` için %82 kesinlik / %56 duyarlılık veriyor — 04'ün ayarlanmış
+kapısı %92 / %28. Duyarlılık iki katı ve **ayarlanacak eşiği yok**: 20 px
+zaten doğruluk toleransı. Güvenilir çapa oranı %2,4 → %6.
+
+Ama n=11; 9/11'in Wilson alt sınırı ~%52. Bu rakam 1000 kareyle doğrulanmadan
+kullanılamaz — ve bu fazın dersi tam olarak buydu.
+
+**Ders (tekrar):** Küçük örneklemde seçilen eşik, kendi verisinde her zaman
+iyi görünür. Ayırmadan ölçme.

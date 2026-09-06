@@ -22,6 +22,7 @@ import plotly.graph_objects as go
 
 ASSETS = Path(__file__).parent / "assets"
 REPO = "https://github.com/YusufGUNEL/GeoAnchor"
+PAPER = f"{REPO}/blob/main/paper/geoanchor.pdf"
 
 DIFFICULTY = json.loads((ASSETS / "21_flight_difficulty.json").read_text(encoding="utf-8"))
 MULTI = json.loads((ASSETS / "20_multiflight.json").read_text(encoding="utf-8"))
@@ -186,7 +187,7 @@ VRAM**.
 The interesting part is not the median. It is that a single measurable property
 tells you *in advance* which flights it will handle — and it is not altitude.
 
-[Code and full write-up on GitHub]({REPO})
+[Code and full write-up on GitHub]({REPO}) - [the manuscript]({PAPER})
 """
 
 

@@ -1,21 +1,60 @@
 {
-  "yon_uyumu": null,
-  "ic_nokta": {
-    "kesinlik": 1.0,
-    "duyarlilik": 0.45454545454545453,
-    "esik": 2958.0,
-    "kabul_edilen": 5
-  },
-  "-ncc_dog": {
-    "kesinlik": 1.0,
-    "duyarlilik": 0.2727272727272727,
-    "esik": 0.0858145152546421,
-    "kabul_edilen": 3
-  },
-  "yon x ic_nokta": {
-    "kesinlik": 1.0,
-    "duyarlilik": 0.45454545454545453,
-    "esik": 0.29691706629410464,
-    "kabul_edilen": 5
+  "kayit": "03_dogrulama_1000.json",
+  "n": 1000,
+  "dogru": 86,
+  "hedef_kesinlik": 0.9,
+  "olcutler": {
+    "yon_uyumu": {
+      "ornek_ici": null,
+      "ayrik": null
+    },
+    "ic_nokta": {
+      "ornek_ici": {
+        "kesinlik": 1.0,
+        "duyarlilik": 0.16279069767441862,
+        "esik": 3154.0,
+        "kabul_edilen": 14
+      },
+      "ayrik": {
+        "bolme": 400,
+        "sessiz_bolme": 0,
+        "kesinlik_medyan": 0.8888888888888888,
+        "kesinlik_p10": 0.7272727272727273,
+        "duyarlilik_medyan": 0.17142857142857143,
+        "esik_medyan": 2870.0
+      }
+    },
+    "-ncc_dog": {
+      "ornek_ici": {
+        "kesinlik": 0.9130434782608695,
+        "duyarlilik": 0.2441860465116279,
+        "esik": 0.07293838239544331,
+        "kabul_edilen": 23
+      },
+      "ayrik": {
+        "bolme": 400,
+        "sessiz_bolme": 0,
+        "kesinlik_medyan": 1.0,
+        "kesinlik_p10": 0.7142857142857143,
+        "duyarlilik_medyan": 0.23255813953488372,
+        "esik_medyan": 0.079648334384713
+      }
+    },
+    "yon x ic_nokta": {
+      "ornek_ici": {
+        "kesinlik": 0.9310344827586207,
+        "duyarlilik": 0.313953488372093,
+        "esik": 0.2822196511422771,
+        "kabul_edilen": 29
+      },
+      "ayrik": {
+        "bolme": 400,
+        "sessiz_bolme": 0,
+        "kesinlik_medyan": 0.9230769230769231,
+        "kesinlik_p10": 0.7607142857142858,
+        "duyarlilik_medyan": 0.2841614906832298,
+        "esik_medyan": 0.2822196511422771
+      }
+    }
   }
 }
