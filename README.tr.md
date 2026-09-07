@@ -697,8 +697,9 @@ python scripts/10_demo_video.py       # gösterim videosu
 python scripts/30_paper_figures.py
 python scripts/31_arxiv_bundle.py
 
-# belgeler hâlâ results/'un dediğini mi söylüyor?
+# belgeler hâlâ results/'un dediğini mi söylüyor, yolları tutuyor mu?
 python scripts/32_tutarlilik.py
+python scripts/33_baglanti.py
 ```
 
 Gece kolu kendi veri kümesini istiyor (74 GB) ve ayrı koşuyor:

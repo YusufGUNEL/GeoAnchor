@@ -21,7 +21,8 @@ Two rules that decide whether these land:
    and what does not work.
 
 Post the Space link, not just the repo — a page people can click through beats
-a page they have to clone.
+a page they have to clone. The Space does not exist yet; see *Indexes and the
+preprint* below for the two commands that create it.
 
 ---
 
@@ -169,9 +170,19 @@ not post both on the same day.
 
 ## Indexes and the preprint
 
-- **Hugging Face Space** — the folder `space/` is ready. Create a Space
-  (Gradio SDK), push the folder, put the resulting link everywhere `<SPACE_LINK>`
-  appears above.
+- **Hugging Face Space** — not deployed yet, which is why `<SPACE_LINK>`
+  still appears above. Two commands:
+
+  ```bash
+  python space/hazirla.py            # build assets from results/ and night/
+  python space/dagit.py --kuru-calisma   # check what would be uploaded
+  python space/dagit.py              # create the Space and push
+  ```
+
+  `dagit.py` refuses to upload without the assets, because a Space that starts
+  and then throws on its first read is worse than no Space. It prints the URL;
+  put that everywhere `<SPACE_LINK>` appears above, and nowhere post a draft
+  that still contains the literal placeholder.
 - **arXiv** — the manuscript is finished and the upload is built by
   `python scripts/31_arxiv_bundle.py`; the submission form's metadata is in
   `paper/ARXIV.md`. Category cs.CV, cross-list cs.RO. A first submission to

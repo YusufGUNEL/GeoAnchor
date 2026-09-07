@@ -884,3 +884,122 @@ tek-ölçüt kapısının %92 / %2,4 / 1,0×'ine karşı. Sistem olarak değil,
 **Durum:** 6 sayfa, 3 şekil, 2 tablo, temiz dizinde derleniyor, arXiv paketi
 hazır. Gece kolu: ölçülmüş bir yasa, ondan türetilmiş bir çalışma noktası ve
 nereye bakılmayacağını söyleyen bir tavan.
+
+---
+
+## Faz 14 — Sunum katmanı ve depo denetimi (2026-09-07)
+
+Bu faz yeni ölçüm üretmedi; projenin **dışarıya bakan yüzünü** düzeltti ve
+depoyu baştan sona denetledi.
+
+### İngilizce README Türkçe şekiller gösteriyordu
+
+Metin İngilizceydi, şekillerin üzerindeki yazılar Türkçe. Bir kez çevirmek
+yarın yeniden bozulurdu; `src/figtext.py` eklendi ve her şekil betiği dizelerini
+iki dilli bir tabloda tutup dili komut satırından alıyor:
+
+```
+python scripts/09_figures.py          # Ingilizce -> figures/
+python scripts/09_figures.py --tr     # Turkce    -> figures/tr/
+```
+
+İngilizce varsayılan, çünkü GitHub'ın açtığı sayfa README.md. Geçirilenler:
+hero, karşılaştırma, dağılım, dayanıklılık, uçuş zorluğu, üç gece şekli ve
+demo videosu.
+
+### 10_karsilastirma yeniden tasarlandı
+
+Sağ panel gerçek ile kestirimi on yedi paralel kolun üstünde üst üste kalın
+çizgiyle çiziyordu. **8,8 km genişlikte 6 m hata çizginin kendisinden küçük**,
+yani o iki çizgi hiçbir zaman ayırt edilemezdi — panel tarama deseni gibi
+okunuyordu ve beyaz gösterge kutucuğu beyaz zeminde görünmüyordu. Üstelik iki
+panel farklı ölçeklerdeydi, yani okur iki farklı harita karşılaştırıyordu.
+
+Artık tek iz çiziliyor ve hataya göre renklendiriliyor: karışma yok, ve şekil
+daha çok şey söylüyor — kestirimin iyi olduğunu değil, rotanın *neresinde* kötü
+olduğunu.
+
+### Şekiller metinden daha uzun süre yalan söylüyor
+
+Üç ayrı yerde eskimiş sayı bulundu ve üçü de görüntünün içindeydi, yani
+`32_tutarlilik.py` onları okuyamıyordu:
+
+- hero'nun özet satırı "9 real survey flights" diyordu (onuncu uçuş aylar önce
+  eklenmişti) → `results/22_summary.json`'dan geliyor
+- `07_yasa`'nın karşılaştırma çubukları elle yazılmış AUC değerleri
+  kullanıyordu, biri 120 karelik eski koşudan kalma → kayıttan okunuyor
+- Space tablosunun taban satırındaki %2,4 elle yazılmıştı → türetiliyor
+
+### Demo GIF'i: 32,6 MB → 7,9 MB
+
+Yeniden üretim bir kusuru açtı: GIF paletsiz kaydediliyordu. Ölçülen seçenekler:
+
+| | boyut |
+|---|---|
+| 800x450, 128 renk, disposal=2 | 32,6 MB |
+| 800x450, 128 renk, disposal=1 | 20,0 MB |
+| 640x360, 96 renk, disposal=1 | 11,1 MB |
+| 640x360, 64 renk, disposal=1, 150 kare | 9,9 MB |
+| **640x360, 64 renk, disposal=1, 120 kare** | **7,9 MB** |
+
+Tek uyarlanabilir palet ve `disposal=1` — böylece PIL yalnızca değişen bölgeyi
+saklıyor. Kare sayısı 150→120 bir küçültme numarası değil düzeltme: 10 fps'te
+120 kare tam 12 saniye, yani README'nin yıllardır yazdığı "12 saniyelik kesit"
+ilk kez doğru.
+
+`demo.mp4` de 16,8 MB'den 81,5 MB'ye çıkmıştı: `quality=7` ayarı imageio-ffmpeg
+sürümüne göre farklı yorumlanıyor. Açık bit hızı (`bitrate="2500k"`) konuldu,
+16,3 MB.
+
+### GeoAnchor Handbook
+
+Projeyi sıfırdan anlatan bir sayfa yayımlandı: problem, dokuz terim, boru
+hattının altı adımı, parçacık süzgecinin içi, **her model seçimi ve onu eleyen
+ölçüm**, sayılar, yasa, gece, kod yapısı, ayar tablosu ve tuzaklar. Beş
+mekanizma diyagramı çizildi. İki README'den ve HF Space'ten bağlantılı.
+
+### `scripts/33_baglanti.py`
+
+`32_tutarlilik.py` sayıları doğruluyordu ama **hiçbir şey yolları
+doğrulamıyordu**. Bir README'nin adını verdiği betik, şekil ya da kaynak dosya
+sessizce yok olabilir ve bunu ilk fark eden, talimatları izleyip duvara toslayan
+okur olur.
+
+Betik 11 belgedeki 102 yolu kontrol ediyor: markdown bağlantıları, gömülü
+görseller ve ters tırnak içindeki dosya yolları. Bilerek işaret edilen ama
+depoda tutulmayan şeyler (indirilen veri, üretilen varlıklar, TeX Live'ın
+sağladığı `IEEEtran.cls`) tahminle değil açık listeyle atlanıyor. Bilerek
+bozularak sınandı: yakaladı ve 1 ile çıktı.
+
+### Depo denetimi
+
+| ne | sonuç |
+|---|---|
+| betik sözdizimi | 49/49 ayrışıyor |
+| import çözümü | hepsi çözülüyor |
+| belge yolları (`33_baglanti.py`) | 11 belge, 102 yol, hepsi yerinde |
+| belge sayıları (`32_tutarlilik.py`) | 26 iddia, 79 kontrol, hepsi tutuyor |
+| makaleler | 6 sayfa (arXiv) ve 4 sayfa (SİU), ikisi de temiz derleniyor |
+
+### HF Space hiç dağıtılmamış
+
+Denetim sırasında çıktı: `space/` klasörü aylardır hazır ama Space hiç
+oluşturulmamış, ve `PAYLASIM-EN.md`'de dört tane `<SPACE_LINK>` yer tutucusu
+duruyor — yani paylaşım taslakları bu hâliyle gönderilemez.
+
+`space/dagit.py` yazıldı: Space'i oluşturup klasörü yüklüyor, varlıklar eksikse
+**reddediyor** (açılıp ilk okumada patlayan bir Space, hiç olmayandan kötüdür),
+ve `--kuru-calisma` ile ne göndereceğini önce gösteriyor. 18 dosya, 18,0 MB.
+
+**Çalıştırılmadı.** Bir Space, kullanıcının hesabı altında herkese açık bir
+sayfa; bu oturumun izni GitHub içindi.
+
+### Kalan
+
+1. **arXiv gönderimi** — paket hazır ve temiz dizinde derlendiği doğrulandı,
+   üstveri `paper/ARXIV.md`'de. cs.CV'ye ilk gönderim onay (endorsement)
+   istiyor; bu hesap işi.
+2. **HF Space** — tek komut, yukarıda.
+3. **Eğitimli cross-modal eşleyici** — Faz 12'den sonra beklentisi düşük:
+   sınırlayan şey eşleyici değil karo içeriği. Ölçülebilir hedef, yapı içeren
+   karolardaki %43'ü yukarı çekmek.

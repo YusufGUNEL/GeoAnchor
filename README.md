@@ -715,8 +715,9 @@ python scripts/10_demo_video.py       # demo video
 python scripts/30_paper_figures.py
 python scripts/31_arxiv_bundle.py
 
-# do the documents still say what results/ says?
+# do the documents still say what results/ says, and do their paths resolve?
 python scripts/32_tutarlilik.py
+python scripts/33_baglanti.py
 ```
 
 The night half needs its own dataset (74 GB) and runs separately:

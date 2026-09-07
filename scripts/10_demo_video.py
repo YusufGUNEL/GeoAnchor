@@ -110,8 +110,12 @@ def main():
     writer = None
     try:
         import imageio
+        # Explicit bitrate rather than quality=: the quality scale is
+        # interpreted differently across imageio-ffmpeg versions and the same
+        # call that produced 16 MB once produced 81 MB later, which is too
+        # large to ship to the Space.
         writer = imageio.get_writer(FIG / "demo.mp4", fps=FPS, codec="libx264",
-                                    quality=7, macro_block_size=8)
+                                    bitrate="2500k", macro_block_size=8)
     except Exception as ex:
         print("imageio yazici acilamadi:", ex)
         import cv2

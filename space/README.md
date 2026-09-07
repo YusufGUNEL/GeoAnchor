@@ -18,6 +18,13 @@ system is pointed at a thermal camera at night.
 Everything shown is precomputed, so the Space runs on free CPU hardware. The
 models and the full pipeline are in the repository.
 
-Assets are generated, not committed: run `python space/hazirla.py` from the
-repository root before pushing, which copies the result arrays and distils
-`night/sonuclar/` into the one summary the night charts read.
+Assets are generated, not committed:
+
+```bash
+python space/hazirla.py     # copy result arrays, distil night/sonuclar/
+python space/dagit.py       # create the Space and upload
+```
+
+`hazirla.py` copies the per-flight arrays and the demo clip, and reduces
+`night/sonuclar/` to the one summary the night charts read. `dagit.py` refuses
+to upload if those assets are missing.
