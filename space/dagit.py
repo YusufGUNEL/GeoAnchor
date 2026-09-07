@@ -1,10 +1,11 @@
 """Create the Hugging Face Space if it does not exist, and push this folder to it.
 
-The Space folder has been ready for a while and was never deployed, so the
-sharing drafts still carry a `<SPACE_LINK>` placeholder. This turns the
-deployment into one command, and refuses to run if the assets are missing --
-pushing app.py without space/assets/ produces a Space that starts and then
-throws on its first read, which is worse than not deploying.
+Live at https://huggingface.co/spaces/MANOROMAN/GeoAnchor. It is a *static*
+Space -- Hugging Face bills Gradio Spaces even on free CPU, and this page never
+needed a running process, so it ships as index.html plus one JSON.
+
+The upload refuses to run if the assets are missing: a Space that starts and
+then throws on its first read is worse than not deploying.
 
     python space/hazirla.py     # build the assets from results/ and night/
     python space/dagit.py --kuru-calisma   # show what would be uploaded
@@ -31,8 +32,8 @@ ASSETS = HERE / "assets"
 REPO_ID = "MANOROMAN/GeoAnchor"
 
 # Everything the Space needs at run time. assets/ is generated, never committed.
-REQUIRED = ["app.py", "README.md", "requirements.txt"]
-REQUIRED_ASSETS = ["20_multiflight.json", "21_flight_difficulty.json"]
+REQUIRED = ["index.html", "README.md"]
+REQUIRED_ASSETS = ["data.json", "demo.mp4"]
 
 
 def check() -> list[Path]:
@@ -102,14 +103,14 @@ def main() -> int:
     # does: the Space builds and runs exactly the same, and making it public
     # later is one switch in the Space settings.
     try:
-        api.create_repo(REPO_ID, repo_type="space", space_sdk="gradio",
+        api.create_repo(REPO_ID, repo_type="space", space_sdk="static",
                         private=gizli, exist_ok=True)
     except Exception as ex:
         # A private Gradio Space needs a PRO subscription; on a free account
         # only public Gradio Spaces (or private *static* ones) are allowed.
         # The API reports this as a bare 402 and the traceback says nothing
         # useful, so the alternative is spelled out here instead.
-        if gizli and "402" in str(ex):
+        if "402" in str(ex):
             sys.exit(
                 "\nGizli Gradio Space PRO abonelik istiyor (402).\n"
                 "Ucretsiz hesapta Gradio Space'leri yalnizca herkese acik olabiliyor.\n\n"
@@ -123,7 +124,10 @@ def main() -> int:
     api.upload_folder(
         repo_id=REPO_ID, repo_type="space", folder_path=str(HERE),
         # __pycache__ and the generator scripts have no business on the Space.
-        ignore_patterns=["__pycache__/*", "hazirla.py", "dagit.py", "*.pyc"],
+        # The Gradio app, the generators and the caches stay behind: a static
+        # Space serves index.html and assets/, nothing else is read.
+        ignore_patterns=["__pycache__/*", "hazirla.py", "dagit.py", "app.py",
+                         "requirements.txt", "*.pyc"],
     )
     url = f"https://huggingface.co/spaces/{REPO_ID}"
     print(f"\n-> {url}  ({'GIZLI' if gizli else 'herkese acik'})")

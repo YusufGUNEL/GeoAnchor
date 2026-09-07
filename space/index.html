@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GeoAnchor — a UAV that finds itself with no GNSS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/3.0.1/plotly.min.js"></script>
+<style>
+:root{
+  --paper:#f2f4f1; --surface:#fff; --sunk:#e9ede8;
+  --ink:#131c22; --ink-2:#41504b; --muted:#6d7b73; --rule:#d3dad3;
+  --good:#0e6b58; --bad:#a8352f; --truth:#1c6c8f; --amber:#8a6412;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --sans:"IBM Plex Sans",system-ui,sans-serif;
+  --serif:"IBM Plex Serif",Georgia,serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+  font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:40px 24px 90px}
+h1,h2,h3{font-family:var(--serif);margin:0;text-wrap:balance}
+h1{font-size:clamp(30px,4.4vw,44px);line-height:1.08;letter-spacing:-.02em;font-weight:700}
+h2{font-size:26px;font-weight:600;letter-spacing:-.012em}
+h3{font-size:18px;font-weight:600}
+p{margin:0 0 1em;max-width:68ch}
+a{color:var(--good)}
+code{font-family:var(--mono);font-size:.88em;background:var(--sunk);
+  padding:.1em .34em;border-radius:3px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--good);margin-bottom:12px}
+.lede{font-size:18.5px;color:var(--ink-2);max-width:62ch}
+section{padding-block:34px;border-top:1px solid var(--rule);margin-top:34px}
+section:first-of-type{border-top:0;margin-top:0}
+
+.facts{display:flex;flex-wrap:wrap;margin:26px 0 0;border:1px solid var(--rule);
+  border-radius:6px;overflow:hidden;background:var(--surface)}
+.facts div{padding:11px 18px;border-right:1px solid var(--rule);flex:1 1 120px}
+.facts div:last-child{border-right:0}
+.facts dt{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted);margin:0}
+.facts dd{margin:2px 0 0;font-family:var(--serif);font-size:21px;font-weight:600;
+  font-variant-numeric:tabular-nums}
+.facts dd small{font-size:12.5px;font-weight:400;color:var(--ink-2);font-family:var(--sans)}
+
+video{width:100%;border-radius:8px;border:1px solid var(--rule);display:block;background:#000}
+figcaption{font-size:13.5px;color:var(--muted);margin-top:9px;max-width:68ch}
+
+.picker{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:18px 0 6px}
+label{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted)}
+select{font-family:var(--sans);font-size:15px;padding:7px 12px;border-radius:6px;
+  border:1px solid var(--rule);background:var(--surface);color:var(--ink)}
+.hint{font-size:13.5px;color:var(--muted)}
+
+.stats{display:flex;flex-wrap:wrap;gap:0;margin:16px 0 6px;border:1px solid var(--rule);
+  border-radius:6px;overflow:hidden;background:var(--surface)}
+.stats div{padding:11px 18px;border-right:1px solid var(--rule);flex:1 1 110px}
+.stats div:last-child{border-right:0}
+.stats .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted)}
+.stats .v{font-family:var(--serif);font-size:20px;font-weight:600;margin-top:2px;
+  font-variant-numeric:tabular-nums}
+.chart{width:100%;height:340px;margin:14px 0;border:1px solid var(--rule);
+  border-radius:8px;background:var(--surface)}
+.chart.tall{height:400px}
+
+.tw{overflow-x:auto;margin:18px 0;border:1px solid var(--rule);border-radius:8px;
+  background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{padding:9px 14px;text-align:left;border-bottom:1px solid var(--rule)}
+thead th{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk);
+  white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono);
+  font-size:13.5px}
+tr.good td:first-child{box-shadow:inset 3px 0 0 var(--good)}
+tr.bad td:first-child{box-shadow:inset 3px 0 0 var(--bad)}
+
+.note{border-left:3px solid var(--good);background:#e2efea;padding:14px 18px;
+  border-radius:0 6px 6px 0;margin:18px 0;max-width:68ch}
+.note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--good);display:block;margin-bottom:5px}
+.note p{margin:0}
+.note p+p{margin-top:.65em}
+.warn{border-left-color:var(--bad);background:#f7e8e6}
+.warn .tag{color:var(--bad)}
+
+ul{max-width:68ch;padding-left:1.15em}
+li{margin-bottom:.35em}
+img.evidence{width:100%;max-width:840px;border:1px solid var(--rule);border-radius:8px;
+  display:block;margin:16px 0}
+footer{margin-top:44px;padding-top:22px;border-top:1px solid var(--rule);
+  font-size:14.5px;color:var(--ink-2);display:flex;gap:22px;flex-wrap:wrap}
+:focus-visible{outline:2px solid var(--good);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">GNSS-denied absolute visual localization</div>
+  <h1>A UAV that finds itself with no GNSS</h1>
+  <p class="lede">A drone whose GPS is jammed does not know where it is. Visual
+  odometry never stops answering and always drifts &mdash; 2.8&nbsp;km off by the end
+  of a 74&nbsp;km flight. Matching the camera to a satellite map never drifts and
+  fails outright on a quarter of frames. GeoAnchor fuses them in a particle
+  filter.</p>
+  <dl class="facts">
+    <div><dt>Real flights</dt><dd>10</dd></div>
+    <div><dt>Median error</dt><dd>8&ndash;25 <small>m</small></dd></div>
+    <div><dt>Coverage</dt><dd>&ge;99.7 <small>%</small></dd></div>
+    <div><dt>Altitude</dt><dd>406&ndash;2572 <small>m</small></dd></div>
+    <div><dt>Peak VRAM</dt><dd>1.4 <small>GB</small></dd></div>
+  </dl>
+</header>
+
+<section>
+  <figure style="margin:0">
+    <video src="assets/demo.mp4" autoplay loop muted playsinline></video>
+    <figcaption>Left: the UAV camera. Right: live position on the satellite map.
+    Bottom: error against distance flown. The clip deliberately includes a stretch
+    where satellite matching collapses entirely &mdash; the error spikes, the filter
+    coasts on odometry, then re-anchors.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>Walk through a flight</h2>
+  <p>Every number here was computed offline and is served as-is; nothing runs on
+  this page but the charts.</p>
+  <div class="picker">
+    <label for="flight">Flight</label>
+    <select id="flight"></select>
+    <span class="hint">03 is the best case, 08 the worst. Try both.</span>
+  </div>
+  <div class="stats" id="stats"></div>
+  <div class="chart" id="err"></div>
+  <div class="chart" id="match"></div>
+</section>
+
+<section>
+  <h2>Which flights work, and how you know before flying</h2>
+  <p>Each point is an entire flight. Match rate is measured with the true position
+  known, so it describes the data rather than the algorithm &mdash; and it can be
+  computed from the satellite map <b>before the aircraft leaves the ground</b>.
+  Altitude is not the discriminator: the 2572&nbsp;m flight works and a 551&nbsp;m
+  one does not.</p>
+  <div class="chart tall" id="law"></div>
+</section>
+
+<section id="night-section">
+  <h2>What happens at night, with a thermal camera</h2>
+  <p>The robustness study says extreme darkness needs a different sensor, not a
+  software fix. So it was measured, on a separate dataset: 26,568 aligned nighttime
+  thermal/satellite pairs over desert, farmland and roads.</p>
+  <p><b>The daylight system does not degrade at night, it stops.</b> LoFTR on raw
+  thermal returns zero inliers on 100 frames out of 100. Throwing away appearance
+  and keeping structure recovers a correct fix on a small fraction of frames:</p>
+  <ul id="arms"></ul>
+  <img class="evidence" src="assets/31_gece_kanit.png"
+       alt="Three matcher arms on one thermal/satellite pair: LoFTR blind, RoMa confidently wrong, RoMa with band-passed input correct.">
+  <p>The same law that decides the daylight flights decides these frames too, and
+  here it is cheaper to check: a structure score computed from the satellite tile
+  alone &mdash; no flight, no thermal frame, no matching &mdash; predicts which
+  frames will localise better than the inlier count measured <i>after</i> the match.</p>
+  <div class="chart" id="decile"></div>
+  <div class="chart" id="auc"></div>
+  <p>Because it is known before matching, it is also a filter. Combined with a
+  second check &mdash; accept a fix only where two band-passed representations
+  independently agree &mdash; it beats the tuned gate on every axis at once:</p>
+  <div class="tw"><table id="ops"></table></div>
+  <div class="note" id="ceiling"></div>
+  <div class="note warn">
+    <span class="tag">Read this before quoting the night numbers</span>
+    <p>All of it is per-frame. The thermal dataset is a grid of aligned tiles from
+    several regions and nights, not a trajectory, so there is nothing for a motion
+    model to integrate and the particle filter was never run on it. This is a
+    predictor and an operating point, <b>not a working night system</b>.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Every flight, measured</h2>
+  <div class="tw"><table id="flights"></table></div>
+  <p style="margin-top:14px">Ground truth is post-processed GNSS with 1.5&nbsp;m
+  cross-track scatter, so the reference is clean. Calibration uses the first 20% of
+  each flight, evaluation the remaining 80%. The three flights that fail are in the
+  repository too.</p>
+</section>
+
+<footer>
+  <a href="https://github.com/YusufGUNEL/GeoAnchor">Code on GitHub</a>
+  <a href="https://github.com/YusufGUNEL/GeoAnchor/blob/main/paper/geoanchor.pdf">The manuscript</a>
+  <a href="https://github.com/YusufGUNEL/GeoAnchor/blob/main/ILERLEME.md">The working log</a>
+</footer>
+</div>
+
+<script>
+const C = {good:"#0e6b58", bad:"#a8352f", truth:"#1c6c8f", ink:"#131c22",
+           muted:"#6d7b73", grid:"rgba(109,123,115,.22)", surface:"#ffffff"};
+const BASE = {
+  paper_bgcolor:"rgba(0,0,0,0)", plot_bgcolor:"rgba(0,0,0,0)",
+  font:{family:"IBM Plex Sans, sans-serif", size:12, color:C.ink},
+  margin:{l:64, r:24, t:62, b:52},
+  xaxis:{gridcolor:C.grid, zeroline:false},
+  yaxis:{gridcolor:C.grid, zeroline:false},
+  legend:{orientation:"h", y:1.005, yanchor:"bottom", x:0},
+  hovermode:"x unified"
+};
+const CFG = {displayModeBar:false, responsive:true};
+const lay = (t, x, y, extra) => Object.assign({}, BASE, {
+  title:{text:t, font:{size:14.5}, y:0.965, yanchor:"top"},
+  xaxis:Object.assign({}, BASE.xaxis, {title:{text:x}}),
+  yaxis:Object.assign({}, BASE.yaxis, {title:{text:y}})
+}, extra || {});
+
+let D = null;
+
+function stats(fid){
+  const z = D.zorluk[fid] || {}, m = (D.multi || {})[fid] || {};
+  const holds = (z.tutma_orani || 0) >= 0.5;
+  const cells = [
+    ["Median error", (z.medyan_hata_m ?? 0).toFixed(1) + " m"],
+    ["90th pct.", Math.round(z.p90_m ?? 0) + " m"],
+    ["Coverage", ((z.kapsama ?? 0) * 100).toFixed(1) + "%"],
+    ["Match rate", Math.round((z.tutma_orani ?? 0) * 100) + "% · " + (holds ? "holds" : "collapses")],
+    ["Altitude", Math.round(z.irtifa_m ?? 0) + " m"],
+    ["Route", Math.round(m.km ?? 0) + " km"]
+  ];
+  document.getElementById("stats").innerHTML = cells.map(([k, v], i) =>
+    `<div><div class="k">${k}</div><div class="v"${i === 3 ? ` style="color:${holds ? C.good : C.bad}"` : ""}>${v}</div></div>`
+  ).join("");
+}
+
+function drawFlight(fid){
+  const f = D.ucuslar[fid];
+  stats(fid);
+  Plotly.react("err", [
+    {x:f.km, y:f.vo_err, name:"visual odometry alone (drifts)", mode:"lines",
+     line:{color:C.bad, width:1.5}},
+    {x:f.km, y:f.err, name:"GeoAnchor (fused)", mode:"lines",
+     line:{color:C.good, width:2}}
+  ], lay(`Flight ${fid}: position error along the route`,
+         "distance flown (km)", "error (m, log scale)",
+         {yaxis:Object.assign({}, BASE.yaxis, {type:"log", title:{text:"error (m, log scale)"}})}), CFG);
+
+  Plotly.react("match", [
+    {x:f.km, y:f.inliers, name:"matched keypoints", mode:"lines", fill:"tozeroy",
+     line:{color:C.truth, width:1}, fillcolor:"rgba(28,108,143,.18)"}
+  ], lay(`Flight ${fid}: how well the camera matched the map`,
+         "distance flown (km)", "inlier keypoints",
+         {shapes:[{type:"line", xref:"paper", x0:0, x1:1, y0:15, y1:15,
+                   line:{color:C.bad, dash:"dash", width:1.2}}],
+          annotations:[{xref:"paper", x:0.01, y:15, yanchor:"bottom", showarrow:false,
+                        text:"below this the frame is rejected",
+                        font:{size:11, color:C.bad}}]}), CFG);
+}
+
+function drawLaw(){
+  const ids = Object.keys(D.zorluk).sort();
+  const x = ids.map(i => D.zorluk[i].tutma_orani * 100);
+  const y = ids.map(i => D.zorluk[i].medyan_hata_m);
+  const alt = ids.map(i => D.zorluk[i].irtifa_m);
+  Plotly.react("law", [{
+    x, y, mode:"markers+text", text:ids.map(i => " " + i), textposition:"middle right",
+    textfont:{size:11},
+    marker:{size:alt.map(a => 9 + a / 260), color:x.map(v => v >= 50 ? C.good : C.bad),
+            line:{width:1, color:C.surface}},
+    hovertemplate:"flight %{text}<br>match rate %{x:.0f}%<br>median %{y:.1f} m<extra></extra>"
+  }], lay("One property separates the flights that work (marker size = altitude)",
+          "match rate (%)", "median error (m, log scale)", {
+    showlegend:false, hovermode:"closest",
+    yaxis:Object.assign({}, BASE.yaxis, {type:"log", title:{text:"median error (m, log scale)"}}),
+    xaxis:Object.assign({}, BASE.xaxis, {range:[0, 100], title:{text:"match rate (%)"}}),
+    shapes:[{type:"line", yref:"paper", x0:50, x1:50, y0:0, y1:1,
+             line:{color:C.muted, dash:"dash", width:1.2}}],
+    annotations:[{x:50, yref:"paper", y:1, yanchor:"bottom", showarrow:false,
+                  text:"50% match rate", font:{size:11, color:C.muted}},
+                 {xref:"paper", x:0.02, yref:"paper", y:0.04, xanchor:"left",
+                  showarrow:false, font:{size:12},
+                  text:"correlation between match rate and log error: <b>−0.764</b>"}]
+  }), CFG);
+}
+
+function drawNight(){
+  const g = D.gece;
+  if (!g){ document.getElementById("night-section").remove(); return; }
+
+  document.getElementById("arms").innerHTML = g.arms.map(a =>
+    `<li><b>${a.ad}</b> — ${Math.round(a.dogru * 100)}% correctly located</li>`).join("");
+
+  const base = g.taban_orani * 100;
+  Plotly.react("decile", [{
+    x:g.decile.map((_, i) => i + 1), y:g.decile, type:"bar",
+    marker:{color:g.decile.map(v => v >= base ? C.good : C.bad),
+            line:{color:C.ink, width:.6}},
+    hovertemplate:"decile %{x}<br>%{y:.0f}% located<extra></extra>"
+  }], lay("Night: the emptiest tenth of tiles locates nothing, the richest locates 43%",
+          "satellite tile ranked by structure content (decile)",
+          "frames correctly located (%)", {
+    showlegend:false, hovermode:"closest",
+    xaxis:Object.assign({}, BASE.xaxis, {dtick:1, title:{text:"satellite tile ranked by structure content (decile)"}}),
+    shapes:[{type:"line", xref:"paper", x0:0, x1:1, y0:base, y1:base,
+             line:{color:C.ink, dash:"dash", width:1.2}}],
+    annotations:[{xref:"paper", x:0.01, y:base, yanchor:"bottom", showarrow:false,
+                  text:`overall ${base.toFixed(1)}%`, font:{size:11, color:C.ink}}]
+  }), CFG);
+
+  const rows = g.auc.slice().sort((a, b) => a.v - b.v);
+  const grp = w => rows.filter(r => r.ne === w);
+  Plotly.react("auc", [
+    {y:grp("before").map(r => r.ad), x:grp("before").map(r => r.v), type:"bar",
+     orientation:"h", marker:{color:C.good}, name:"measurable before matching",
+     text:grp("before").map(r => r.v.toFixed(3)), textposition:"outside"},
+    {y:grp("after").map(r => r.ad), x:grp("after").map(r => r.v), type:"bar",
+     orientation:"h", marker:{color:"#b6c2bb"}, name:"only after matching",
+     text:grp("after").map(r => r.v.toFixed(3)), textposition:"outside"}
+  ], lay("A number read off the map beats one measured after the match",
+         "AUC — telling a correct fix from a wrong one", "", {
+    hovermode:"closest", barmode:"overlay",
+    margin:{l:210, r:36, t:62, b:52},
+    xaxis:Object.assign({}, BASE.xaxis, {range:[0.45, 1.0],
+      title:{text:"AUC — telling a correct fix from a wrong one"}})
+  }), CFG);
+
+  document.getElementById("ops").innerHTML =
+    "<thead><tr><th>Gate</th><th class='n'>Precision</th><th class='n'>Recall</th>" +
+    "<th class='n'>Frames with a trustworthy fix</th><th class='n'>Matcher cost</th></tr></thead><tbody>" +
+    g.ops.map((o, i) => `<tr class="${i === g.ops.length - 1 ? "good" : ""}"><td>${o.ad}</td>` +
+      `<td class="n">${Math.round(o.kesinlik * 100)}%</td>` +
+      `<td class="n">${Math.round(o.duyarlilik * 100)}%</td>` +
+      `<td class="n"><b>${(o.kare * 100).toFixed(1)}%</b></td>` +
+      `<td class="n">${o.maliyet.toFixed(1)}×</td></tr>`).join("") + "</tbody>";
+
+  const t = g.tavan;
+  document.getElementById("ceiling").innerHTML =
+    `<span class="tag">Would training a matcher help? Measured</span>` +
+    `<p>On ${t.hedef_kare} frames both sides hold structure and the alignment is ` +
+    `correct by construction, and the match is still missed — the correspondence ` +
+    `exists and is not being found, which is what training fixes.</p>` +
+    `<p><b>The ceiling is ${(t.taban * 100).toFixed(1)}% → at most ` +
+    `${(t.tavan * 100).toFixed(1)}%.</b> Training could roughly double the ` +
+    `correct-fix rate, and can never approach the 70–100% the daylight flights ` +
+    `supply, because on most frames one side has nothing to match.</p>`;
+}
+
+function flightsTable(){
+  const ids = Object.keys(D.zorluk).sort((a, b) =>
+    D.zorluk[a].medyan_hata_m - D.zorluk[b].medyan_hata_m);
+  document.getElementById("flights").innerHTML =
+    "<thead><tr><th>Flight</th><th class='n'>Frames</th><th class='n'>Altitude</th>" +
+    "<th class='n'>Distance</th><th class='n'>Match rate</th><th class='n'>Coverage</th>" +
+    "<th class='n'>Median</th><th class='n'>90th pct.</th></tr></thead><tbody>" +
+    ids.map(i => {
+      const z = D.zorluk[i], m = (D.multi || {})[i] || {};
+      const ok = z.tutma_orani >= 0.5;
+      return `<tr class="${ok ? "good" : "bad"}"><td>${i}</td>` +
+        `<td class="n">${m.kare ?? "—"}</td>` +
+        `<td class="n">${Math.round(z.irtifa_m)} m</td>` +
+        `<td class="n">${Math.round(m.km ?? 0)} km</td>` +
+        `<td class="n">${Math.round(z.tutma_orani * 100)}%</td>` +
+        `<td class="n">${(z.kapsama * 100).toFixed(1)}%</td>` +
+        `<td class="n"><b>${z.medyan_hata_m.toFixed(2)} m</b></td>` +
+        `<td class="n">${z.p90_m.toFixed(2)} m</td></tr>`;
+    }).join("") + "</tbody>";
+}
+
+fetch("assets/data.json").then(r => r.json()).then(d => {
+  D = d;
+  const sel = document.getElementById("flight");
+  Object.keys(D.ucuslar).sort().forEach(f => {
+    const o = document.createElement("option");
+    o.value = f; o.textContent = "Flight " + f;
+    if (f === "03") o.selected = true;
+    sel.appendChild(o);
+  });
+  sel.addEventListener("change", e => drawFlight(e.target.value));
+  drawFlight("03");
+  drawLaw();
+  drawNight();
+  flightsTable();
+});
+</script>
+</body>
+</html>

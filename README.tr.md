@@ -22,6 +22,10 @@ metre seviyesi konum veriyorlar.
 
 ---
 
+**Tarayıcıda deneyin:** [etkileşimli sonuçlar](https://huggingface.co/spaces/MANOROMAN/GeoAnchor) — on uçuş,
+konuşlandırılabilirlik yasası ve gece ölçümleri; hepsi önceden hesaplanmış,
+kurulum yok.
+
 **Yeni misiniz?** [**GeoAnchor Handbook**](https://claude.ai/code/artifact/4e74f825-8ffb-4469-8efa-68d9fb4e0b62) projeyi sıfırdan
 anlatıyor — problem tam olarak nedir, hangi modeller girdi, hangileri hangi ölçümle
 elendi, hangi ayar ne yapar ve hangi tuzaklar gerçekten vakit yedi. Oradan başlayın;

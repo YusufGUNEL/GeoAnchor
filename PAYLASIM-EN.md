@@ -21,8 +21,7 @@ Two rules that decide whether these land:
    and what does not work.
 
 Post the Space link, not just the repo — a page people can click through beats
-a page they have to clone. The Space does not exist yet; see *Indexes and the
-preprint* below for the two commands that create it.
+a page they have to clone: https://huggingface.co/spaces/MANOROMAN/GeoAnchor
 
 ---
 
@@ -68,7 +67,7 @@ preprint* below for the two commands that create it.
 > are in the repo — I would rather show them than trim the table.
 >
 > Interactive results (pick a flight, see the error curve and where matching
-> collapses): <SPACE_LINK>
+> collapses): https://huggingface.co/spaces/MANOROMAN/GeoAnchor
 > Code and write-up: https://github.com/YusufGUNEL/GeoAnchor
 >
 > Happy to be told what I got wrong — particularly on the particle filter's
@@ -140,7 +139,7 @@ about your own work. State the problem, the number, the limitation.
 > Three flights fail and are in the repo, with the diagnosis rather than a
 > trimmed table.
 >
-> Interactive: <SPACE_LINK>
+> Interactive: https://huggingface.co/spaces/MANOROMAN/GeoAnchor
 > Code: https://github.com/YusufGUNEL/GeoAnchor
 
 ---
@@ -163,15 +162,17 @@ not post both on the same day.
 > the terrain before flying, so a route can be screened in advance. The three
 > flights where it fails are published with the diagnosis.
 >
-> Interactive results: <SPACE_LINK>
+> Interactive results: https://huggingface.co/spaces/MANOROMAN/GeoAnchor
 > Code: https://github.com/YusufGUNEL/GeoAnchor
 
 ---
 
 ## Indexes and the preprint
 
-- **Hugging Face Space** — not deployed yet, which is why `<SPACE_LINK>`
-  still appears above. Two commands:
+- **Hugging Face Space** — live at https://huggingface.co/spaces/MANOROMAN/GeoAnchor.
+  It is a *static* Space: Hugging Face bills Gradio even on free CPU, and the
+  page never needed a running process, so it ships as HTML plus one JSON.
+  Rebuild and push it with:
 
   ```bash
   python space/hazirla.py            # build assets from results/ and night/
@@ -181,13 +182,8 @@ not post both on the same day.
 
   `dagit.py` refuses to upload without the assets, because a Space that starts
   and then throws on its first read is worse than no Space, and it checks the
-  token before touching the network. The token currently on this machine is
-  fine-grained and read-only (`repo.content.read`), so it will stop and say so:
-  create a token with `repo.write` at huggingface.co/settings/tokens and run
-  `hf auth login`.
-
-  It prints the URL; put that everywhere `<SPACE_LINK>` appears above, and
-  nowhere post a draft that still contains the literal placeholder.
+  token's permissions before touching the network. Uploading needs a token with
+  `repo.write` from huggingface.co/settings/tokens, then `hf auth login`.
 - **arXiv** — the manuscript is finished and the upload is built by
   `python scripts/31_arxiv_bundle.py`; the submission form's metadata is in
   `paper/ARXIV.md`. Category cs.CV, cross-list cs.RO. A first submission to
