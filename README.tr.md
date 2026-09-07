@@ -599,10 +599,37 @@ Karelerin **%6,2'sinde** güvenilir çapa; gündüz bu %70-100'dü. Bu ölçülm
 bulgu ve bir yordayıcı — çalışan bir gece sistemi değil, ve tek bir veri
 kümesinden geliyor.
 
-Yasanın değiştirdiği şey, emeğin nereye gideceği. Başarısızlık bir eşleyici
-sorunu gibi göründüğü sürece eğitimli cross-modal eşleyici bariz sonraki
-adımdı; artık ölçülebilir hedef daha dar — yapı *içeren* karolardaki %43'ü
-yukarı çekmek, hiç içermeyenlerin peşinden koşmak değil.
+### Eğitim değer mi? Tahmin değil, ölçüm
+
+Başarısızlık içerik biçimli görününce bariz sonuç "eğitimli cross-modal
+eşleyici işe yaramaz" oluyordu. Bu bir çıkarımdı — ve bu projenin kendi dersi,
+ara bir gözlemden çıkarım yapmanın cevabı tersine çevirdiğidir. O yüzden
+ölçüldü, önbellekteki skorlardan, GPU kullanmadan.
+
+Başarısızlıkların çoğu gerçekten içerik: doğru fix'lerin termal yapı skoru
+ortalama 1,44, en zengin uydu decile'ındaki başarısızlıklarınki 0,64. Yapı
+haritada var; termal sensör onu hiç yakalamamış, yani hiçbir eşleyicinin
+bulabileceği bir karşılık yok.
+
+Ama hepsi değil. **İki taraf da** yapı bakımından en iyi %30'daysa:
+
+| | Kare | Doğru konumlanan | Hâlâ başarısız |
+|---|---|---|---|
+| ikisi de en iyi %30 | 154 | %37 | **97** (tüm karelerin %9,7'si) |
+| ikisi de en iyi %20 | 99 | %44 | 55 |
+| ikisi de en iyi %10 | 41 | **%63** | 15 |
+
+O 97 karede yapı iki tarafta da var ve hizalama tanım gereği doğru. Karşılık
+mevcut ve bulunamıyor — eğitimin düzelttiği şey tam olarak bu.
+
+**Tavan: %8,6 → en fazla %18,3.** Yani önceki sonuç bir yönde yanlış, öbür
+yönde doğruydu: eğitim doğru fix oranını kabaca *ikiye katlayabilir*, ama
+gündüzdeki %70-100'e asla yaklaşamaz, çünkü karelerin çoğunda bir tarafta
+eşleştirilecek hiçbir şey yok.
+
+Bu, kararı aritmetiğe çeviriyor. %6,2 güvenilir çapadan ~%13'e çıkmak,
+ikiye katlamak önemliyse günlerce GPU'ya değer; gece için çalışan bir sistem
+gerekiyorsa değmez ve dürüst cevap farklı bir sensör ya da daha sık çapadır.
 
 `night/DURUM.md` projenin bu yarısının çalışma günlüğü.
 

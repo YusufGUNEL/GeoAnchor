@@ -612,10 +612,40 @@ A trustworthy anchor on **6.2%** of frames, against 70–100% in daylight. That
 is a measured finding and a predictor, not a working night system, and it comes
 from one dataset.
 
-What the law changes is where effort should go. A trained cross-modal matcher
-was the obvious next step while the failure looked like a matcher problem; now
-the measurable target is narrower — raise the 43% on tiles that *do* hold
-structure, rather than chase the tiles that hold none.
+### Is training a matcher worth it? Measured, not guessed
+
+The obvious next step, once the failure looked content-shaped, was to conclude
+that a trained cross-modal matcher would not help. That was reasoning, and this
+project's own lesson is that reasoning from an intermediate observation is how
+you get the answer backwards. So it was measured, from the cached scores, with
+no GPU.
+
+Most failures really are content: correct fixes have a mean thermal structure
+score of 1.44, while failures in the richest satellite decile average 0.64. The
+map has the structure; the thermal sensor never captured it, so no
+correspondence exists for any matcher to find.
+
+But not all of them. Where **both** sides are in the top 30% by structure:
+
+| | Frames | Correctly located | Still failing |
+|---|---|---|---|
+| both sides top 30% | 154 | 37% | **97** (9.7% of all frames) |
+| both sides top 20% | 99 | 44% | 55 |
+| both sides top 10% | 41 | **63%** | 15 |
+
+On those 97 frames the structure is present on both sides and the alignment is
+correct by construction. The correspondence exists and is not being found —
+which is exactly what training fixes.
+
+**The ceiling is 8.6% → at most 18.3%.** So the earlier conclusion was wrong in
+one direction and right in the other: training could roughly *double* the
+correct-fix rate, and it can never approach the 70–100% the daylight flights
+supply, because on most frames one side simply has nothing to match.
+
+That turns the decision into arithmetic. Going from 6.2% reliable anchors to
+around 13% is worth days of GPU if doubling matters; it is not worth it if what
+you need is a working night system, and then the honest answer is a different
+sensor or more frequent anchors.
 
 `night/DURUM.md` is the working log for this half of the project.
 

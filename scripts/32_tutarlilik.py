@@ -138,6 +138,13 @@ def build() -> Claims:
     c.add("uzlasma ham kesinlik", uz["kesinlik"] * 100, 0, [EN, TR, DURUM], pct=True)
     c.add("uzlasma ham duyarlilik", uz["duyarlilik"] * 100, 0, [EN, TR, DURUM], pct=True)
 
+    # --- the measured ceiling on training ----------------------------------
+    tavan = load(NIGHT / "09_tavan_1000.json")
+    o = tavan["her_iki_taraf"]["%30"]
+    c.add("egitilebilir nufus", o["basarisiz"], 0, [EN, TR, DURUM])
+    c.add("tavan", 100 * (tavan["taban_dogru_orani"] + o["basarisiz_kare_orani"]), 1,
+          [EN, TR, DURUM])
+
     # --- the sharing drafts, where counts are spelled out -------------------
     calisan = sum(1 for i in zorluk.values() if i["tutma_orani"] >= 0.5)
     c.add_word("degerlendirilen ucus", ozet["n_ucus"], [SHARE_EN, SHARE_TR])

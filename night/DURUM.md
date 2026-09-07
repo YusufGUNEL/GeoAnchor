@@ -20,7 +20,10 @@ En iyi çalışma noktası bunların birleşimi: iki temsilin uzlaşması + ön-
 **%95 kesinlik, karelerin %6,2'sinde doğru fix**, üstelik taban çizgisinin
 **0,6 katı** hesapla. Başlangıç %92 / %2,4 / 1,0× idi.
 
-Yine de bu çalışan bir gece sistemi değil: gündüz çapa oranı %70-100'dü.
+Yine de bu çalışan bir gece sistemi değil: gündüz çapa oranı %70-100'dü. Ve
+tavan ölçüldü — kusursuz bir eşleyici bile doğru fix oranını %8,6'dan ancak
+%18,3'e çıkarabilir, çünkü karelerin çoğunda bir tarafta eşleştirilecek yapı
+yok.
 
 ## Veri
 
@@ -255,12 +258,51 @@ Uzlaşma kare başına iki çağrı ister, ön-kapı kaç kareye bakılacağın�
 ### Sıradaki
 
 1. ~~Uzlaşma kapısını 1000 kareyle doğrula~~ — yapıldı, %82/%57.
-2. Eğitimli cross-modal eşleştirme (STHN/UASTHN hattı bu veriyle homografi ağı
-   eğitiyor; train bölümü diskte). Ama 07'den sonra beklenti düştü: eğitim de
-   olmayan yapıyı bulamaz. Ölçülebilir hedef, yapı skoru yüksek karelerdeki
-   %43'ü yukarı çekmek — düşük skorluları değil.
+2. ~~Eğitimin değip değmeyeceğini ölç~~ — yapıldı, aşağıda.
 3. Temsil taramasını genişletmek (phase congruency, yapı tensörü) — 06'nın
    sonucundan sonra **düşük öncelik**: yeni temsil de aynı kareleri bulacak.
+
+### Eğitim değer mi? Ölçüldü (`09_tavan.py`, 1000 kare)
+
+Faz 12 "eğitim de olmayan yapıyı bulamaz" demişti. Bu bir **çıkarımdı, ölçüm
+değildi** ve projenin tek açık araştırma yönünü bir tahmine dayandırıyordu.
+Ayırt edici ölçüm zaten önbellekteki verideydi: 07 her iki tarafın yapı skorunu,
+03 her karenin doğru/yanlış etiketini saklıyor.
+
+Uydu karosu yapılı olduğunda başarısızlıkların termal tarafı zayıf:
+
+| uydu yapısı | kare | doğru | başarısızların termal ort. |
+|---|---|---|---|
+| en iyi %10 | 100 | %43 | 0,64 |
+| en iyi %30 | 300 | %22 | 0,29 |
+| hepsi | 1000 | %9 | −0,14 |
+
+Karşılaştırma: **doğru** fix'lerin termal yapı ortalaması **1,44**. Yani
+başarısızlıkların büyük kısmı hâlâ içerik — uydu karosu zengin ama termal
+sensör o yapıyı hiç yakalamamış, dolayısıyla bulunacak bir karşılık yok.
+
+Ama iki taraf da zenginken:
+
+| eşik | kare | doğru | başarısız | karelerin %'si |
+|---|---|---|---|---|
+| ikisi de en iyi %30 | 154 | %37 | **97** | %9,7 |
+| ikisi de en iyi %20 | 99 | %44 | 55 | %5,5 |
+| ikisi de en iyi %10 | 41 | **%63** | 15 | %1,5 |
+
+O 97 karede iki tarafta da yapı var ve hizalama tanım gereği doğru: **karşılık
+mevcut ve bulunamıyor.** Eğitimin düzelttiği şey tam olarak bu.
+
+**Ölçülen tavan: %8,6 → en fazla %18,3.** Yani:
+
+- Faz 12 fazla karamsardı: eğitim doğru fix oranını kabaca **ikiye
+  katlayabilir**.
+- Faz 12 doğru yerde karamsardı: gündüzdeki %70-100'e **asla** yaklaşamaz,
+  çünkü karelerin çoğunda bir tarafta yapı yok ve eğitim yok olan şeyi üretemez.
+
+Karar buna göre verilmeli: %8,6'dan %18'e çıkmak (uzlaşma + ön-kapıyla güvenilir
+çapa %6,2 → ~%13) günlerce GPU'ya değiyorsa STHN/UASTHN hattı gerekçelendi;
+gece için çalışan bir sistem bekleniyorsa değmiyor ve doğru cevap farklı bir
+sensör ya da daha sık çapa.
 
 ## Dosyalar
 
@@ -275,5 +317,6 @@ night/05_kanit.py      kanit figurleri (figures/30_*, figures/31_*)
 night/06_uzlasma.py    temsiller ayni karelerde mi basarili?
 night/07_yasa.py       basarisizlik esleyici sorunu mu, icerik sorunu mu?
 night/08_birlesik.py   on-kapi + sonraki kapi birlikte ne veriyor?
+night/09_tavan.py      egitim deger mi: hedeflenebilir nufus ve tavan
 night/sonuclar/*.json  her kosunun ciktisi
 ```

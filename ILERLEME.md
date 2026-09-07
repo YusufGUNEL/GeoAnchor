@@ -977,8 +977,8 @@ bozularak sınandı: yakaladı ve 1 ile çıktı.
 |---|---|
 | betik sözdizimi | 49/49 ayrışıyor |
 | import çözümü | hepsi çözülüyor |
-| belge yolları (`33_baglanti.py`) | 11 belge, 102 yol, hepsi yerinde |
-| belge sayıları (`32_tutarlilik.py`) | 26 iddia, 79 kontrol, hepsi tutuyor |
+| belge yolları (`33_baglanti.py`) | 11 belge, 104 yol, hepsi yerinde |
+| belge sayıları (`32_tutarlilik.py`) | 28 iddia, 85 kontrol, hepsi tutuyor |
 | makaleler | 6 sayfa (arXiv) ve 4 sayfa (SİU), ikisi de temiz derleniyor |
 
 ### HF Space hiç dağıtılmamış
@@ -1003,3 +1003,42 @@ sayfa; bu oturumun izni GitHub içindi.
 3. **Eğitimli cross-modal eşleyici** — Faz 12'den sonra beklentisi düşük:
    sınırlayan şey eşleyici değil karo içeriği. Ölçülebilir hedef, yapı içeren
    karolardaki %43'ü yukarı çekmek.
+
+---
+
+## Faz 15 — Eğitimin tavanı ölçüldü (2026-09-07)
+
+Faz 12 "eğitim de olmayan yapıyı bulamaz" diyerek projenin tek açık araştırma
+yönünü kapatmıştı. Bu bir **çıkarımdı, ölçüm değildi** — ve tam da bu projenin
+kendi dersine aykırıydı: ara bir gözlemden sistem düzeyinde bir sonuç çıkarmak.
+
+Ayırt edici ölçüm zaten önbellekteki veriydi. `night/09_tavan.py`, GPU
+kullanmadan, saniyeler içinde:
+
+**Başarısızlıkların çoğu gerçekten içerik.** Doğru fix'lerin termal yapı
+ortalaması 1,44; en iyi uydu decile'ındaki başarısızlıklarınki 0,64. Uydu
+karosu zengin ama termal sensör o yapıyı yakalamamış.
+
+**Ama hepsi değil.** İki taraf da en iyi %30'daysa 154 karenin 97'si hâlâ
+başarısız. O karelerde yapı iki tarafta da var ve hizalama tanım gereği doğru:
+karşılık mevcut ve bulunamıyor. Eğitimin düzelttiği şey budur.
+
+| | kare | doğru | başarısız |
+|---|---|---|---|
+| ikisi de en iyi %30 | 154 | %37 | 97 (karelerin %9,7'si) |
+| ikisi de en iyi %20 | 99 | %44 | 55 |
+| ikisi de en iyi %10 | 41 | %63 | 15 |
+
+**Tavan: %8,6 → en fazla %18,3.**
+
+Faz 12 iki yönde birden yanlıştı. Fazla karamsardı: eğitim doğru fix oranını
+kabaca ikiye katlayabilir. Ve yeterince karamsar değildi diye düşünülemez:
+gündüzdeki %70-100 ulaşılamaz, çünkü karelerin çoğunda bir tarafta yapı yok.
+
+Karar artık sayıya dayanıyor: %6,2 güvenilir çapadan ~%13'e çıkmak günlerce
+GPU'ya değiyorsa STHN/UASTHN hattı gerekçeli; gece için çalışan bir sistem
+bekleniyorsa değmiyor.
+
+**Ders:** "Muhtemelen işe yaramaz" bir sonuç değil, ölçülmemiş bir hipotezdir.
+Bu projede aynı hata daha önce ters yönde yapılmıştı (RoMa "muhtemelen daha
+iyi" sanılmıştı); ikisi de uçtan uca ölçülünce çözüldü.

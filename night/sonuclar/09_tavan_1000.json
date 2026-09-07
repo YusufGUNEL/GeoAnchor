@@ -1,0 +1,28 @@
+{
+  "n": 1000,
+  "dogru": 86,
+  "taban_dogru_orani": 0.086,
+  "her_iki_taraf": {
+    "%30": {
+      "kare": 154,
+      "dogru": 57,
+      "basarisiz": 97,
+      "dogru_orani": 0.37012987012987014,
+      "basarisiz_kare_orani": 0.097
+    },
+    "%20": {
+      "kare": 99,
+      "dogru": 44,
+      "basarisiz": 55,
+      "dogru_orani": 0.4444444444444444,
+      "basarisiz_kare_orani": 0.055
+    },
+    "%10": {
+      "kare": 41,
+      "dogru": 26,
+      "basarisiz": 15,
+      "dogru_orani": 0.6341463414634146,
+      "basarisiz_kare_orani": 0.015
+    }
+  }
+}
