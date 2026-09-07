@@ -19,15 +19,41 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 
+from src.figtext import figdir, pick
 from src.flight import load_flight
 from src.geo import SatelliteMap, local_m_to_latlon
 
 ROOT = Path(__file__).resolve().parents[1]
 CACHE = Path(r"D:\GeoAnchorData\cache")
-FIG = ROOT / "figures"
-FIG.mkdir(exist_ok=True)
+FIG = figdir()
+
+T = pick({
+ "en": {
+  "cam": "UAV camera   ·   frame {}/{}   ·   altitude {:.0f} m",
+  "map": "NO GPS   ·   absolute position on the satellite map   ·   {}",
+  "hud": "error {:5.1f} m     flown {:5.1f} km",
+  "vo": "odometry only",
+  "pf": "fusion",
+  "x": "distance flown (km)",
+  "y": "error (m)",
+ },
+ "tr": {
+  "cam": "IHA kamerasi   ·   kare {}/{}   ·   irtifa {:.0f} m",
+  "map": "GPS YOK   ·   uydu haritasinda mutlak konum   ·   {}",
+  "hud": "hata {:5.1f} m     yol {:5.1f} km",
+  "vo": "sadece odometri",
+  "pf": "fuzyon",
+  "x": "kat edilen yol (km)",
+  "y": "hata (m)",
+ },
+})
 
 FPS = 15
+# The GIF is a 12-second excerpt at 10 fps, so 120 frames -- which is also what
+# the README caption claims it is. 640x360 and 64 colours keep it under 8 MB;
+# at 800x450 and full colour the same animation came out at 32 MB, which GitHub
+# will not render inline.
+GIF_EVERY, GIF_FRAMES, GIF_SIZE, GIF_COLORS = 6, 120, (640, 360), 64
 BG = "#0a0a0e"
 C_GT = "#7fdfff"
 C_PF = "#00ff6a"
@@ -101,7 +127,7 @@ def main():
         # --- kamera ---
         ax_cam.imshow(np.ascontiguousarray(q[i]))
         ax_cam.plot(320, 320, "+", color=C_PF, ms=18, mew=2.2)
-        ax_cam.set_title("IHA kamerasi   ·   kare {}/{}   ·   irtifa {:.0f} m"
+        ax_cam.set_title(T["cam"]
                          .format(i + 1, n, d["height"].iloc[i]),
                          color="w", fontsize=12, pad=7)
         ax_cam.axis("off")
@@ -120,11 +146,11 @@ def main():
                         mew=0.7, zorder=6)
         ax_map.plot(gx[i], gy[i], "o", ms=6, color=C_GT, mec="k", mew=0.6, zorder=5)
         mode = str(modes[i]) if i < len(modes) else ""
-        ax_map.set_title("GPS YOK   ·   uydu haritasinda mutlak konum   ·   {}"
+        ax_map.set_title(T["map"]
                          .format(mode), color="w", fontsize=12, pad=7)
         ax_map.axis("off")
         ax_map.text(0.012, 0.025,
-                    "hata {:5.1f} m     yol {:5.1f} km".format(err[i], km[i]),
+                    T["hud"].format(err[i], km[i]),
                     transform=ax_map.transAxes, color="w", fontsize=13,
                     family="monospace",
                     bbox=dict(fc="#000000cc", ec="none", pad=5))
@@ -132,13 +158,13 @@ def main():
         # --- hata egrisi ---
         ax_err.set_facecolor("#14141a")
         ax_err.plot(km[:i + 1], vo_err[:i + 1], color=C_VO, lw=1.3,
-                    label="sadece odometri")
-        ax_err.plot(km[:i + 1], err[:i + 1], color=C_PF, lw=1.5, label="fuzyon")
+                    label=T["vo"])
+        ax_err.plot(km[:i + 1], err[:i + 1], color=C_PF, lw=1.5, label=T["pf"])
         ax_err.set_xlim(0, km[-1])
         ax_err.set_yscale("log")
         ax_err.set_ylim(0.5, 4000)
-        ax_err.set_xlabel("kat edilen yol (km)", color="w", fontsize=10)
-        ax_err.set_ylabel("hata (m)", color="w", fontsize=10)
+        ax_err.set_xlabel(T["x"], color="w", fontsize=10)
+        ax_err.set_ylabel(T["y"], color="w", fontsize=10)
         ax_err.tick_params(colors="w", labelsize=9)
         for s in ax_err.spines.values():
             s.set_color("#3a3a45")
@@ -153,9 +179,9 @@ def main():
         else:
             import cv2
             vw.write(cv2.cvtColor(buf, cv2.COLOR_RGB2BGR))
-        if i % 5 == 0 and len(gif_frames) < 150:
+        if i % GIF_EVERY == 0 and len(gif_frames) < GIF_FRAMES:
             import cv2
-            gif_frames.append(cv2.resize(buf, (800, 450)))
+            gif_frames.append(cv2.resize(buf, GIF_SIZE))
         if (i + 1) % 150 == 0:
             print("  {}/{}".format(i + 1, n), flush=True)
 
@@ -169,7 +195,16 @@ def main():
 
     try:
         import imageio
-        imageio.mimsave(FIG / "demo.gif", gif_frames, fps=10, loop=0)
+        # One adaptive palette for the whole animation, and disposal=1 so PIL
+        # stores only what changes between frames. disposal=2 forces a full
+        # frame every time and doubles the file for no visible gain.
+        from PIL import Image
+        imgs = [Image.fromarray(f) for f in gif_frames]
+        base = imgs[0].quantize(colors=GIF_COLORS, method=Image.MEDIANCUT)
+        q = [base] + [im.quantize(palette=base, dither=Image.FLOYDSTEINBERG)
+                      for im in imgs[1:]]
+        q[0].save(FIG / "demo.gif", save_all=True, append_images=q[1:],
+                  duration=100, loop=0, optimize=True, disposal=1)
         print("figures/demo.gif yazildi ({:.1f} MB)".format(
             (FIG / "demo.gif").stat().st_size / 1e6))
     except Exception as ex:

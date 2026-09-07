@@ -16,11 +16,16 @@ metre seviyesi konum veriyorlar.
 
 ![Karşılaştırma](figures/tr/10_karsilastirma.png)
 
-![Gosterim](figures/demo.gif)
+![Gosterim](figures/tr/demo.gif)
 
 *Solda İHA kamerası. Sağda uydu haritasında canlı konum — açık mavi gerçek, yeşil kestirim, kırmızı sadece odometri. Altta kat edilen yola göre hata. Bu 12 saniyelik kesit, uydu eşlemesinin tamamen çöktüğü bölümlerden birini bilerek içeriyor: yeşil hata eğrisi fırlıyor, süzgeç odometriyle devam ediyor, sonra yeniden çapa atıyor.*
 
 ---
+
+**Yeni misiniz?** [**GeoAnchor Handbook**](https://claude.ai/code/artifact/4e74f825-8ffb-4469-8efa-68d9fb4e0b62) projeyi sıfırdan
+anlatıyor — problem tam olarak nedir, hangi modeller girdi, hangileri hangi ölçümle
+elendi, hangi ayar ne yapar ve hangi tuzaklar gerçekten vakit yedi. Oradan başlayın;
+bu README başvuru metni. (İngilizce.)
 
 Bu çalışmanın makalesi [`paper/`](paper/) altında —
 *Knowing When You Do Not Know: Sequential Map-Anchored Visual Localization for

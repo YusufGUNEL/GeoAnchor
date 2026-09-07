@@ -22,6 +22,12 @@ GNSS of any kind**.
 
 ---
 
+**New here?** The [**GeoAnchor Handbook**](https://claude.ai/code/artifact/4e74f825-8ffb-4469-8efa-68d9fb4e0b62) explains the whole project
+from the ground up — what the problem actually is, every model that went in, every
+model that got thrown out and the measurement that threw it, the settings that
+matter, and the traps that cost real time. Start there; this README is the
+reference.
+
 A manuscript covering this work is in [`paper/`](paper/) —
 *Knowing When You Do Not Know: Sequential Map-Anchored Visual Localization for
 GNSS-Denied UAV Flight*, IEEE conference format, built from the same result

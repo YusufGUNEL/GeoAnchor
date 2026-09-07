@@ -22,6 +22,7 @@ results/07_sequential_*_*.json
 
 # buyuk medya (demo.gif depoda kalir, mp4 kalmaz)
 figures/*.mp4
+figures/tr/*.mp4
 
 # isletim sistemi
 Thumbs.db
