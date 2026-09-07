@@ -180,9 +180,14 @@ not post both on the same day.
   ```
 
   `dagit.py` refuses to upload without the assets, because a Space that starts
-  and then throws on its first read is worse than no Space. It prints the URL;
-  put that everywhere `<SPACE_LINK>` appears above, and nowhere post a draft
-  that still contains the literal placeholder.
+  and then throws on its first read is worse than no Space, and it checks the
+  token before touching the network. The token currently on this machine is
+  fine-grained and read-only (`repo.content.read`), so it will stop and say so:
+  create a token with `repo.write` at huggingface.co/settings/tokens and run
+  `hf auth login`.
+
+  It prints the URL; put that everywhere `<SPACE_LINK>` appears above, and
+  nowhere post a draft that still contains the literal placeholder.
 - **arXiv** — the manuscript is finished and the upload is built by
   `python scripts/31_arxiv_bundle.py`; the submission form's metadata is in
   `paper/ARXIV.md`. Category cs.CV, cross-list cs.RO. A first submission to
