@@ -1,8 +1,16 @@
-# Sharing drafts — English channels
+# Sharing — Reddit, and where the work is indexed
 
-`PAYLASIM.md` covers LinkedIn in Turkish. This file covers the places that
-actually produce stars and inbound messages: Reddit, Hacker News, X, and the
-indexes. Read each one before posting and change the wording to sound like you.
+`PAYLASIM.md` has the LinkedIn post, in Turkish, and it is the one that matters
+for a Turkish network. This file has the one English channel worth the effort
+plus the places the work should be listed.
+
+**What was cut, and why.** Hacker News is a lottery: front page or nobody, and
+a flop is a bad first experience for no gain. An X or Bluesky thread needs an
+audience you already have. A second, English LinkedIn post splits one network
+in half — the international reader gets the README, the Space and the paper,
+all of which are already in English.
+
+Read the draft before posting and change the wording to sound like you.
 
 There is a second story now, and on the technical channels it is the stronger
 one: the same project was pointed at a thermal camera at night, the daylight
@@ -73,97 +81,10 @@ a page they have to clone: https://huggingface.co/spaces/MANOROMAN/GeoAnchor
 > Happy to be told what I got wrong — particularly on the particle filter's
 > resampling, which I suspect is cruder than it needs to be.
 
-**Also worth posting to:** r/drones (rewrite the opening for pilots, not CV
-people), r/Robotics, r/remotesensing.
-
----
-
-## Hacker News
-
-**Title**
-
-> Show HN: GeoAnchor – a UAV that locates itself on a satellite map with no GPS
-
-**Body (first comment, post it yourself right after submitting)**
-
-> Author here. This started as a question I could not answer: if GPS is jammed,
-> can a drone still know where it is using only a camera and a map it downloaded
-> before takeoff?
->
-> Visual odometry drifts (2.8 km off after 74 km). Satellite-map matching does
-> not drift but fails on about a quarter of frames — water, farmland, repeated
-> rooftops. Fusing them in a particle filter gives 8–25 m median error on seven
-> of ten real survey flights, with a position on essentially every frame, in
-> 1.4 GB of VRAM.
->
-> The finding I did not expect is that flight-level success is predictable in
-> advance from a property of the terrain rather than of the algorithm, so a
-> route can be screened before anyone flies it. Three flights fail and they are
-> in the repo with the diagnosis.
->
-> Evaluated on UAV-VisLoc, ground truth is post-processed GNSS, calibration on
-> the first 20% of each flight and evaluation on the remaining 80%.
-
-HN dislikes marketing language. No emoji, no "excited to share", no adjectives
-about your own work. State the problem, the number, the limitation.
-
----
-
-## X / Bluesky thread
-
-> 1/ A drone whose GPS is jammed does not know where it is.
->
-> I gave one a downward camera and a satellite map downloaded before takeoff.
-> Over ten real flights it finds itself to 8–25 metres, with no GNSS of any
-> kind, in 1.4 GB of VRAM. 🧵
-
-> 2/ Two methods, both insufficient.
->
-> Visual odometry never stops answering but drifts: 2.8 km off after 74 km.
-> Satellite matching never drifts but fails on 23% of frames — water, farmland,
-> repeating rooftops.
->
-> A particle filter uses each to cover the other's failure.
-
-> 3/ The part I did not expect.
->
-> Which flights work is predictable, and altitude is not the predictor — the
-> 2572 m flight works, a 551 m one collapses.
->
-> It is the match rate against the map. Above 50% it holds, below it breaks.
-> Correlation −0.764.
-
-> 4/ That number is measurable on a planned route *before takeoff*. So the
-> system can say "I will not work here" instead of failing in flight.
->
-> Three flights fail and are in the repo, with the diagnosis rather than a
-> trimmed table.
->
-> Interactive: https://huggingface.co/spaces/MANOROMAN/GeoAnchor
-> Code: https://github.com/YusufGUNEL/GeoAnchor
-
----
-
-## LinkedIn — short English version
-
-For international recruiters. Keep the Turkish post for the local network; do
-not post both on the same day.
-
-> A UAV with jammed GPS does not know where it is. I gave one a downward-facing
-> camera and a satellite map downloaded before takeoff.
->
-> Visual odometry drifts — 2.8 km off after a 74 km flight. Matching the camera
-> to the map does not drift but fails on a quarter of frames. Fused in a
-> particle filter, they cover each other: 8–25 m median error across seven of
-> ten real survey flights (406–2572 m altitude, 9–103 km each), position on
-> ≥99.7% of frames, 1.4 GB of VRAM.
->
-> What I find more useful than the median is that success is predictable from
-> the terrain before flying, so a route can be screened in advance. The three
-> flights where it fails are published with the diagnosis.
->
-> Interactive results: https://huggingface.co/spaces/MANOROMAN/GeoAnchor
-> Code: https://github.com/YusufGUNEL/GeoAnchor
+**If it goes well:** r/drones (rewrite the opening for pilots rather than CV
+people), r/Robotics, r/remotesensing. One at a time, days apart — the point of
+posting is answering the replies, and you cannot do that in four places at
+once.
 
 ---
 
@@ -195,21 +116,20 @@ not post both on the same day.
 - **Papers with Code** — add the repo against the "Visual Localization" and
   "Image Retrieval" tasks. Free, indexed by Google, and it is where people
   looking for a baseline actually search.
-- **GitHub hygiene** — the repository description and topics are already set.
-  Add the Space link to the About panel, and put the demo GIF in the first
-  screen of the README (it is currently below the fold on mobile).
+- **GitHub** — description, topics and the About panel's website link are set;
+  the website points at the Space.
 
 ## Order and timing
 
-Do not fire everything at once. One channel per day, so you can answer comments
-properly on each:
+Two posts, days apart:
 
-1. Space goes live, README links to it.
-2. r/computervision (weekday morning, US time).
-3. Hacker News (Tuesday–Thursday, around 09:00 US Eastern).
-4. LinkedIn Turkish, then the English version three days later.
-5. X thread on the same day as LinkedIn.
-6. Papers with Code and the preprint whenever they are ready.
+1. **LinkedIn, Turkish** (`PAYLASIM.md`) — weekday morning. Your own network,
+   the one that leads to conversations.
+2. **r/computervision** — a few days later, weekday morning US time. Different
+   audience, so no repetition problem.
+
+Then Papers with Code and the preprint whenever they are ready.
 
 The single most valuable thing you can do is answer every technical comment
-within a few hours. That is what turns a post into an audience.
+within a few hours. That is what turns a post into an audience — and it is the
+reason for not posting everywhere on the same day.
