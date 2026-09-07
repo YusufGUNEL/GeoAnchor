@@ -1042,3 +1042,51 @@ bekleniyorsa değmiyor.
 **Ders:** "Muhtemelen işe yaramaz" bir sonuç değil, ölçülmemiş bir hipotezdir.
 Bu projede aynı hata daha önce ters yönde yapılmıştı (RoMa "muhtemelen daha
 iyi" sanılmıştı); ikisi de uçtan uca ölçülünce çözüldü.
+
+---
+
+## Faz 16 — Space yayında: sunucusuz olması gerekiyormuş (2026-09-07)
+
+Faz 14 denetimi `space/` klasörünün aylardır hazır ama hiç dağıtılmamış
+olduğunu bulmuştu. Dağıtmaya çalışınca üç engel üst üste çıktı ve üçü de
+öğreticiydi.
+
+**Jeton okuma yetkisindeydi.** `create_repo` 403 veriyordu. `izin_kontrol()`
+eklendi: ağa dokunmadan önce yetkiye bakıp mevcut yetkiyi, gerekeni ve nereden
+alınacağını yazıyor.
+
+**Gizli Gradio Space PRO istiyor.** Kullanıcı önce gizli dağıtım istemişti;
+402 geldi. Betiğe bu durumun açıklaması ve alternatifi kondu.
+
+**Ücretsiz hesapta Gradio hiç çalışmıyor.** Herkese açık denendiğinde de 402:
+"Static Spaces are free for everyone, but hosting Gradio and Docker Spaces on
+free cpu-basic requires a PRO subscription."
+
+Bu bir engel değil düzeltme oldu. **Uygulamada sunucu tarafında tek bir hesap
+yok** — bütün sayılar aylar önce offline hesaplanıp `results/`'a yazılmıştı.
+Yani Gradio baştan beri gereksiz bir bağımlılıktı ve bunu fatura fark ettirdi.
+
+`space/index.html`: tek JSON çekip grafikleri Plotly ile çizen static sayfa.
+`hazirla.py` artık kopyalamıyor damıtıyor — NPZ dizileri 90 KB'lik tek
+`data.json`'a giriyor (her ikinci kare; 768 nokta 900 pikselden fazla).
+
+Sayfa üç kez boş açıldı, üçü de ayrı sebepten:
+
+1. `json.dumps` **NaN** yazıyordu, geçerli JSON değil, tarayıcı parse'ta ölüyordu.
+   Konum üretilemeyen kareler artık `null` — Plotly onu boşluk çiziyor, ki
+   doğrusu da bu. `allow_nan=False` kondu ki bir sonraki tarayıcıda değil
+   burada yakalansın; hemen yakaladı (iki uçuşun kullanılmayan kalibrasyon
+   alanları). Çözüm hepsini temizlemek değil, sayfanın kullandığı alanları
+   göndermek oldu.
+2. Plotly **olmayan bir sürüme** sabitlenmişti (2.35.2, cdnjs'te 404).
+   Doğrulanıp 3.0.1 kondu. Sürüm numarası tahmin edilecek şey değilmiş.
+3. `short_description` 60 karakteri aşıyordu, HF yüklemeyi reddetti.
+
+**Sonuç:** https://huggingface.co/spaces/MANOROMAN/GeoAnchor — ücretsiz, anında
+açılıyor, uyuyan bir Space'in soğuk başlangıcı yok. `PAYLASIM-EN.md`'deki üç
+`<SPACE_LINK>` yer tutucusu dolduruldu; paylaşım taslakları artık olduğu gibi
+gönderilebilir.
+
+**Ders:** Bir bağımlılığın gereksiz olduğunu çoğu zaman onu ödemek zorunda
+kalınca fark ediyorsun. Sunucu tarafında hiçbir hesap yapmayan bir uygulama
+için sunucu kiralanıyordu.

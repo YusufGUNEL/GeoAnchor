@@ -132,10 +132,7 @@ def main() -> int:
     url = f"https://huggingface.co/spaces/{REPO_ID}"
     print(f"\n-> {url}  ({'GIZLI' if gizli else 'herkese acik'})")
     if gizli:
-        print("Space ayarlarindan herkese acik yaptiktan sonra baglantiyi")
-        print("PAYLASIM-EN.md'deki <SPACE_LINK> yerlerine koy.")
-    else:
-        print("Bu baglantiyi PAYLASIM-EN.md'deki <SPACE_LINK> yerlerine koy.")
+        print("Space ayarlarindan herkese acik yapmayi unutma.")
     return 0
 
 
