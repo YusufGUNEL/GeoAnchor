@@ -49,11 +49,45 @@ import matplotlib                                            # noqa: E402
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt                              # noqa: E402
 
+from src.figtext import figdir, pct, pick                     # noqa: E402
+
 kopru = import_module("02_kopru")
+
+T = pick({
+ "en": {
+  "bar_x": ("satellite tile ranked by structure content (decile)\n"
+            "(1 = emptiest tiles, 10 = richest)"),
+  "bar_y": "frames correctly located (%)",
+  "bar_t": ("The emptiest tenth locates NOTHING,\nthe richest locates one frame in three"),
+  "mean": "overall {}",
+  "auc_x": "AUC — power to tell a correct fix from a wrong one",
+  "auc_t": ("GREEN: measured BEFORE matching, from the map alone\n"
+            "GREY: only measurable AFTER the match is computed"),
+  "sup": "At night too, performance is set by TILE CONTENT, not by the matcher — {n} frames",
+  "b_yon": "gradient orientation", "b_ic": "inlier count", "b_mi": "mutual information",
+  "b_tile": "satellite tile: ", "b_hf": "satellite: high frequency",
+  "b_edge": "satellite: edge density",
+ },
+ "tr": {
+  "bar_x": ("uydu karosunun yapi icerigine gore decile\n"
+            "(1 = en yapisiz karolar, 10 = en yapili)"),
+  "bar_y": "dogru konumlanan kare orani (%)",
+  "bar_t": ("En yapisiz onda birde HICBIR kare tutmuyor,\n"
+            "en yapilida her uc karenin biri"),
+  "mean": "genel ortalama {}",
+  "auc_x": "AUC — dogru fix'i yanlistan ayirma gucu",
+  "auc_t": ("YESIL: eslesmeden ONCE, sadece haritadan olculuyor\n"
+            "GRI: eslesme yapildiktan SONRA olculebiliyor"),
+  "sup": "Gecede de basarimi belirleyen sey esleyici degil, KARONUN ICERIGI — {n} kare",
+  "b_yon": "yon uyumu", "b_ic": "ic nokta sayisi", "b_mi": "karsilikli bilgi",
+  "b_tile": "uydu karosu: ", "b_hf": "uydu: yuksek frekans",
+  "b_edge": "uydu: kenar yogunlugu",
+ },
+})
 
 DATA = ROOT / "night" / "veri" / "thermal_dataset"
 OUT = ROOT / "night" / "sonuclar"
-FIG = ROOT / "figures"
+FIG = figdir()
 KAYIT = OUT / "03_dogrulama_1000.json"
 
 
@@ -227,29 +261,32 @@ def analyse(ham: dict, labels: np.ndarray, n: int) -> int:
     cols = ["#ff2d55" if r < 100 * labels.mean() else "#00b894" for r in rate]
     ax.bar(np.arange(1, 11), rate, color=cols, edgecolor="k", linewidth=0.6)
     ax.axhline(100 * labels.mean(), color="#2d3436", ls="--", lw=1.3,
-               label=f"genel ortalama %{100 * labels.mean():.1f}")
+               label=T["mean"].format(pct(100 * labels.mean(), 1)))
     for b, r in enumerate(rate):
-        ax.text(b + 1, r + 0.8, f"%{r:.0f}", ha="center", fontsize=10)
+        ax.text(b + 1, r + 0.8, pct(r), ha="center", fontsize=10)
     ax.set_xticks(np.arange(1, 11))
-    ax.set_xlabel("uydu karosunun yapi icerigine gore decile\n"
-                  "(1 = en yapisiz karolar, 10 = en yapili)")
-    ax.set_ylabel("dogru konumlanan kare orani (%)")
+    ax.set_xlabel(T["bar_x"])
+    ax.set_ylabel(T["bar_y"])
     ax.set_ylim(0, max(rate[~np.isnan(rate)]) * 1.22)
-    ax.set_title("En yapisiz onda birde HICBIR kare tutmuyor,\n"
-                 "en yapilida her uc karenin biri", fontsize=12.5)
+    ax.set_title(T["bar_t"], fontsize=12.5)
     ax.grid(alpha=0.25, axis="y")
     ax.legend(fontsize=10, loc="upper left")
 
     # The comparison that matters: this measure needs only the basemap, and it
     # still ranks with the scores that require the match to have been computed.
     ax = axes[1]
+    # The post-match numbers come from the record 03 wrote rather than being
+    # typed in; this panel exists to compare them against the pre-match score,
+    # so a stale constant here would quietly undo the whole point.
+    after = json.loads(KAYIT.read_text(encoding="utf-8"))["ozet"]
+    summary_after = {k: max(v["auc"], 1 - v["auc"]) for k, v in after.items()}
     bars = [
-        ("yon uyumu", 0.878, "sonra"),
-        (sat_best.replace("uydu_", "uydu karosu: "), summary[sat_best]["auc"], "once"),
-        ("ic nokta sayisi", 0.803, "sonra"),
-        ("uydu: yuksek frekans", summary["uydu_yuksek_frekans"]["auc"], "once"),
-        ("uydu: kenar yogunlugu", summary["uydu_kenar_yogunlugu"]["auc"], "once"),
-        ("karsilikli bilgi", 0.521, "sonra"),
+        (T["b_yon"], summary_after["yon_uyumu"], "sonra"),
+        (sat_best.replace("uydu_", T["b_tile"]), summary[sat_best]["auc"], "once"),
+        (T["b_ic"], summary_after["ic_nokta"], "sonra"),
+        (T["b_hf"], summary["uydu_yuksek_frekans"]["auc"], "once"),
+        (T["b_edge"], summary["uydu_kenar_yogunlugu"]["auc"], "once"),
+        (T["b_mi"], summary_after["mi"], "sonra"),
     ]
     bars.sort(key=lambda b: b[1])
     y = np.arange(len(bars))
@@ -262,13 +299,11 @@ def analyse(ham: dict, labels: np.ndarray, n: int) -> int:
     ax.set_yticklabels([b[0] for b in bars], fontsize=10)
     ax.axvline(0.5, color="#636e72", ls=":", lw=1.2)
     ax.set_xlim(0.45, 1.0)
-    ax.set_xlabel("AUC — dogru fix'i yanlistan ayirma gucu")
-    ax.set_title("YESIL: eslesmeden ONCE, sadece haritadan olculuyor\n"
-                 "GRI: eslesme yapildiktan SONRA olculebiliyor", fontsize=12.5)
+    ax.set_xlabel(T["auc_x"])
+    ax.set_title(T["auc_t"], fontsize=12.5)
     ax.grid(alpha=0.25, axis="x")
 
-    fig.suptitle("Gecede de basarimi belirleyen sey esleyici degil, KARONUN ICERIGI — "
-                 f"{n} kare", fontsize=14, y=0.99)
+    fig.suptitle(T["sup"].format(n=n), fontsize=14, y=0.99)
     fig.tight_layout(rect=(0, 0, 1, 0.945))
     fig.savefig(FIG / "32_gece_yasa.png", dpi=125, bbox_inches="tight")
     plt.close(fig)

@@ -50,16 +50,78 @@ import matplotlib                                            # noqa: E402
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt                              # noqa: E402
 
+from src.figtext import figdir, pct, pick                     # noqa: E402
 from src.matching import estimate_similarity                 # noqa: E402
 
 kopru = import_module("02_kopru")
 
 DATA = ROOT / "night" / "veri" / "thermal_dataset"
-FIG = ROOT / "figures"
+FIG = figdir()
+
+T = pick({
+ "en": {
+  "why_title": ("Same place, two modalities: BRIGHTNESS IS NOT SHARED, STRUCTURE IS\n"
+                "Top, as captured — the two frames are {off} px apart and the ground "
+                "texture is not the same thing on both sides.\n"
+                "Bottom, after the band-pass — roads, field boundaries and building "
+                "outlines survive on both."),
+  "thermal": "THERMAL — what the camera sees",
+  "sat": "SATELLITE — what the map shows",
+  "thermal_dog": "thermal, clahe+dog",
+  "sat_dog": "satellite, clahe+dog",
+  "ev_title": ("Night thermal localization: how the daylight system fails, and what "
+               "moves the needle\nEach row: thermal left, satellite right; lines are "
+               "the correspondences the matcher proposed.\nOn the satellite half a "
+               "CYAN CROSS is the true place and a DOT is the estimate. One and the "
+               "same pair (scan index {k})."),
+  "truth": "true place",
+  "est": "estimate",
+  "row1": "1) LoFTR, raw input — the daylight system as it stands",
+  "row1n": ("{raw} raw correspondences, none survive RANSAC ({n} inliers).\n"
+            "No estimate is produced: the system is BLIND. Correct on {rate} of "
+            "{total} frames."),
+  "row2": "2) RoMa, raw input — a stronger matcher",
+  "row2n": ("{n} inliers, error {err:.0f} px.\n"
+            "Confident and WRONG: it answers every frame, {rate} of them correctly."),
+  "row3": "3) RoMa + clahe+dog — appearance discarded, structure kept",
+  "row3n": ("{n} inliers, error {err:.1f} px (inside the {tol:.0f} px tolerance).\n"
+            "{rate} of frames look like this."),
+ },
+ "tr": {
+  "why_title": ("Ayni yer, iki kip: PARLAKLIK ORTAK DEGIL, YAPI ORTAK\n"
+                "Ustte ham goruntuler — iki kare arasinda {off} px gercek kayma var; "
+                "zemin dokusu iki tarafta ayni sey degil.\n"
+                "Altta bant-gecirenden sonra — yollar, tarla sinirlari ve bina "
+                "hatlari iki tarafta da cikiyor."),
+  "thermal": "TERMAL — kameranin gordugu",
+  "sat": "UYDU — haritanin gosterdigi",
+  "thermal_dog": "termal, clahe+dog",
+  "sat_dog": "uydu, clahe+dog",
+  "ev_title": ("Gece termal konumlandirma: gunduz sisteminin cokusu ve neyin ibreyi "
+               "kaldirdigi\nHer satirda solda termal, sagda uydu; cizgiler "
+               "esleyicinin kurdugu karsiliklar.\nUydu tarafinda MAVI ARTI = gercek "
+               "yer, DAIRE = kestirilen yer. Tek ve ayni cift (tarama indeksi {k})."),
+  "truth": "gercek yer",
+  "est": "kestirilen yer",
+  "row1": "1) LoFTR, ham goruntu — gunduz sistemi oldugu gibi",
+  "row1n": ("{raw} ham karsilik, RANSAC'i geceni yok ({n} ic nokta).\n"
+            "Kestirim uretilemiyor: sistem KOR. {total} karede dogru konum orani "
+            "{rate}."),
+  "row2": "2) RoMa, ham goruntu — daha guclu esleyici",
+  "row2n": ("{n} ic nokta, hata {err:.0f} px.\n"
+            "Kendinden emin ve YANLIS: her kareyi kabul ediyor, {rate}'si dogru."),
+  "row3": "3) RoMa + clahe+dog — gorunum atildi, yapi kaldi",
+  "row3n": ("{n} ic nokta, hata {err:.1f} px ({tol:.0f} px toleransin altinda).\n"
+            "Karelerin {rate}'sinda boyle."),
+ },
+})
 OUT = ROOT / "night" / "sonuclar"
 OFFSET = kopru.OFFSET
 TOL_PX = 20.0
-N_SCAN = int(sys.argv[1]) if len(sys.argv) > 1 else 40
+# Skip flags such as --tr so the language switch and the scan size can be
+# passed together.
+_args = [a for a in sys.argv[1:] if not a.startswith("-")]
+N_SCAN = int(_args[0]) if _args else 40
 MAX_LINES = 70
 
 CYAN, GREEN, RED = "#00d4ff", "#00b894", "#ff2d55"
@@ -132,13 +194,13 @@ def draw_row(ax, arm, title, note):
     # which reads as a drawing error rather than as a position.
     shift = np.array([w, 0.0])
     ct = centre(a.shape, truth_M()) + shift
-    ax.plot(*ct, "+", color=CYAN, ms=17, mew=2.6, zorder=6, label="gercek yer")
+    ax.plot(*ct, "+", color=CYAN, ms=17, mew=2.6, zorder=6, label=T["truth"])
     if arm["M"] is not None:
         ce = centre(a.shape, arm["M"]) + shift
         col = GREEN if ok else RED
         ax.plot([ct[0], ce[0]], [ct[1], ce[1]], "-", color=col, lw=1.6, zorder=6)
         ax.plot(*ce, "o", color=col, ms=9, mec="k", mew=0.8, zorder=7,
-                label="kestirilen yer")
+                label=T["est"])
         ax.annotate(f"{arm['err']:.0f} px", ce, textcoords="offset points",
                     xytext=(11, -4), color="w", fontsize=10, zorder=8,
                     bbox=dict(fc=col, ec="none", alpha=0.9, pad=2.0))
@@ -214,21 +276,16 @@ def main() -> int:
 
     # ---- figure 30: why raw matching cannot work ------------------------
     fig, axes = plt.subplots(2, 2, figsize=(10.2, 10.9))
-    panels = [(t_raw, "TERMAL — kameranin gordugu", axes[0, 0]),
-              (s_raw, "UYDU — haritanin gosterdigi", axes[0, 1]),
-              (dog(t_raw, True), "termal, clahe+dog", axes[1, 0]),
-              (dog(s_raw, False), "uydu, clahe+dog", axes[1, 1])]
+    panels = [(t_raw, T["thermal"], axes[0, 0]),
+              (s_raw, T["sat"], axes[0, 1]),
+              (dog(t_raw, True), T["thermal_dog"], axes[1, 0]),
+              (dog(s_raw, False), T["sat_dog"], axes[1, 1])]
     for img, name, ax in panels:
         ax.imshow(img, cmap="gray")
         ax.set_title(name, fontsize=12)
         ax.set_xticks([])
         ax.set_yticks([])
-    fig.suptitle("Ayni yer, iki kip: PARLAKLIK ORTAK DEGIL, YAPI ORTAK\n"
-                 f"Ustte ham goruntuler — iki kare arasinda {OFFSET} px gercek "
-                 "kayma var; zemin dokusu iki tarafta ayni sey degil.\n"
-                 "Altta bant-gecirenden sonra — yollar, tarla sinirlari ve bina "
-                 "hatlari iki tarafta da cikiyor.",
-                 fontsize=12, y=0.995)
+    fig.suptitle(T["why_title"].format(off=OFFSET), fontsize=12, y=0.995)
     fig.tight_layout(rect=(0, 0, 1, 0.935), h_pad=2.2)
     fig.savefig(FIG / "30_gece_neden.png", dpi=115, bbox_inches="tight")
     plt.close(fig)
@@ -238,30 +295,21 @@ def main() -> int:
     a0, a1, a2 = arms["loftr_ham"], arms["roma_ham"], arms["roma_dog"]
     g = global_rates()
     rows = [
-        (a0, "1) LoFTR, ham goruntu — gunduz sistemi oldugu gibi",
-         f"{len(a0['pa'])} ham karsilik, RANSAC'i geceni yok ({a0['n']} ic nokta).\n"
-         f"Kestirim uretilemiyor: sistem KOR. {g['n']} karede dogru konum orani "
-         f"%{100 * g['loftr_dogru']:.0f}."),
-        (a1, "2) RoMa, ham goruntu — daha guclu esleyici",
-         f"{a1['n']} ic nokta, hata {a1['err']:.0f} px.\n"
-         f"Kendinden emin ve YANLIS: her kareyi kabul ediyor, "
-         f"%{100 * g['roma_ham_dogru']:.0f}'si dogru."),
-        (a2, "3) RoMa + clahe+dog — gorunum atildi, yapi kaldi",
-         f"{a2['n']} ic nokta, hata {a2['err']:.1f} px ({TOL_PX:.0f} px toleransin altinda).\n"
-         f"Karelerin %{100 * g['roma_dog_dogru']:.0f}'sinda boyle."),
+        (a0, T["row1"], T["row1n"].format(
+            raw=len(a0["pa"]), n=a0["n"], total=g["n"],
+            rate=pct(100 * g["loftr_dogru"]))),
+        (a1, T["row2"], T["row2n"].format(
+            n=a1["n"], err=a1["err"], rate=pct(100 * g["roma_ham_dogru"]))),
+        (a2, T["row3"], T["row3n"].format(
+            n=a2["n"], err=a2["err"], tol=TOL_PX,
+            rate=pct(100 * g["roma_dog_dogru"]))),
     ]
     fig, axes = plt.subplots(3, 1, figsize=(11.6, 15.4))
     for ax, (arm, title, note) in zip(axes, rows):
         draw_row(ax, arm, title, note)
     # Row 2 is the only one carrying both markers, so the legend goes there.
     axes[1].legend(loc="upper right", fontsize=10, framealpha=0.85)
-    fig.suptitle("Gece termal konumlandirma: gunduz sisteminin cokusu ve neyin "
-                 "ibreyi kaldirdigi\n"
-                 "Her satirda solda termal, sagda uydu; cizgiler esleyicinin "
-                 "kurdugu karsiliklar.\n"
-                 f"Uydu tarafinda MAVI ARTI = gercek yer, DAIRE = kestirilen yer. "
-                 f"Tek ve ayni cift (tarama indeksi {k}).",
-                 fontsize=12, y=0.998)
+    fig.suptitle(T["ev_title"].format(k=k), fontsize=12, y=0.998)
     fig.tight_layout(rect=(0, 0, 1, 0.968), h_pad=1.6)
     fig.savefig(FIG / "31_gece_kanit.png", dpi=112, bbox_inches="tight")
     plt.close(fig)

@@ -17,27 +17,89 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+from src.figtext import figdir, num, pct, pick
 from src.flight import load_flight
 from src.geo import SatelliteMap, latlon_to_local_m, local_m_to_latlon
 
 ROOT = Path(__file__).resolve().parents[1]
-FIG = ROOT / "figures"
+FIG = figdir()
 RES = ROOT / "results"
-FIG.mkdir(exist_ok=True)
 
 C_GT = "#00e5ff"
 C_SF = "#ffb000"
 C_VO = "#ff2d55"
 C_PF = "#00ff6a"
 
-T_SOL = ("BU SISTEM OLMASAYDI\n"
-         "Sadece odometri: suruklenme IHA'yi haritanin DISINA tasiyor")
-T_SAG = ("BU SISTEMLE\n"
-         "Yesil cizgi, kalin beyaz gercegin ustunde kaliyor")
-T_CDF = ("Hata birikimli dagilimi\n"
-         "SOLA ve YUKARIYA yaslanan egri IYIDIR")
-T_ERR = ("Hata mesafeyle nasil degisiyor?\n"
-         "KIRMIZI ile YESIL arasindaki fark ne kadar buyukse o kadar iyi")
+T = pick({
+ "en": {
+  "left": "WITHOUT THIS SYSTEM\nodometry alone drifts the UAV clean off the map",
+  "right": "WITH THIS SYSTEM\nthe whole route stays on the truth; colour is the error",
+  "suptitle": ("Absolute positioning with no GNSS — Taizhou, 74 km, 768 frames, "
+               "8.8 x 7.3 km satellite map"),
+  "gt": "true route (where the drone really was)",
+  "vo": "where it thinks it is without the system: {:.0f} m off after 74 km",
+  "err_cb": "position error (m)",
+  "collapse": "matching collapsed here ({} frames)",
+  "sf_pts": "single-frame method — a result on only {} of frames",
+  "cdf_sf": "single frame (search the whole map) (n={})",
+  "cdf_pf": "THIS SYSTEM (sequential fusion) (n={})",
+  "cdf_vo": "WITHOUT the system (odometry only)",
+  "cdf_x": "position error (m, log scale)",
+  "cdf_y": "frames below this error (%)",
+  "cdf_title": "Error distribution\nfurther LEFT and UP is better",
+  "err_title": ("How does the error grow with distance?\n"
+                "the bigger the gap between RED and GREEN, the better"),
+  "err_vo": "WITHOUT the system (odometry only)",
+  "err_sf": "single frame (frames it solved)",
+  "err_pf": "THIS SYSTEM",
+  "err_spread": "the filter's own uncertainty estimate",
+  "err_y": "position error (m, log scale)",
+  "err_y2": "error (m)",
+  "err_x": "distance flown (km)",
+  "cov_title": "Which frames produced a position?  single frame: {}",
+  "cov_sf": "single frame",
+  "cov_pf": "fusion\n{}",
+  "cov_no": "none",
+  "cov_yes": "yes",
+  "cov_calls": "matching calls\nper frame",
+  "cov_l_sf": "single frame (mean {})",
+  "cov_l_pf": "sequential fusion (mean {})",
+ },
+ "tr": {
+  "left": "BU SISTEM OLMASAYDI\nSadece odometri: suruklenme IHA'yi haritanin DISINA tasiyor",
+  "right": "BU SISTEMLE\nButun rota gercegin uzerinde kaliyor; renk hatayi gosteriyor",
+  "suptitle": ("GPS'siz mutlak konumlandirma — Taizhou, 74 km, 768 kare, "
+               "8,8 x 7,3 km uydu haritasi"),
+  "gt": "GERCEK yorunge (drone gercekte buradaydi)",
+  "vo": "sistem OLMADAN nerede sandigi: 74 km sonra {:.0f} m sapma",
+  "err_cb": "konum hatasi (m)",
+  "collapse": "eslemenin coktugu yerler ({} kare)",
+  "sf_pts": "tek kare yontemi — sadece {} karede sonuc",
+  "cdf_sf": "tek kare (harita geneli arama) (n={})",
+  "cdf_pf": "BU SISTEM (sirali fuzyon) (n={})",
+  "cdf_vo": "sistem OLMADAN (sadece odometri)",
+  "cdf_x": "konum hatasi (m, logaritmik)",
+  "cdf_y": "bu hatanin altinda kalan kare orani (%)",
+  "cdf_title": "Hata birikimli dagilimi\nSOLA ve YUKARIYA yaslanan egri IYIDIR",
+  "err_title": ("Hata mesafeyle nasil degisiyor?\n"
+                "KIRMIZI ile YESIL arasindaki fark ne kadar buyukse o kadar iyi"),
+  "err_vo": "sistem OLMADAN (sadece odometri)",
+  "err_sf": "tek kare (cozulen kareler)",
+  "err_pf": "BU SISTEM",
+  "err_spread": "suzgecin kendi belirsizlik kestirimi",
+  "err_y": "konum hatasi (m, logaritmik)",
+  "err_y2": "hata (m)",
+  "err_x": "kat edilen yol (km)",
+  "cov_title": "Hangi karede konum uretilebildi?  tek kare: {}",
+  "cov_sf": "tek kare",
+  "cov_pf": "fuzyon\n{}",
+  "cov_no": "yok",
+  "cov_yes": "var",
+  "cov_calls": "kare basina\nesleme cagrisi",
+  "cov_l_sf": "tek kare (ort {})",
+  "cov_l_pf": "sirali fuzyon (ort {})",
+ },
+})
 
 
 def load_all():
@@ -75,6 +137,19 @@ def make_to_px(sat, ov, lat0, lon0):
 
 
 def fig_trajectories(D):
+    """Two panels, one frame of reference, and no overlapping tracks.
+
+    The old version drew truth and estimate as two thick lines on top of each
+    other across seventeen parallel survey legs. At 8.8 km wide a 6 m error is
+    smaller than the line itself, so the two could never be told apart -- the
+    panel read as a hatch pattern and its white legend swatch was invisible on
+    a white box. Overlaying them can only ever show gross divergence, which is
+    what the left panel is for.
+
+    So the right panel draws one track, coloured by error. That removes the
+    tangle and says more: not just that the estimate is good, but where on the
+    route it is worst.
+    """
     flight = D["flight"]
     sat = SatelliteMap(flight.satellite_path)
     ov = sat.overview(1500)
@@ -83,50 +158,61 @@ def fig_trajectories(D):
     to_px = make_to_px(sat, ov, lat0, lon0)
     gx, gy = to_px(D["gt_n"], D["gt_e"])
 
-    fig, axes = plt.subplots(1, 2, figsize=(19, 9))
+    fig, axes = plt.subplots(1, 2, figsize=(18, 8.4))
 
+    # --- left: what happens without the system ---
     ax = axes[0]
-    ax.imshow(ov, alpha=0.5)
-    ax.plot(gx, gy, "-", lw=3.4, color="#ffffff", alpha=0.95,
-            label="GERCEK yorunge (drone gercekte buradaydi)", zorder=5)
+    ax.imshow(ov, alpha=0.55)
+    ax.plot(gx, gy, "-", lw=4.0, color="w", alpha=0.9, zorder=4)
+    ax.plot(gx, gy, "-", lw=1.6, color=C_GT, zorder=5, label=T["gt"])
     if "vo" in D:
         vx, vy = to_px(D["vo"]["north"], D["vo"]["east"])
-        lbl = "sistem OLMADAN nerede sandigi: 74 km sonra {:.0f} m sapma".format(
-            D["vo"]["err"][-1])
-        ax.plot(vx, vy, "-", lw=1.8, color=C_VO, alpha=0.95, zorder=4, label=lbl)
-        ax.plot(vx[-1], vy[-1], "X", ms=14, color=C_VO, mec="k", mew=0.8, zorder=6)
-    ax.set_title(T_SOL, fontsize=13)
-    ax.legend(loc="lower left", fontsize=10, framealpha=0.9)
-    ax.set_aspect("equal")
-    ax.axis("off")
+        ax.plot(vx, vy, "-", lw=1.8, color=C_VO, zorder=6,
+                label=T["vo"].format(D["vo"]["err"][-1]))
+        ax.plot(vx[-1], vy[-1], "X", ms=15, color=C_VO, mec="k", mew=1.0, zorder=7)
+    ax.set_title(T["left"], fontsize=13)
 
+    # --- right: the same route, coloured by how wrong it is ---
     ax = axes[1]
-    ax.imshow(ov)
-    ax.plot(gx, gy, "-", lw=5.0, color="#ffffff", alpha=0.9,
-            label="GERCEK yorunge (drone gercekte buradaydi)", zorder=4)
-    if "sf" in D:
-        m = np.isfinite(D["sf"]["north"])
-        sxp, syp = to_px(D["sf"]["north"][m], D["sf"]["east"][m])
-        ax.plot(sxp, syp, ".", ms=4.5, color=C_SF, alpha=0.95, zorder=5,
-                label="tek kare yontemi - sadece %{:.0f} karede sonuc".format(m.mean() * 100))
+    ax.imshow(ov, alpha=0.55)
+    sc = None
     if "pf" in D:
         px, py = to_px(D["pf"]["north"], D["pf"]["east"])
         e = D["pf"]["err"]
-        ax.plot(px, py, "-", lw=1.5, color=C_PF, alpha=0.95, zorder=6,
-                label="BU SISTEM nerede sandigi - %100 kare, medyan {:.1f} m".format(
-                    np.nanmedian(e)))
+        # Clipped at 20 m so the colour spends its range on the errors that
+        # actually occur; the collapses are marked separately below.
+        sc = ax.scatter(px, py, c=np.clip(e, 0, 20), s=6, cmap="viridis",
+                        vmin=0, vmax=20, zorder=5)
         bad = e > 50
         if bad.any():
-            ax.plot(px[bad], py[bad], ".", ms=6, color="#ff2d55", zorder=7,
-                    label="eslemenin coktugu yerler - burada beyaz aciga cikiyor (%{:.1f})".format(
-                        bad.mean() * 100))
-    ax.set_title(T_SAG, fontsize=13)
-    ax.legend(loc="upper right", fontsize=10, framealpha=0.9)
-    ax.axis("off")
+            ax.plot(px[bad], py[bad], "o", ms=7, mfc="none", mec=C_VO, mew=1.4,
+                    zorder=6, label=T["collapse"].format(int(bad.sum())))
+    ax.set_title(T["right"], fontsize=13)
 
-    fig.suptitle("GPS'siz mutlak konumlandirma - Taizhou, 74 km, 768 kare, "
-                 "8,8 x 7,3 km uydu haritasi", fontsize=15, y=0.99)
-    fig.tight_layout()
+    # Both panels share the union of the extents: the drift has to be read
+    # against the same frame the estimate is drawn in, not a rescaled one.
+    xs = [gx, [0, ov.shape[1]]]
+    ys = [gy, [0, ov.shape[0]]]
+    if "vo" in D:
+        xs.append(vx); ys.append(vy)
+    xs, ys = np.concatenate(xs), np.concatenate(ys)
+    pad = 0.03 * max(np.ptp(xs), np.ptp(ys))
+    for a in axes:
+        a.set_xlim(xs.min() - pad, xs.max() + pad)
+        a.set_ylim(ys.max() + pad, ys.min() - pad)
+        a.set_aspect("equal")
+        a.axis("off")
+        leg = a.legend(loc="lower left", fontsize=11, framealpha=0.9,
+                       facecolor="#1a1d24", edgecolor="none")
+        for txt in leg.get_texts():
+            txt.set_color("w")
+
+    if sc is not None:
+        cb = fig.colorbar(sc, ax=axes[1], fraction=0.036, pad=0.02)
+        cb.set_label(T["err_cb"], fontsize=11)
+
+    fig.suptitle(T["suptitle"], fontsize=15, y=0.98)
+    fig.tight_layout(rect=(0, 0, 1, 0.95))
     fig.savefig(FIG / "10_karsilastirma.png", dpi=125, bbox_inches="tight")
     plt.close(fig)
     sat.close()
@@ -136,27 +222,26 @@ def fig_trajectories(D):
 def fig_cdf(D):
     n_tot = len(D["gt_n"])
     fig, ax = plt.subplots(figsize=(10, 6.5))
-    for key, color, name in [("sf", C_SF, "tek kare (harita geneli arama)"),
-                             ("pf", C_PF, "BU SISTEM (sirali fuzyon)")]:
+    for key, color, tmpl in [("sf", C_SF, T["cdf_sf"]), ("pf", C_PF, T["cdf_pf"])]:
         if key not in D:
             continue
         e = D[key]["err"]
         e = np.sort(e[np.isfinite(e)])
         ys = np.arange(1, len(e) + 1) / n_tot * 100
-        ax.plot(e, ys, lw=2.4, color=color, label="{} (n={})".format(name, len(e)))
+        ax.plot(e, ys, lw=2.4, color=color, label=tmpl.format(len(e)))
     if "vo" in D:
         e = np.sort(D["vo"]["err"])
         ax.plot(e, np.arange(1, len(e) + 1) / n_tot * 100, lw=2.0,
-                color=C_VO, label="sistem OLMADAN (sadece odometri)")
+                color=C_VO, label=T["cdf_vo"])
     for t in (5, 10, 20):
         ax.axvline(t, color="#888", ls=":", lw=1)
         ax.text(t, 3, "{} m".format(t), color="#666", fontsize=9, ha="center")
     ax.set_xscale("log")
     ax.set_xlim(0.5, 5000)
     ax.set_ylim(0, 100)
-    ax.set_xlabel("konum hatasi (m, logaritmik)")
-    ax.set_ylabel("bu hatanin altinda kalan kare orani (%)")
-    ax.set_title(T_CDF, fontsize=13)
+    ax.set_xlabel(T["cdf_x"])
+    ax.set_ylabel(T["cdf_y"])
+    ax.set_title(T["cdf_title"], fontsize=13)
     ax.grid(alpha=0.3, which="both")
     ax.legend(fontsize=10, loc="lower right")
     fig.tight_layout()
@@ -171,27 +256,26 @@ def fig_error_curve(D):
                              gridspec_kw={"height_ratios": [2, 1]})
     ax = axes[0]
     if "vo" in D:
-        ax.plot(km, D["vo"]["err"], color=C_VO, lw=1.6,
-                label="sistem OLMADAN (sadece odometri)")
+        ax.plot(km, D["vo"]["err"], color=C_VO, lw=1.6, label=T["err_vo"])
     if "sf" in D:
         m = np.isfinite(D["sf"]["err"])
         ax.plot(km[m], D["sf"]["err"][m], ".", ms=3, color=C_SF, alpha=0.6,
-                label="tek kare (cozulen kareler)")
+                label=T["err_sf"])
     if "pf" in D:
-        ax.plot(km, D["pf"]["err"], color=C_PF, lw=1.6, label="BU SISTEM")
+        ax.plot(km, D["pf"]["err"], color=C_PF, lw=1.6, label=T["err_pf"])
     ax.set_yscale("log")
-    ax.set_ylabel("konum hatasi (m, logaritmik)")
+    ax.set_ylabel(T["err_y"])
     ax.grid(alpha=0.3, which="both")
     ax.legend(fontsize=10)
-    ax.set_title(T_ERR, fontsize=13)
+    ax.set_title(T["err_title"], fontsize=13)
 
     ax = axes[1]
     if "pf" in D:
-        ax.plot(km, D["pf"]["err"], color=C_PF, lw=1.4, label="BU SISTEM")
+        ax.plot(km, D["pf"]["err"], color=C_PF, lw=1.4, label=T["err_pf"])
         ax.fill_between(km, 0, D["pf"]["spread"], color=C_PF, alpha=0.2,
-                        label="suzgecin kendi belirsizlik kestirimi")
-    ax.set_xlabel("kat edilen yol (km)")
-    ax.set_ylabel("hata (m)")
+                        label=T["err_spread"])
+    ax.set_xlabel(T["err_x"])
+    ax.set_ylabel(T["err_y2"])
     ax.set_ylim(0, 60)
     ax.grid(alpha=0.3)
     ax.legend(fontsize=10)
@@ -209,28 +293,26 @@ def fig_coverage(D):
     if "sf" in D:
         ok = np.isfinite(D["sf"]["err"])
         ax.fill_between(km, 0, ok.astype(float), step="mid", color=C_SF, alpha=0.85)
-        ax.set_ylabel("tek kare", fontsize=9)
+        ax.set_ylabel(T["cov_sf"], fontsize=9)
         ax.set_yticks([0, 1])
-        ax.set_yticklabels(["yok", "var"], fontsize=8)
-        ax.set_title("Hangi karede konum uretilebildi?  tek kare: %{:.1f}".format(
-            ok.mean() * 100), fontsize=12)
+        ax.set_yticklabels([T["cov_no"], T["cov_yes"]], fontsize=8)
+        ax.set_title(T["cov_title"].format(pct(ok.mean() * 100, 1)), fontsize=12)
     ax = axes[1]
     if "pf" in D:
         ok2 = np.isfinite(D["pf"]["err"])
         ax.fill_between(km, 0, ok2.astype(float), step="mid", color=C_PF, alpha=0.85)
-        ax.set_ylabel("fuzyon\n%{:.0f}".format(ok2.mean() * 100), fontsize=9)
+        ax.set_ylabel(T["cov_pf"].format(pct(ok2.mean() * 100)), fontsize=9)
         ax.set_yticks([0, 1])
-        ax.set_yticklabels(["yok", "var"], fontsize=8)
+        ax.set_yticklabels([T["cov_no"], T["cov_yes"]], fontsize=8)
     ax = axes[2]
     if "sf" in D:
         ax.plot(km, D["sf"]["n_tried"], lw=0.9, color=C_SF, alpha=0.85,
-                label="tek kare (ort {:.2f})".format(np.nanmean(D["sf"]["n_tried"])))
+                label=T["cov_l_sf"].format(num(np.nanmean(D["sf"]["n_tried"]), 2)))
     if "pf" in D:
         ax.plot(km, D["pf"]["n_loftr"], lw=0.9, color=C_PF,
-                label="sirali fuzyon (ort {:.2f})".format(
-                    np.nanmean(D["pf"]["n_loftr"])))
-    ax.set_ylabel("kare basina\nesleme cagrisi", fontsize=9)
-    ax.set_xlabel("kat edilen yol (km)")
+                label=T["cov_l_pf"].format(num(np.nanmean(D["pf"]["n_loftr"]), 2)))
+    ax.set_ylabel(T["cov_calls"], fontsize=9)
+    ax.set_xlabel(T["err_x"])
     ax.legend(fontsize=9)
     ax.grid(alpha=0.3)
     fig.tight_layout()

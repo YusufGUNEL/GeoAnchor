@@ -16,8 +16,37 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+from src.figtext import figdir, pick  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[1]
 d = json.loads((ROOT / "results" / "21_flight_difficulty.json").read_text(encoding="utf-8"))
+
+T = pick({
+ "en": {
+  "thr": "threshold: 50%",
+  "bad": "match rate too low\nthe system collapses",
+  "good": "match rate sufficient\n8 - 25 m",
+  "fit": "trend (correlation %.2f)",
+  "cb": "flight altitude (m)",
+  "x": ("match rate (%)\n"
+        "share of frames that match the satellite map when the true position is known"),
+  "y": "final median position error (m)",
+  "title": ("What decides performance is not the algorithm, it is WHETHER THE DATA "
+            "MATCHES THE MAP\nEach point is one flight; colour is altitude"),
+ },
+ "tr": {
+  "thr": "esik: %50",
+  "bad": "esleme orani dusuk\nsistem cokuyor",
+  "good": "esleme orani yeterli\n8 - 25 m arasi",
+  "fit": "egilim (korelasyon %.2f)",
+  "cb": "ucus irtifasi (m)",
+  "x": ("esleme orani (%)\n"
+        "gercek konum biliniyorken uydu haritasiyla eslesebilen kare orani"),
+  "y": "nihai medyan konum hatasi (m)",
+  "title": ("Basarimi belirleyen sey algoritma degil, VERININ HARITAYLA ORTUSMESI\n"
+            "Her nokta bir ucus; renk irtifayi gosteriyor"),
+ },
+})
 
 ids = sorted(d)
 x = np.array([d[i]["tutma_orani"] * 100 for i in ids])
@@ -29,11 +58,9 @@ fig, ax = plt.subplots(figsize=(10, 6.8))
 ax.axvspan(0, 50, color="#ff2d55", alpha=0.07)
 ax.axvspan(50, 100, color="#00b894", alpha=0.07)
 ax.axvline(50, color="#636e72", ls="--", lw=1.4)
-ax.text(51, 430, "esik: %50", color="#636e72", fontsize=10)
-ax.text(3, 15, "esleme orani dusuk\nsistem cokuyor", color="#c0392b",
-        fontsize=11, weight="bold")
-ax.text(53, 220, "esleme orani yeterli\n8 - 25 m arasi", color="#0e8f6f",
-        fontsize=11, weight="bold")
+ax.text(51, 430, T["thr"], color="#636e72", fontsize=10)
+ax.text(3, 15, T["bad"], color="#c0392b", fontsize=11, weight="bold")
+ax.text(53, 220, T["good"], color="#0e8f6f", fontsize=11, weight="bold")
 
 sc = ax.scatter(x, y, s=90 + alt / 10, c=alt, cmap="viridis",
                 edgecolor="k", zorder=3, linewidth=0.8)
@@ -44,21 +71,19 @@ r = float(np.corrcoef(x, np.log10(y))[0, 1])
 k = np.polyfit(x, np.log10(y), 1)
 xs = np.linspace(5, 100, 60)
 ax.plot(xs, 10 ** np.polyval(k, xs), "--", color="#2d3436", lw=1.4,
-        label="egilim (korelasyon %.2f)" % r)
+        label=T["fit"] % r)
 
 cb = fig.colorbar(sc, ax=ax, pad=0.02)
-cb.set_label("ucus irtifasi (m)")
+cb.set_label(T["cb"])
 ax.set_yscale("log")
 ax.set_xlim(0, 100)
-ax.set_xlabel("esleme orani (%)\n"
-              "gercek konum biliniyorken uydu haritasiyla eslesebilen kare orani")
-ax.set_ylabel("nihai medyan konum hatasi (m)")
-ax.set_title("Basarimi belirleyen sey algoritma degil, VERININ HARITAYLA ORTUSMESI\n"
-             "Her nokta bir ucus; renk irtifayi gosteriyor", fontsize=13)
+ax.set_xlabel(T["x"])
+ax.set_ylabel(T["y"])
+ax.set_title(T["title"], fontsize=13)
 ax.grid(alpha=0.3, which="both")
 ax.legend(fontsize=10, loc="upper right")
 fig.tight_layout()
-fig.savefig(ROOT / "figures" / "15_ucus_zorlugu.png", dpi=130, bbox_inches="tight")
+fig.savefig(figdir() / "15_ucus_zorlugu.png", dpi=130, bbox_inches="tight")
 plt.close(fig)
 print("figures/15_ucus_zorlugu.png yeniden yazildi (%d ucus)" % len(ids))
 print("  esik ustu: %s" % " ".join(np.array(ids)[ok]))

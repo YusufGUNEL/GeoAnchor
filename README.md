@@ -696,7 +696,7 @@ python scripts/06c_yaw_from_map.py    # compass bias measured from the map
 python scripts/07_sequential.py       # PHASE 3 fusion  ← main result
 python scripts/08_robustness.py       # PHASE 4 degradation + outage
 python scripts/11_ablation.py         # PHASE 5 ablation
-python scripts/09_figures.py          # figures
+python scripts/09_figures.py          # figures (add --tr for the Turkish set)
 python scripts/12_robustness_figure.py
 python scripts/13_blur_fix.py             # blur mitigation
 python scripts/20_multiflight.py          # 9-flight evaluation

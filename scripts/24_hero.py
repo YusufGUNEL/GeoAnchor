@@ -2,7 +2,15 @@
 
 Uc panel: IHA ne goruyor / haritada nerede oldugunu nasil biliyor / hata nasil
 seyrediyor. Ustte tek satirlik sonuc.
+
+Ustteki ozet satiri "9 ucus" diye sabit yazilmisti ve onuncu ucus eklendiginde
+sekil sessizce yanlisa dustu -- bir sekildeki metni hicbir tutarlilik denetimi
+okumuyor. Artik results/22_summary.json'dan geliyor.
+
+    python scripts/24_hero.py          # Ingilizce -> figures/
+    python scripts/24_hero.py --tr     # Turkce    -> figures/tr/
 """
+import json
 import sys
 from pathlib import Path
 
@@ -16,11 +24,49 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
+from src.figtext import figdir, pick
 from src.flight import load_flight
 from src.geo import SatelliteMap, local_m_to_latlon
 
 ROOT = Path(__file__).resolve().parents[1]
 CACHE = Path(r"D:\GeoAnchorData\cache")
+T = pick({
+ "en": {
+  "title": "GeoAnchor  —  GNSS-denied absolute visual localization for UAVs",
+  "sub": ("{n} real survey flights  ·  406–2572 m altitude  ·  median 8–25 m "
+          "where the map is usable  ·  odometry alone drifts 2.8 km in 74 km  "
+          "·  runs in 1.4 GB VRAM"),
+  "cam": "what the drone sees",
+  "map": "GREEN = this system   ·   RED = what happens without it",
+  "truth": "truth  (where the drone really was)",
+  "pf": "GeoAnchor  — tracks the truth",
+  "vo": "without GeoAnchor — drifts off the map",
+  "err": "bigger gap = bigger win",
+  "err_x": "distance flown (km)",
+  "err_y": "position error (m)",
+  "l_vo": "without GeoAnchor",
+  "l_pf": "with GeoAnchor",
+  "gain": "370x\nbetter",
+ },
+ "tr": {
+  "title": "GeoAnchor  —  GPS'siz İHA mutlak görsel konumlandırma",
+  "sub": ("{n} gerçek tarama uçuşu  ·  406–2572 m irtifa  ·  harita kullanışlı "
+          "olduğunda medyan 8–25 m  ·  tek başına odometri 74 km'de 2,8 km "
+          "sürükleniyor  ·  1,4 GB VRAM"),
+  "cam": "dronun gördüğü",
+  "map": "YEŞİL = bu sistem   ·   KIRMIZI = o olmadan",
+  "truth": "gerçek  (drone gerçekte buradaydı)",
+  "pf": "GeoAnchor  — gerçeği takip ediyor",
+  "vo": "GeoAnchor olmadan — haritanın dışına çıkıyor",
+  "err": "aradaki fark ne kadar büyükse o kadar iyi",
+  "err_x": "kat edilen yol (km)",
+  "err_y": "konum hatası (m)",
+  "l_vo": "GeoAnchor olmadan",
+  "l_pf": "GeoAnchor ile",
+  "gain": "370 kat\ndaha iyi",
+ },
+})
+
 BG = "#0b0d12"
 C_GT = "#8fd6ff"
 C_PF = "#22e07a"
@@ -62,18 +108,18 @@ def main():
     fig = plt.figure(figsize=(17, 6.4), dpi=110)
     fig.patch.set_facecolor(BG)
 
-    fig.text(0.5, 0.962, "GeoAnchor  —  GNSS-denied absolute visual localization for UAVs",
+    n_ucus = json.loads((ROOT / "results" / "22_summary.json")
+                        .read_text(encoding="utf-8"))["n_ucus"]
+    fig.text(0.5, 0.962, T["title"],
              ha="center", color="w", fontsize=20, weight="bold")
-    fig.text(0.5, 0.902,
-             "9 real survey flights  ·  406–2572 m altitude  ·  median 8–25 m where the map is usable  "
-             "·  odometry alone drifts 2.8 km in 74 km  ·  runs in 1.4 GB VRAM",
+    fig.text(0.5, 0.902, T["sub"].format(n=n_ucus),
              ha="center", color="#9aa3b2", fontsize=11.5)
 
     # --- panel 1: kamera ---
     ax = fig.add_axes([0.012, 0.06, 0.245, 0.78])
     ax.imshow(np.ascontiguousarray(q[FRAME]))
     ax.plot(320, 320, "+", color=C_PF, ms=22, mew=2.5)
-    ax.set_title("what the drone sees", color="w", fontsize=13, pad=6)
+    ax.set_title(T["cam"], color="w", fontsize=13, pad=6)
     ax.axis("off")
 
     # --- panel 2: harita ---
@@ -83,14 +129,13 @@ def main():
     ax.plot(vx, vy, "-", lw=1.5, color=C_VO, alpha=0.9)
     ax.plot(px, py, "-", lw=1.5, color=C_PF)
     ax.plot(px[FRAME], py[FRAME], "o", ms=11, color=C_PF, mec="k", mew=0.8, zorder=6)
-    ax.set_title("GREEN = this system   ·   RED = what happens without it",
-                 color="w", fontsize=13, pad=6)
+    ax.set_title(T["map"], color="w", fontsize=13, pad=6)
     ax.axis("off")
     ax.add_patch(Rectangle((0.012, 0.012), 0.62, 0.185, transform=ax.transAxes,
                            color="#000000", alpha=0.62, zorder=7))
-    for i, (c, t) in enumerate([("#ffffff", "truth  (where the drone really was)"),
-                                (C_PF, "GeoAnchor  — tracks the truth"),
-                                (C_VO, "without GeoAnchor — drifts off the map")]):
+    for i, (c, t) in enumerate([("#ffffff", T["truth"]),
+                                (C_PF, T["pf"]),
+                                (C_VO, T["vo"])]):
         ax.add_patch(Rectangle((0.032, 0.148 - i * 0.058), 0.038, 0.026,
                                transform=ax.transAxes, color=c, zorder=8))
         ax.text(0.082, 0.161 - i * 0.058, t, transform=ax.transAxes,
@@ -99,13 +144,13 @@ def main():
     # --- panel 3: hata ---
     ax = fig.add_axes([0.725, 0.155, 0.258, 0.63])
     ax.set_facecolor("#141822")
-    ax.plot(km, vo["err"], color=C_VO, lw=1.8, label="without GeoAnchor")
-    ax.plot(km, err, color=C_PF, lw=1.8, label="with GeoAnchor")
+    ax.plot(km, vo["err"], color=C_VO, lw=1.8, label=T["l_vo"])
+    ax.plot(km, err, color=C_PF, lw=1.8, label=T["l_pf"])
     ax.set_yscale("log")
     ax.set_ylim(1, 5000)
     ax.set_xlim(0, km[-1])
-    ax.set_xlabel("distance flown (km)", color="w", fontsize=11)
-    ax.set_ylabel("position error (m)", color="w", fontsize=11)
+    ax.set_xlabel(T["err_x"], color="w", fontsize=11)
+    ax.set_ylabel(T["err_y"], color="w", fontsize=11)
     ax.tick_params(colors="w", labelsize=9)
     for s in ax.spines.values():
         s.set_color("#39404f")
@@ -114,16 +159,15 @@ def main():
               labelcolor="w", loc="center left")
     ax.annotate("", xy=(km[-1] * 0.62, 2600), xytext=(km[-1] * 0.62, 7),
                 arrowprops=dict(arrowstyle="<->", color="#ffd166", lw=1.8))
-    ax.text(km[-1] * 0.60, 130, "370x\nbetter", color="#ffd166", fontsize=12,
+    ax.text(km[-1] * 0.60, 130, T["gain"], color="#ffd166", fontsize=12,
             weight="bold", ha="right", va="center")
-    ax.set_title("bigger gap = bigger win", color="w", fontsize=13, pad=6)
+    ax.set_title(T["err"], color="w", fontsize=13, pad=6)
 
-    fig.savefig(ROOT / "figures" / "00_hero.png", dpi=110,
-                facecolor=BG, bbox_inches="tight")
+    out = figdir() / "00_hero.png"
+    fig.savefig(out, dpi=110, facecolor=BG, bbox_inches="tight")
     plt.close(fig)
     sat.close()
-    p = ROOT / "figures" / "00_hero.png"
-    print("figures/00_hero.png yazildi (%.1f MB)" % (p.stat().st_size / 1e6))
+    print(f"{out.relative_to(ROOT)} yazildi ({out.stat().st_size / 1e6:.1f} MB)")
 
 
 if __name__ == "__main__":

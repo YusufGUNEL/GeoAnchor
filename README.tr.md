@@ -2,7 +2,7 @@
 
 *[English version: **[README.md](README.md)**]*
 
-![GeoAnchor](figures/00_hero.png)
+![GeoAnchor](figures/tr/00_hero.png)
 
 GPS'i karıştırılan bir İHA nerede olduğunu bilmez. Görsel odometri bağıl
 hareketi verir ama **sürüklenir** — bu 74 km'lik uçuşta sonunda **2,8 km**
@@ -14,7 +14,7 @@ GeoAnchor ikisini bir parçacık süzgecinde birleştirir. Tek başına hiçbiri
 yetmiyor; birlikte, **hiçbir uydu sinyali olmadan**, sürekli ve sürüklenmesiz
 metre seviyesi konum veriyorlar.
 
-![Karşılaştırma](figures/10_karsilastirma.png)
+![Karşılaştırma](figures/tr/10_karsilastirma.png)
 
 ![Gosterim](figures/demo.gif)
 
@@ -70,7 +70,7 @@ kullanışlı bir sonucu var: **eşleşme oranı, planlanan rota üzerinde uçma
 önce ölçülebilir; yani sistemin orada işe yarayıp yaramayacağı önceden
 bilinebilir.**
 
-![Uçuş zorluğu](figures/15_ucus_zorlugu.png)
+![Uçuş zorluğu](figures/tr/15_ucus_zorlugu.png)
 
 ### Ayrıntılı örnek olay: uçuş 03
 
@@ -93,7 +93,7 @@ otomasyonun bedeli: otomatik montaj kalibrasyonu elle ayarlanmış olandan
 yaklaşık 2 metre kötü. Bu dürüst maliyet, iyi olan sayıyı öne çıkarıp
 gizlenmek yerine yazılıyor.
 
-![Hata dağılımı](figures/13_dagilim.png)
+![Hata dağılımı](figures/tr/13_dagilim.png)
 
 Füzyon iki girdisinden de doğru olmakla kalmıyor, her karede haritanın
 tamamını aramaktan **2,5 kat daha ucuz** — çünkü kabaca nerede olduğunu
@@ -290,7 +290,7 @@ Aşırı karanlık satırını açıkça yazmak gerek: sistem hiçbir konum üre
 çünkü daha ilk kare haritada bulunamıyor. Gece harekâtı için bu tasarım
 termal veya düşük ışık sensörü ister, yazılım düzeltmesi değil.
 
-![Dayanıklılık](figures/14_dayaniklilik.png)
+![Dayanıklılık](figures/tr/14_dayaniklilik.png)
 
 ---
 
@@ -439,13 +439,13 @@ indiriyor, erişimi her kullanıcı kaynağında kendisi kabul ediyor.
 Nedeni tek bir görselde duruyor. Termal ile optik parlaklık konusunda neredeyse
 hiçbir şeyi, yapı konusunda neredeyse her şeyi paylaşıyor:
 
-![Gece eşleşmesi neden çöküyor](figures/30_gece_neden.png)
+![Gece eşleşmesi neden çöküyor](figures/tr/30_gece_neden.png)
 
 Yani çözüm görünümü atmak. Her iki tarafa aynı biçimde uygulanan CLAHE +
 Gauss-farkı bant-geçireni ibreyi sıfırdan kaldırmaya yetiyor. Aynı çift, üç
 yapılandırma:
 
-![Gece kanıtı](figures/31_gece_kanit.png)
+![Gece kanıtı](figures/tr/31_gece_kanit.png)
 
 | Kol | Doğru konum | Kesinlik |
 |---|---|---|
@@ -507,7 +507,7 @@ eşleyici onu göremiyor, ya da o karelerde bulunacak ortak bir şey yok.
 eşleşme ve gerçek konum gerektirmeyen ölçütlerle puanlayıp sonucu yordayıp
 yordamadığına bakalım:
 
-![Gece yasası](figures/32_gece_yasa.png)
+![Gece yasası](figures/tr/32_gece_yasa.png)
 
 | Ölçüt | AUC | |
 |---|---|---|
@@ -679,7 +679,7 @@ python scripts/06c_yaw_from_map.py    # pusula sapmasını haritadan ölç
 python scripts/07_sequential.py       # FAZ 3 füzyon  ← ana sonuç
 python scripts/08_robustness.py       # FAZ 4 bozulma + ölçüm kesintisi
 python scripts/11_ablation.py         # FAZ 5 ablasyon
-python scripts/09_figures.py          # şekiller
+python scripts/09_figures.py --tr     # şekiller (--tr olmadan İngilizce)
 python scripts/12_robustness_figure.py
 python scripts/13_blur_fix.py             # blur mitigation
 python scripts/20_multiflight.py          # 9-flight evaluation
