@@ -15,6 +15,12 @@ so the figures cannot drift away from the numbers:
 Vector output throughout; the orthophoto panel carries an embedded raster,
 which is what makes it the only figure that needs the dataset on disk. If the
 dataset is missing that figure is skipped and the other two still build.
+
+    python scripts/30_paper_figures.py          # English, into paper/figures/
+    python scripts/30_paper_figures.py --tr     # Turkish, into paper/siu/figures/
+
+The Turkish set is for SIU, which requires Turkish and caps papers at four
+pages. Same code, same numbers, only the strings differ.
 """
 from __future__ import annotations
 
@@ -32,8 +38,52 @@ import matplotlib.pyplot as plt
 
 ROOT = Path(__file__).resolve().parents[1]
 RES = ROOT / "results"
-OUT = ROOT / "paper" / "figures"
 DATA_ROOT = Path(r"D:\GeoAnchorData\raw")
+
+# SIU wants Turkish, arXiv has the English manuscript, and both quote the same
+# result files. Forking the script is how two versions of one figure start
+# disagreeing, so the strings live in a lookup and only the language changes.
+LANG = "tr" if "--tr" in sys.argv else "en"
+OUT = ROOT / ("paper/siu/figures" if LANG == "tr" else "paper/figures")
+
+T = {
+ "en": {
+  "gt": "ground truth",
+  "vo": "odometry only ({:.0f} m final)",
+  "pf": "proposed ({:.1f} m median, 100% coverage)",
+  "bad": "matching collapsed ({:.1f}% of frames)",
+  "a": "(a) without map anchoring",
+  "b": "(b) proposed system",
+  "km": "1 km",
+  "cdf_vo": "odometry only",
+  "cdf_sf": "single-frame\n(77% coverage)",
+  "cdf_pf": "proposed\n(100% coverage)",
+  "cdf_x": "position error (m, log scale)",
+  "cdf_y": "frames below this error (%)",
+  "law_fit": "$\\rho = {:.3f}$ (log error)",
+  "law_cb": "flight altitude (m)",
+  "law_x": "match rate (%)",
+  "law_y": "median position error (m)",
+ },
+ "tr": {
+  "gt": "gerçek yörünge",
+  "vo": "sadece odometri (sonunda {:.0f} m)",
+  "pf": "önerilen ({:.1f} m medyan, %100 kapsama)",
+  "bad": "eşleşmenin çöktüğü kareler (%{:.1f})",
+  "a": "(a) harita çapası olmadan",
+  "b": "(b) önerilen sistem",
+  "km": "1 km",
+  "cdf_vo": "sadece odometri",
+  "cdf_sf": "tek kare\n(%77 kapsama)",
+  "cdf_pf": "önerilen\n(%100 kapsama)",
+  "cdf_x": "konum hatası (m, logaritmik)",
+  "cdf_y": "bu hatanın altındaki kare oranı (%)",
+  "law_fit": "$\\rho = {:.3f}$ (log hata)",
+  "law_cb": "uçuş irtifası (m)",
+  "law_x": "eşleşme oranı (%)",
+  "law_y": "medyan konum hatası (m)",
+ },
+}[LANG]
 
 # IEEEtran: a column is 3.5 in, the text block 7.16 in. Type sizes are set
 # below the body size so the figure text lands near the caption's 8 pt.
@@ -95,23 +145,23 @@ def fig1_trajectory() -> bool:
     ax = axes[0]
     ax.imshow(ov, alpha=0.55)
     ax.plot(gx, gy, "-", lw=2.2, color="w", zorder=3)
-    ax.plot(gx, gy, "-", lw=1.1, color=C_GT, zorder=4, label="ground truth")
+    ax.plot(gx, gy, "-", lw=1.1, color=C_GT, zorder=4, label=T["gt"])
     ax.plot(vx, vy, "-", lw=1.0, color=C_VO, zorder=5,
-            label=f"odometry only ({vo['err'][-1]:.0f} m final)")
+            label=T["vo"].format(vo["err"][-1]))
     ax.plot(vx[-1], vy[-1], "X", ms=5, color=C_VO, mec="k", mew=0.4, zorder=6)
-    ax.set_title("(a) without map anchoring", fontsize=8)
+    ax.set_title(T["a"], fontsize=8)
 
     ax = axes[1]
     ax.imshow(ov, alpha=0.55)
     ax.plot(gx, gy, "-", lw=2.2, color="w", zorder=3)
-    ax.plot(gx, gy, "-", lw=1.1, color=C_GT, zorder=4, label="ground truth")
+    ax.plot(gx, gy, "-", lw=1.1, color=C_GT, zorder=4, label=T["gt"])
     ax.plot(px, py, "-", lw=0.8, color=C_PF, zorder=5,
-            label=f"proposed ({np.nanmedian(err):.1f} m median, 100% coverage)")
+            label=T["pf"].format(np.nanmedian(err)))
     bad = err > 50
     if bad.any():
         ax.plot(px[bad], py[bad], ".", ms=2.2, color=C_VO, zorder=6,
-                label=f"matching collapsed ({100 * bad.mean():.1f}% of frames)")
-    ax.set_title("(b) proposed system", fontsize=8)
+                label=T["bad"].format(100 * bad.mean()))
+    ax.set_title(T["b"], fontsize=8)
 
     # Both panels get the union of the two extents. The odometry track leaves
     # the basemap, and if each panel scaled to its own contents the reader
@@ -136,7 +186,7 @@ def fig1_trajectory() -> bool:
     y0 = lo_y + 0.95 * (hi_y - lo_y)
     for ax in axes:
         ax.plot([x0, x0 + km_px], [y0, y0], "-", color="k", lw=1.4, zorder=7)
-        ax.text(x0 + km_px / 2, y0 - 0.015 * (hi_y - lo_y), "1 km", ha="center",
+        ax.text(x0 + km_px / 2, y0 - 0.015 * (hi_y - lo_y), T["km"], ha="center",
                 va="bottom", fontsize=6.5, zorder=7)
     fig.tight_layout(pad=0.2)
     fig.savefig(OUT / "fig1_trajectory.pdf", dpi=400, metadata=PDF_META)
@@ -157,9 +207,9 @@ def fig2_cdf() -> None:
     # Labelled on the curves rather than in a box: at this size a legend large
     # enough to read covers the part of the plot that carries the argument.
     for e, color, name, at, ha in [
-        (vo["err"], C_VO, "odometry only", (620, 46), "right"),
-        (sf["err"], C_SF, "single-frame\n(77% coverage)", (14, 60), "left"),
-        (pf["err"], C_PF, "proposed\n(100% coverage)", (1.4, 72), "left"),
+        (vo["err"], C_VO, T["cdf_vo"], (620, 46), "right"),
+        (sf["err"], C_SF, T["cdf_sf"], (14, 60), "left"),
+        (pf["err"], C_PF, T["cdf_pf"], (1.4, 72), "left"),
     ]:
         e = np.sort(e[np.isfinite(e)])
         # Denominator is every frame of the flight, not every frame the method
@@ -174,8 +224,8 @@ def fig2_cdf() -> None:
     ax.set_xscale("log")
     ax.set_xlim(0.5, 5000)
     ax.set_ylim(0, 100)
-    ax.set_xlabel("position error (m, log scale)")
-    ax.set_ylabel("frames below this error (%)")
+    ax.set_xlabel(T["cdf_x"])
+    ax.set_ylabel(T["cdf_y"])
     ax.grid(alpha=0.25, which="both", lw=0.4)
     fig.tight_layout(pad=0.2)
     fig.savefig(OUT / "fig2_cdf.pdf", metadata=PDF_META)
@@ -208,18 +258,18 @@ def fig3_law() -> None:
     k = np.polyfit(x, np.log10(y), 1)
     xs = np.linspace(5, 100, 60)
     ax.plot(xs, 10 ** np.polyval(k, xs), "--", color="#333", lw=0.8,
-            label=f"$\\rho = {r:.3f}$ (log error)")
+            label=T["law_fit"].format(r))
 
     cb = fig.colorbar(sc, ax=ax, pad=0.02)
-    cb.set_label("flight altitude (m)", fontsize=7)
+    cb.set_label(T["law_cb"], fontsize=7)
     cb.ax.tick_params(labelsize=6)
     cb.outline.set_linewidth(0.5)
 
     ax.set_yscale("log")
     ax.set_xlim(0, 100)
     ax.set_ylim(min(y) * 0.62, max(y) * 2.2)   # headroom: flight 08 sits at the top
-    ax.set_xlabel("match rate (%)")
-    ax.set_ylabel("median position error (m)")
+    ax.set_xlabel(T["law_x"])
+    ax.set_ylabel(T["law_y"])
     ax.grid(alpha=0.25, which="both", lw=0.4)
     ax.legend(loc="lower left", framealpha=0.9, borderpad=0.3, handlelength=1.6)
     fig.tight_layout(pad=0.2)
@@ -230,6 +280,7 @@ def fig3_law() -> None:
 
 def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
+    print(f"dil: {LANG}  ->  {OUT.relative_to(ROOT)}")
     fig2_cdf()
     fig3_law()
     fig1_trajectory()

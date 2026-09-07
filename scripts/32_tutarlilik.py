@@ -2,8 +2,9 @@
 
 The README claims every number in it comes from `results/`, and the paper
 claims the same. Nothing enforced that. Numbers get quoted in four places --
-README.md, README.tr.md, paper/geoanchor.tex and night/DURUM.md -- and a rerun
-that shifts a median leaves three of them stale and confident.
+README.md, README.tr.md, both manuscripts, night/DURUM.md and the sharing
+drafts -- and a rerun that shifts a median leaves most of them stale and
+confident.
 
 This script re-derives the headline numbers from the JSON and NPZ files and
 checks that each document still contains them, in that document's own notation.
@@ -41,11 +42,12 @@ NIGHT = ROOT / "night" / "sonuclar"
 EN = ROOT / "README.md"
 TR = ROOT / "README.tr.md"
 TEX = ROOT / "paper" / "geoanchor.tex"
+SIU = ROOT / "paper" / "siu" / "siu_geoanchor.tex"
 DURUM = ROOT / "night" / "DURUM.md"
 SHARE_EN = ROOT / "PAYLASIM-EN.md"
 SHARE_TR = ROOT / "PAYLASIM.md"
-FILES = (EN, TR, TEX, DURUM, SHARE_EN, SHARE_TR)
-TURKISH = {TR, DURUM, SHARE_TR}     # comma decimals, percent sign leading
+FILES = (EN, TR, TEX, DURUM, SHARE_EN, SHARE_TR, SIU)
+TURKISH = {TR, DURUM, SHARE_TR, SIU}   # comma decimals, percent sign leading
 
 # The sharing drafts spell counts out, and a stale one there is worse than a
 # stale one in the README: those texts get pasted into a public post. The
@@ -91,7 +93,7 @@ def build() -> Claims:
     # --- the ten-flight table --------------------------------------------
     for fid, row in sorted(multi.items()):
         if row.get("durum") == "tamam":
-            c.add(f"ucus {fid} medyan", row["medyan_m"], 2, [EN, TR])
+            c.add(f"ucus {fid} medyan", row["medyan_m"], 2, [EN, TR, SIU])
     c.add("en iyi ucus", ozet["en_iyi"], 2, [EN, TEX])
     c.add("en kotu ucus", ozet["en_kotu"], 2, [EN, TEX])
 
@@ -99,11 +101,12 @@ def build() -> Claims:
     ids = sorted(zorluk)
     x = np.array([zorluk[i]["tutma_orani"] * 100 for i in ids])
     y = np.array([zorluk[i]["medyan_hata_m"] for i in ids])
-    c.add("korelasyon", abs(float(np.corrcoef(x, np.log10(y))[0, 1])), 3, [EN, TR, TEX])
+    c.add("korelasyon", abs(float(np.corrcoef(x, np.log10(y))[0, 1])), 3,
+          [EN, TR, TEX, SIU])
 
     # --- odometry drift on flight 03 --------------------------------------
     vo = np.load(RES / "06_odometry.npz")
-    c.add("odometri son hata", float(vo["err"][-1]), 0, [EN, TR, TEX])
+    c.add("odometri son hata", float(vo["err"][-1]), 0, [EN, TR, TEX, SIU])
 
     # --- night: verification ----------------------------------------------
     dog = load(NIGHT / "03_dogrulama_1000.json")
@@ -143,10 +146,13 @@ def build() -> Claims:
 
 
 def main() -> int:
-    # Strip the manuscript's escapes and the non-breaking spaces the markdown
-    # uses, so a claim is judged on the number rather than on the typesetting.
+    # Strip the typesetting so a claim is judged on the number. Three idioms
+    # matter: IEEEtran's thin space before a unit, the escaped percent sign,
+    # and the braced comma the Turkish manuscript needs in maths mode so
+    # that 0{,}764 is not read as a separator.
     texts = {p: p.read_text(encoding="utf-8")
-             .replace("\\,", "").replace("\\%", "%").replace(" ", " ")
+             .replace("\\,", "").replace("\\%", "%")
+             .replace("{,}", ",").replace(" ", " ")
              for p in FILES}
     claims = build()
 

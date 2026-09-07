@@ -35,6 +35,12 @@ paper/*.synctex.gz
 paper/*.fls
 paper/*.fdb_latexmk
 paper/_*.png
+paper/siu/*.aux
+paper/siu/*.log
+paper/siu/*.out
+paper/siu/*.fls
+paper/siu/*.fdb_latexmk
+paper/siu/*.synctex.gz
 
 # arXiv paketi: scripts/31_arxiv_bundle.py ile yeniden uretiliyor
 paper/arxiv-submission.tar.gz

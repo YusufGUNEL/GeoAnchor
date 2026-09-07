@@ -1,0 +1,375 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{cite}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\graphicspath{{figures/}}
+\usepackage{textcomp}
+\usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
+
+% IEEEtran yazdirir bunlari Ingilizce; Turkce bildiride Turkce olmali.
+\renewcommand{\abstractname}{Öz}
+\renewcommand{\IEEEkeywordsname}{Anahtar Kelimeler}
+\renewcommand{\figurename}{Şekil}
+\renewcommand{\tablename}{Tablo}
+\renewcommand{\refname}{Kaynaklar}
+
+\begin{document}
+
+\title{Ne Zaman Bilmediğini Bilmek:\\
+GNSS'siz İHA Uçuşu için Sıralı Harita Çapalı\\
+Görsel Konumlandırma}
+
+% CIFT KOR DEGERLENDIRME: yazar bilgisi kabul sonrasi eklenecek.
+\author{\IEEEauthorblockN{}\IEEEauthorblockA{}}
+
+\maketitle
+
+\begin{abstract}
+GNSS reddedildiğinde mutlak konuma ulaşmanın standart yolu, aşağı bakan
+kamerayı önceden yüklenmiş bir uydu haritasıyla eşleştirmektir. Güncel
+literatür bunu tek görüntülü bir getirme problemi olarak ele alıyor ve yaygın
+kıyas kümesi doygunluğa yaklaşmış durumda. Oysa uçan bir hava aracı bir
+\emph{dizi} üretir ve bu bağlamda belirleyici kısıt getirme doğruluğu değil,
+karelerin önemli bir bölümünün hiç eşleştirilememesidir. Bu çalışmada çapraz
+görüş eşleştirmesini görsel odometriyle bir parçacık süzgecinde birleştiriyor
+ve 406--2572\,m irtifa, uçuş başına 9--103\,km ve 2016--2023 arası çekim
+tarihleri kapsayan \emph{on} gerçek İHA tarama uçuşunda değerlendiriyoruz.
+Görüntüsü harita ile kullanılabilir düzeyde örtüşen yedi uçuşta sistem
+8,35--24,79\,m medyan hatayı karelerin $\geq$\%99,7'sinde koruyor; buna karşılık
+tek başına görsel odometri 74\,km'de 2803\,m sürükleniyor. Aynı düzenekten iki
+yan ürün çıkıyor. Birincisi, harita eşleşmelerinin artık dönmesi platformun
+yönelim hatasını açığa vuruyor ve sistem manyetometre sapmasını GNSS olmadan
+kalibre ederek sürüklenmeyi kat edilen yolun \%3,795'inden \%0,865'ine
+indiriyor. İkincisi, planlanan bir rota üzerinde uçmadan ölçülebilen
+\emph{eşleşme oranı}, sistemin orada çalışıp çalışmayacağını önceden
+söylüyor (logaritmik hatayla $\rho=-0{,}764$, eşik \%50 civarı). Son olarak
+genellenebileceğine inandığımız bir olumsuz sonuç bildiriyoruz: LoFTR yerine
+RoMa kullanmak çöken uçuşlarda eşleşme oranını \%12--42'den \%96--100'e
+çıkarıyor ama uçtan uca doğruluğu \emph{çarpıcı biçimde kötüleştiriyor},
+çünkü RoMa ilgisiz görüntüler için de kendinden emin karşılıklar üretiyor.
+Konumlandırmada bir eşleyicinin değeri ne kadar eşleştirdiğiyle değil,
+susabilmesiyle ölçülür.
+\end{abstract}
+
+\begin{IEEEkeywords}
+GNSS'siz seyrüsefer, çapraz görüş coğrafi konumlandırma, parçacık süzgeci,
+görsel odometri, insansız hava aracı, görüntü eşleştirme
+\end{IEEEkeywords}
+
+\section{Giriş}
+
+GNSS alıcısı karıştırılan ya da aldatılan bir insansız hava aracı mutlak
+konumunu yitirir. Ataletsel ve görsel odometri bağıl hareketi vermeye devam
+eder, ama hataları sınırsız birikir: burada incelenen 74\,km'lik uçuşta kareler
+arası görsel odometri gerçek konumdan 2803\,m uzakta bitiyor. Yerleşik çözüm,
+coğrafi referanslı bir uydu haritası taşımak ve kameranın gördüğünü bu haritayla
+eşleştirerek mutlak konumu geri kazanmaktır.
+
+Güncel çalışmalar problemi çapraz görüş görüntü getirme olarak kuruyor ve
+yaygın kıyas kümesini doygunluğa yaklaştırdı; University-1652 bugün \%97,5
+Recall@1 seviyesinde~\cite{mgs2net}. Bu kuruluş, işin zor kısmının aday
+konumlar arasından doğru olanı seçmek olduğunu sessizce varsayar. Gerçek arazi
+üzerindeki uçuşta ise bambaşka bir kısıt baskın çıkıyor: karelerin önemli bir
+bölümünde seçilecek \emph{doğru bir eşleşme zaten yok}. Su üstünde, tekdüze
+tarlada, tekrar eden yapı desenlerinde ve haritayla kamera mevsim ya da yıl
+olarak ayrıştığında eşleştirme kullanılabilir hiçbir şey döndürmüyor. Tek kare
+taban çizgimizde bu oran, kümemizdeki en kolay uçuşta \%23, en zorunda \%96.
+
+Uçan bir hava aracı bağımsız fotoğrafların toplamı değildir. Bir yörünge izler
+ve eşleştirilemeyen kareler, eşleştirilebilenlerin arasında kalır. Bu yüzden
+problemi sıralı durum kestirimi olarak ele alıyoruz: görsel odometri hareket
+modelini, harita eşleştirmesi mutlak düzeltmeleri sağlıyor ve başarısız olmasına
+izin veriliyor, parçacık süzgeci ikisini birlikte taşıyor. Bu, yer robotiğinde
+yerleşik bir uygulama olmakla birlikte güncel İHA çapraz görüş literatüründe
+neredeyse hiç yok.
+
+Katkılarımız şunlardır: (i) bir değil \emph{on} gerçek uçuşta değerlendirilen,
+her uçuşun kendi ilk \%20'sinden kalibre edilip kalanında ölçülen tam otomatik
+bir sıralı harita çapalı konumlandırma sistemi; (ii) harita eşleşmelerinin
+geometrisinden, GNSS gerektirmeden yapılan çevrimiçi yönelim ve ölçek
+öz-kalibrasyonu; (iii) uçmadan ölçülebilen bir konuşlandırılabilirlik
+yordayıcısı; (iv) mekanizması tespit edilmiş bir olumsuz eşleyici sonucu.
+
+\section{İlgili Çalışmalar}
+
+\textbf{Çapraz görüş coğrafi konumlandırma.} Baskın kuruluş, tek bir İHA
+görüntüsünü uydu karolarından oluşan bir veri tabanıyla eşleştirir. Güncel
+çalışmalar dönüştürücü ve durum uzayı mimarilerini~\cite{mgs2net}, dik olmayan
+bakışa dayanıklılığı~\cite{offnadir} ve bozulmuş görüntüyü~\cite{relate}
+kapsıyor. 2024--2026 arasındaki yirmi böyle çalışmayı tarayıp kare başına
+sonucu zaman içindeki bir hareket modeliyle birleştiren hiçbirine rastlamadık.
+
+\textbf{Hava görüntüsüne karşı sıralı konumlandırma.} Hava haritalarına karşı
+parçacık süzgeci \emph{yer} platformlarında yerleşiktir: BEV-Patch-PF öğrenilmiş
+kuşbakışı eşleştirmeyi arazi araçları için bir parçacık süzgeciyle
+birleştiriyor~\cite{bevpatchpf}. Hava araçları için en yakın çalışma modern
+öğrenilmiş eşleştirmeden öncesine dayanıyor: Shan ve ark.~\cite{shan} optik
+akışı harita korelasyonuyla süzüyor. Katkımız tam bu kesişimde duruyor: bir
+uçakta, sıralı bir süzgecin içinde modern dedektörsüz bir eşleyici ve
+kilometrelerce yörünge üzerinde metrik hata.
+
+\textbf{Görüntü eşleştirme.} LoFTR~\cite{loftr} dönüştürücülerle dedektörsüz
+kabadan inceye eşleştirme yapar. RoMa~\cite{roma} temel model kodlayıcısıyla
+yoğun bir çarpıtma kestirir ve güncel kıyas kümelerinde önde gider. İkisini de
+kullanıyor, kıyas sıralamasının bu göreve neden aktarılmadığını
+Bölüm~\ref{sec:esleyici}'de bildiriyoruz.
+
+\section{Yöntem}
+
+Her İHA karesi platform yöneliminden kuzey-yukarı döndürülüyor ve haritanın yer
+ölçeğine örnekleniyor; sonuç, $300 \times 300$\,m kapsayan metrik ve kuzey
+hizalı bir kırpma. Yönelim ataletsel birimden, irtifa barometrik
+yükseklikölçerden geliyor; hiçbiri GNSS'e bağlı değil. Harita EPSG:4326'da
+saklanıyor; pikselleri derecede kare, metrede değil --- enlemimizde doğu-batı
+0,2526\,m/px'e karşı kuzey-güney 0,2974\,m/px, yani \%17,8 anizotropi. Bu
+düzeltilmediğinde eşleştirmeye sistematik bir ölçek hatası olarak giriyor.
+
+Mutlak düzeltme için, kestirilen konumun etrafındaki karo DINOv2 tanımlayıcıları
+ile getiriliyor ve LoFTR karşılıkları üzerinden RANSAC ile bir benzerlik
+dönüşümü kestiriliyor. Yeterli iç nokta bulunamazsa kare \emph{reddediliyor};
+sistem yanlış bir konum bildirmek yerine hiçbir şey bildirmiyor. Görüntü
+merkezinden hava aracı konumuna geçerken duruş kaynaklı kayma modelleniyor:
+$d = h\tan\theta$ ile eğim ve yalpa, gövde çerçevesinde iz-boyu ve iz-dışı
+bileşenlere ayrılıyor.
+
+Sıralı füzyonda parçacık süzgeci, hareket modelini görsel odometriden alıyor;
+harita düzeltmeleri olabilirlik olarak giriyor ve gelmedikleri karelerde süzgeç
+yalnızca hareket modeliyle ilerliyor. Ölçüm güdümlü enjeksiyon, her adımda
+parçacıkların bir bölümünü hareket modeli yerine ölçüm dağılımından çekiyor; bu
+olmadan süzgeç erken bir yanlış eşleşmeye kilitlenip doğru ölçümü görse bile
+kıpırdayamıyor.
+
+\textbf{Haritadan öz-kalibrasyon.} Kuzey-yukarı bir kareyi kuzey-yukarı bir
+karoya oturtan dönüşümün artık dönmesi sıfır değilse, yönelim açısının kendisi
+tam o kadar yanlıştır. Uçuş boyunca ölçüldüğünde bu hatanın uçuş yönüne göre
+değiştiği görülüyor: tarama deseninin iki kolunda $-1{,}93^\circ$ ve
+$-7{,}08^\circ$. Yöne bağlı bu imza manyetometrenin sert-demir hatasının klasik
+parmak izidir ve GNSS'ten hesaplanan değerlerle ($+1{,}65^\circ$,
+$+7{,}22^\circ$) büyüklük ve işaret olarak uyuşuyor. Düzeltmeyi odometriye geri
+beslemek sürüklenmeyi kat edilen yolun \%3,795'inden \%0,865'ine indiriyor.
+
+\section{Deneysel Kurulum}
+
+UAV-VisLoc~\cite{uavvisloc} veri kümesini kullanıyoruz; gerçek İHA uçuşlarını
+coğrafi referanslı haritalar ve işlenmiş GNSS ile eşleştiriyor. Referans
+kalitesini bağımsız olarak doğruladık: düz tarama kollarında iz-dışı saçılma
+1,50\,m, yani referansın kendisi bildirdiğimiz hatalara göre temiz.
+
+On bir uçuşun onunu değerlendiriyoruz; dışlanan uçuşun üstverisinde yöntemin
+gerektirdiği duruş ve yönelim sütunları yok ve yükleyicimiz bunu desteklenmeyen
+sayılar üretmek yerine açıkça reddediyor. Bir uçuşun haritası tek dosya yerine
+toplam 4,5\,GB'lık $2\times2$ GeoTIFF ızgarası hâlinde geliyor; bunları hiçbir
+kopya çıkarılmadan, GDAL sanal rasterı üzerinden sunuyoruz --- konuşlandırmada
+karolu haritalar da zaten böyle gelir. Her uçuşun yer örnekleme aralığı ve
+kamera montaj açısı o uçuşun ilk \%20'sinden kestiriliyor, bildirilen bütün
+değerler kalan \%80'den geliyor. Bütün deneyler 4\,GB bellekli bir dizüstü
+NVIDIA RTX 3050 Ti üzerinde koşuyor; en yüksek bellek kullanımı 1,4\,GB.
+
+\section{Sonuçlar}
+\label{sec:sonuclar}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{fig1_trajectory.pdf}
+\caption{Uçuş 03 (768 kare, 74\,km, 466\,m irtifa), 8,8$\times$7,3\,km'lik
+ortofotosu üzerinde. İki panel aynı çerçeveyi paylaşıyor. (a) Tek başına görsel
+odometri yönelim ve ölçek hatasını biriktirerek haritanın tamamen dışına
+çıkıyor ve gerçek konumdan 2803\,m uzakta bitiyor ($\times$). (b) Aynı odometri
+harita eşleşmeleriyle çapalandığında her karede gerçek yörüngenin üzerinde
+kalıyor; işaretli kareler eşleştirmenin tamamen çöktüğü ve süzgecin yeniden
+çapa atana dek yalnızca hareket modeliyle ilerlediği dört kesim.}
+\label{fig:yorunge}
+\end{figure*}
+
+\begin{table}[t]
+\caption{Uçuş başına sonuçlar, tam otomatik. Çizginin üstündeki yedi uçuşun
+eşleşme oranı en az \%50; altındaki üçünün değil.}
+\label{tab:ucuslar}
+\centering
+\small
+\begin{tabular}{lrrrrr}
+\toprule
+Uçuş & İrtifa (m) & Yol (km) & Eşleşme & Kapsama & Medyan (m) \\
+\midrule
+03 & 466  & 74  & \%93 & \%100,0 & \textbf{8,35}  \\
+09 & 546  & 77  & \%70 & \%100,0 & \textbf{14,94} \\
+06 & 834  & 24  & \%76 & \%99,7  & \textbf{15,06} \\
+04 & 544  & 83  & \%90 & \%100,0 & \textbf{15,44} \\
+05 & 2313 & 30  & \%50 & \%99,8  & \textbf{16,69} \\
+01 & 406  & 66  & \%77 & \%100,0 & \textbf{22,51} \\
+11 & 2572 & 84  & \%90 & \%99,8  & \textbf{24,79} \\
+\midrule
+02 & 406  & 86  & \%37 & \%99,7  & 53,45  \\
+10 & 773  & 9   & \%13 & \%84,7  & 126,88 \\
+08 & 551  & 103 & \%33 & \%79,7  & 648,49 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig3_law.pdf}
+\caption{On uçuşta eşleşme oranına karşı nihai doğruluk. Eşleşme oranı gerçek
+konum verilerek ölçülüyor, yani algoritmayı değil veriyi betimliyor ve
+planlanan bir rota üzerinde uçmadan hesaplanabiliyor. Renk irtifayı gösteriyor
+ve grupları ayırmıyor: 2572\,m'deki uçuş (11) çalışıyor, 551\,m'deki (08)
+çöküyor.}
+\label{fig:yasa}
+\end{figure}
+
+Tablo~\ref{tab:ucuslar} uçuş başına sonuçları veriyor. Yedi uçuş 8,35 ile
+24,79\,m arasında medyan hatayla ve \%99,7 veya üstü kapsamayla konumlanıyor;
+üçü çöküyor.
+
+\textbf{Bileşen karşılaştırması.} Uçuş 03'te üç yaklaşımı doğrudan
+karşılaştırdığımızda (Şekil~\ref{fig:yorunge}): tek başına görsel odometri her
+kareyi kapsıyor ama 2803\,m sürükleniyor; tek kare harita eşleştirmesi
+çözebildiği karelerin \%76,6'sında 5,46\,m medyan tutturuyor ve kare başına
+3,80 eşleştirme çağrısı harcıyor; füzyon karelerin \%100'ünü 6,20\,m medyanla
+ve kare başına 1,52 çağrıyla kapsıyor. Tek kare taban çizgisi 100\,m'nin
+ötesinde kaba aykırı değer üretmiyor: getirme yanlış bölgeyi önerdiğinde
+doğrulama onu reddediyor ve sistem yanlış bir konum bildirmek yerine hiçbir şey
+bildirmiyor.
+
+\textbf{Çalışan uçuşları çökenlerden ne ayırıyor?} Başarım uçuşlar arasında
+78 kat değişiyor; bu, sistemin bazı uçuşlarda mı başarısız olduğu yoksa bazı
+uçuşların mı eşleştirilemez olduğu sorusunu doğuruyor. İkincisini doğrudan
+ölçüyoruz: gerçek konum verildiğinde karelerin ne kadarı haritayla eşleşiyor?
+Arama içermediği için bu, verinin bir özelliği.
+
+Cevap iki grubu ayırıyor (Şekil~\ref{fig:yasa}). Eşleşme oranı $\geq$\%50 olan
+uçuşlar $\geq$\%99,7 kapsamada 8,35--24,79\,m medyan veriyor; altındakiler
+\%80--85 kapsamada 53--648\,m. Eşleşme oranı ile logaritmik hata arasındaki
+korelasyon $-0{,}764$. Ayırt edici olan irtifa değil: 2572\,m'deki uçuş
+çalışıyor, 551\,m'deki çöküyor. Bunun pratik değeri, eşleşme oranının uçuş
+gerektirmemesinde: planlanan bir rota ve bir harita verildiğinde önceden
+ölçülebiliyor ve konuşlandırılabilirlik bir sorudan bir ölçüme dönüşüyor.
+
+\section{Bir Eşleyiciyi Burada Değerli Kılan Nedir}
+\label{sec:esleyici}
+
+Yukarıdaki çözümleme darboğazın eşleştirme kalitesi olduğunu gösterdiği için
+mantıklı adım LoFTR'ı daha güçlü bir eşleyiciyle değiştirmekti. RoMa güncel
+eşleştirme kıyaslarında önde gidiyor. Bilinen doğru konumlarda ölçüldüğünde
+sorunu çözmüş görünüyor: çöken üç uçuşta eşleşme oranı \%12--42'den
+\%96--100'e çıkıyor, hem de 2,7\,GB bellekle.
+
+Uçtan uca sonuç ise çok daha kötü: uçuş 01'de LoFTR'ın 22\,m verdiği yerde
+1669\,m.
+
+Kıyaslama yanlış soruyu soruyordu. Her iki eşleyiciye de yalnızca \emph{doğru}
+karoyu gösteriyordu; oysa bir konumlandırma sistemi mesaisinin çoğunu adayın
+doğru yer olup olmadığına karar vermeye harcar. Her kareyi haritanın rastgele
+ve ilgisiz bir parçasıyla eşleştirdiğimizde:
+
+\begin{center}
+\small
+\begin{tabular}{lrrr}
+\toprule
+& Doğru yerde & Yanlış yerde & Oran \\
+\midrule
+LoFTR & 709 iç nokta & \textbf{0} & 709$\times$ \\
+RoMa  & 4598 iç nokta & 341 & 13,5$\times$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+LoFTR ilgisiz görüntüde hiçbir şey döndürmüyor; RoMa yüzlerce karşılık
+döndürüyor. Görünürdeki üstünlüğü, yalnızca kolay yönü ölçen bir ölçütün yan
+ürünüymüş. Kabul eşiğini yeniden ayarlamak da kurtarmıyor: ham iç nokta, iç
+nokta oranı ve eşleyici güveni ölçütlerinde LoFTR için sıfır hatalı bir eşik
+\emph{var}, RoMa için hiçbir ölçütte yok --- bazı yanlış yerler bazı doğru
+yerlerden yüksek puan alıyor.
+
+Uçtan uca, eşikler RoMa lehine ayarlıyken uçuş 08 maliyeti somutlaştırıyor:
+LoFTR karelerin \%4,5'inde konum üretiyor, medyan hata 582\,m --- yani
+bilmediğini söylüyor. RoMa \%95,5'inde üretiyor ve ortalama 6250\,m yanılıyor.
+Uçuşta birinci davranış ataletsel seyre devri tetikler; ikincisi hava aracını
+altı kilometre yanlış yere, hiçbir uyarı vermeden uçurur.
+
+Bu yüzden LoFTR'ı koruyoruz; daha güçlü eşleyici olduğu için değil --- değil
+--- bu görev eşleştirme kıyaslarının ölçmediği bir özellik istediği için. Bir
+eşleyici konumlandırmada, hiçbir şey döndürmeye istekli olduğu ölçüde
+değerlidir.
+
+\section{Bileşen Katkıları ve Dayanıklılık}
+
+Bileşenleri teker teker çıkardığımızda (300 kare, sabit tohum) tek en büyük
+katkı montaj açısı düzeltmesinden geliyor: onsuz medyan 17,13\,m, onunla
+6,62\,m. Odometriyi çıkarmak medyanı 9,98\,m'ye taşıyıp bırakıyor ama kuyruğu
+yok ediyor --- \%90 dilim 16,17\,m'den 367,66\,m'ye çıkıyor, ki bir hareket
+modeli tam olarak bunun içindir. Ölçüm güdümlü enjeksiyonu çıkarmak 1,0\,m
+medyan ve 3,3\,m \%90 dilim maliyetli. İki bileşen ise yerini hak etmiyor ve
+bunu aksini iddia etmek yerine bildiriyoruz: parçacık sayısı neredeyse etkisiz
+(100 parçacıkla 7,08\,m, 2000 ile 6,80\,m) ve olabilirlik aykırı değer tabanını
+kaldırmak ölçülebilir bir şey değiştirmiyor, çünkü kapı ve enjeksiyon kötü
+düzeltmeleri zaten daha yukarıda süzüyor.
+
+Yirmi bozulma koşulunda ortaya çıkan örüntü şu: sistem \emph{ışıkölçüme}
+kayıtsız, \emph{dokuya} duyarlı. En yüksek şiddette sis 0,6\,m, karenin üçte
+birini kapatan bir örtme 0,6\,m, çözünürlük kaybı 0,9\,m maliyetli. Asıl
+başarısızlık kipi hareket bulanıklığı: orta düzeyde medyan 6,62'den 58,31\,m'ye,
+ağır düzeyde 500\,m'ye çıkıyor. Aynı gözlem bir kısmi çare de veriyor --- harita
+karosu zaten keskin ve aynı yeri aynı ölçekte gösterdiği için, karo ile sorgu
+arasındaki keskinlik farkı bulanıklığı ölçüyor; karoyu sorguya eşitleyecek kadar
+bulandırmak sürdürülmüş bulanıklıkta medyanı 44,47\,m'den 20,00\,m'ye,
+\%90 dilimi 214\,m'den 91\,m'ye indiriyor. Temiz başarımı geri getirmiyor;
+ağır titreşim gerçek bir sınır olarak duruyor.
+
+Uydu düzeltmelerini rastgele atmak, seyrekleşene kadar az şeye mal oluyor:
+kesinti yokken 6,62\,m, düzeltmelerin yarısı atıldığında 7,38\,m, \%75'i
+atıldığında 10,76\,m ve \%90'ı atıldığında 41,55\,m.
+
+\section{Sınırlar ve Sonuç}
+
+On uçuşun tamamı tek bir veri kümesinden ve tek bir ülkeden geliyor; irtifa
+406--2572\,m ve tarihler 2016--2023 arasında yayılsa da çekim sistemi ve harita
+sınıfı hepsinde ortak. Onun üçü çöküyor ve sebebi ölçülmüş olsa da bu gerçek
+bir işletme sınırı. İşlem çevrimdışı, dizüstü kartında kare başına 866\,ms; bu
+veride kareler 7\,s'de bir geldiği için rahat gerçek zamanlı, ama gömülü
+donanımda denenmedi. Düzlemsel homografi varsayımı dike yakın karelerde geçerli,
+eğik bakışta bozuluyor; artık hatanın baskın kaynağı bina kabartma kayması ve
+ulaşılabilir tabanın 1\,m değil 6\,m civarında olmasının sebebi bu.
+
+GNSS'siz görsel konumlandırmayı kare başına getirme yerine sıralı kestirim
+olarak ele almak, hangi problemin zor olduğunu değiştiriyor. Kısıt getirme
+doğruluğu değil; kısıt, karelerin çoğunun hiç eşleştirilememesi ve bir hareket
+modelinin tam olarak onları kapatması. On gerçek uçuşta füzyon, harita ile
+kameranın tanınabilir ölçüde aynı dünyayı gösterdiği her yerde karelerin
+\%99,7 veya fazlasını 8--25\,m medyanla konumlandırıyor; bu koşulu sağlayan
+kare oranı ise uçuştan önce ölçülebiliyor. Aynı eşleşme geometrisi platformun
+kendi yönelim hatasını da veriyor ve manyetometrenin hiçbir konum bilgisi
+olmadan haritaya karşı kalibre edilmesini sağlıyor. Eşleyici çalışması ise
+eşleştirme literatürünün hâlihazırda bildirmediği bir ölçüt öneriyor:
+konumlandırmada seçicilik duyarlılığa baskındır ve her zaman cevap veren bir
+eşleyici, bazen susandan kötüdür.
+
+Kod, veri hazırlığı ve bildirilen bütün ölçümler kabul hâlinde herkese açık
+olarak yayımlanacaktır.
+
+\begin{thebibliography}{00}
+\bibitem{mgs2net} M. Li \textit{et al.}, ``(MGS)$^2$-Net: Macro/micro-geometric
+structure and scale modeling for cross-view geo-localization,''
+arXiv:2602.10704, 2026.
+\bibitem{offnadir} Q. Qiao \textit{et al.}, ``OffNadirLoc: A benchmark for large
+off-nadir view geo-localization,'' arXiv:2607.19951, 2026.
+\bibitem{relate} H. Jiang \textit{et al.}, ``ReLATE: Reliability-guided evidence
+fusion for degraded UAV--satellite matching,'' arXiv:2607.25524, 2026.
+\bibitem{bevpatchpf} D. Lee \textit{et al.}, ``BEV-Patch-PF: Particle filtering
+with learned aerial patch matching for GPS-free localization,''
+arXiv:2512.15111, 2025.
+\bibitem{shan} M. Shan \textit{et al.}, ``Google map aided visual navigation for
+UAVs in GPS-denied environment,'' arXiv:1703.10125, 2017.
+\bibitem{loftr} J. Sun \textit{et al.}, ``LoFTR: Detector-free local feature
+matching with transformers,'' in \textit{CVPR}, 2021.
+\bibitem{roma} J. Edstedt \textit{et al.}, ``RoMa: Robust dense feature
+matching,'' in \textit{CVPR}, 2024.
+\bibitem{uavvisloc} W. Xu \textit{et al.}, ``UAV-VisLoc: A large-scale dataset
+for UAV visual localization,'' arXiv:2405.11936, 2024.
+\end{thebibliography}
+
+\end{document}

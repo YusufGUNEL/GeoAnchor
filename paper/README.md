@@ -64,11 +64,9 @@ The call for papers caps submissions at **four pages** and requires them to be
 does not apply here. So "the same manuscript goes to SİU" was never possible:
 SİU needs a separate, Turkish, four-page version.
 
-Cutting six English pages to four Turkish ones is an editorial decision, not a
-translation job. The plausible cut is one of the two secondary contributions —
-the self-calibration section (III-E and V-C) or the matcher study (VI) — since
-each is self-contained and either one alone leaves a coherent paper around the
-sequential-fusion result and the deployability predictor.
+That version exists: [`siu/`](siu/) holds `siu_geoanchor.tex`, Turkish, four
+pages, anonymised, built from the same result files. What it drops and why, and
+the anonymity checklist, are in [`siu/README.md`](siu/README.md).
 
 SİU 2026 (July 2026) has passed; SİU 2027 opens for submission around
 February. ELECO is biennial and next runs in 2027.
