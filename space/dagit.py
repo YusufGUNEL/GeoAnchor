@@ -8,8 +8,11 @@ throws on its first read, which is worse than not deploying.
 
     python space/hazirla.py     # build the assets from results/ and night/
     python space/dagit.py --kuru-calisma   # show what would be uploaded
-    python space/dagit.py --gizli          # create it private, then look
     python space/dagit.py                  # create it public
+    python space/dagit.py --gizli          # private -- needs a PRO account
+
+A private Gradio Space requires PRO; on a free account the review step is
+running it locally (`python space/app.py`) before making it public.
 
 A Space is a web page under your account. Nothing uploaded is generated here
 that is not already in the public repository -- the precomputed result arrays,
@@ -98,8 +101,25 @@ def main() -> int:
     # Private first is the safe default when someone will look before the world
     # does: the Space builds and runs exactly the same, and making it public
     # later is one switch in the Space settings.
-    api.create_repo(REPO_ID, repo_type="space", space_sdk="gradio",
-                    private=gizli, exist_ok=True)
+    try:
+        api.create_repo(REPO_ID, repo_type="space", space_sdk="gradio",
+                        private=gizli, exist_ok=True)
+    except Exception as ex:
+        # A private Gradio Space needs a PRO subscription; on a free account
+        # only public Gradio Spaces (or private *static* ones) are allowed.
+        # The API reports this as a bare 402 and the traceback says nothing
+        # useful, so the alternative is spelled out here instead.
+        if gizli and "402" in str(ex):
+            sys.exit(
+                "\nGizli Gradio Space PRO abonelik istiyor (402).\n"
+                "Ucretsiz hesapta Gradio Space'leri yalnizca herkese acik olabiliyor.\n\n"
+                "Iki secenek:\n"
+                "  1. Once yerelde bak, sonra herkese acik dagit:\n"
+                "       python space/app.py         # http://127.0.0.1:7860\n"
+                "       python space/dagit.py       # --gizli olmadan\n"
+                "  2. Space'i sil: huggingface.co/spaces/" + REPO_ID + " -> Settings\n"
+                "     Silmek geri donusu olan bir islem, tek tikla.")
+        raise
     api.upload_folder(
         repo_id=REPO_ID, repo_type="space", folder_path=str(HERE),
         # __pycache__ and the generator scripts have no business on the Space.
