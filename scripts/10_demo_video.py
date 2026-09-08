@@ -53,7 +53,7 @@ FPS = 15
 # the README caption claims it is. 640x360 and 64 colours keep it under 8 MB;
 # at 800x450 and full colour the same animation came out at 32 MB, which GitHub
 # will not render inline.
-GIF_EVERY, GIF_FRAMES, GIF_SIZE, GIF_COLORS = 6, 120, (640, 360), 64
+GIF_EVERY, GIF_FRAMES, GIF_SIZE, GIF_COLORS = 6, 120, (640, 360), 128
 BG = "#0a0a0e"
 C_GT = "#7fdfff"
 C_PF = "#00ff6a"
@@ -204,9 +204,27 @@ def main():
         # frame every time and doubles the file for no visible gain.
         from PIL import Image
         imgs = [Image.fromarray(f) for f in gif_frames]
-        base = imgs[0].quantize(colors=GIF_COLORS, method=Image.MEDIANCUT)
-        q = [base] + [im.quantize(palette=base, dither=Image.FLOYDSTEINBERG)
-                      for im in imgs[1:]]
+        # The palette comes from the whole animation, not from frame 0. At
+        # frame 0 no trajectory has been drawn yet, so a palette taken there
+        # spends every slot on the satellite imagery and quantises the three
+        # tracks to grey -- which is the one thing the animation exists to
+        # show. The track colours are then appended by hand: they cover a few
+        # hundred thin-line pixels per frame, too few for median cut to keep
+        # them however many frames it looks at.
+        w, h = imgs[0].size
+        sample = imgs[::4]
+        strip = Image.new("RGB", (w, h * len(sample)))
+        for k, im in enumerate(sample):
+            strip.paste(im, (0, k * h))
+        base = strip.quantize(colors=GIF_COLORS - 3, method=Image.MEDIANCUT)
+        pal = base.getpalette()[: (GIF_COLORS - 3) * 3]
+        for hexcol in (C_GT, C_PF, C_VO):
+            pal += [int(hexcol[j:j + 2], 16) for j in (1, 3, 5)]
+        pal_img = Image.new("P", (1, 1))
+        pal_img.putpalette(pal + [0] * (768 - len(pal)))
+        # No dithering: Floyd-Steinberg scatters the saturated track colours
+        # across the camera image as green speckle, and costs 1.4 MB doing it.
+        q = [im.quantize(palette=pal_img, dither=Image.NONE) for im in imgs]
         q[0].save(FIG / "demo.gif", save_all=True, append_images=q[1:],
                   duration=100, loop=0, optimize=True, disposal=1)
         print("figures/demo.gif yazildi ({:.1f} MB)".format(
