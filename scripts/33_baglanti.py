@@ -47,7 +47,10 @@ IGNORE_PREFIX = ("http", "#", "mailto:", "D:", "night/veri/", "night/ornekler/",
                  "night/sonuclar/*", "paper/siu/*")
 
 # Named in the documents but supplied by the toolchain, not by this repository.
-EXTERNAL = {"IEEEtran.cls"}
+# The sharing drafts are named in the work log but deliberately untracked --
+# personal post copy, kept locally, gitignored -- so a clone will not have
+# them and the log's mentions of them are history, not instructions.
+EXTERNAL = {"IEEEtran.cls", "PAYLASIM.md", "PAYLASIM-EN.md"}
 
 MD_LINK = re.compile(r"!?\[[^\]]*\]\(([^)\s]+)\)")
 CODE_PATH = re.compile(r"`([A-Za-z0-9_./-]+\.(?:py|md|tex|json|npz|png|gif|txt|cls|toml|yaml|yml))`")

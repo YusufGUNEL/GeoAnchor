@@ -1,10 +1,9 @@
 """Do the documents still say what the result files say?
 
 The README claims every number in it comes from `results/`, and the paper
-claims the same. Nothing enforced that. Numbers get quoted in four places --
-README.md, README.tr.md, both manuscripts, night/DURUM.md and the sharing
-drafts -- and a rerun that shifts a median leaves most of them stale and
-confident.
+claims the same. Nothing enforced that. Numbers get quoted in five places --
+README.md, README.tr.md, both manuscripts and night/DURUM.md -- and a rerun
+that shifts a median leaves most of them stale and confident.
 
 This script re-derives the headline numbers from the JSON and NPZ files and
 checks that each document still contains them, in that document's own notation.
@@ -44,16 +43,8 @@ TR = ROOT / "README.tr.md"
 TEX = ROOT / "paper" / "geoanchor.tex"
 SIU = ROOT / "paper" / "siu" / "siu_geoanchor.tex"
 DURUM = ROOT / "night" / "DURUM.md"
-SHARE_EN = ROOT / "PAYLASIM-EN.md"
-SHARE_TR = ROOT / "PAYLASIM.md"
-FILES = (EN, TR, TEX, DURUM, SHARE_EN, SHARE_TR, SIU)
-TURKISH = {TR, DURUM, SHARE_TR, SIU}   # comma decimals, percent sign leading
-
-# The sharing drafts spell counts out, and a stale one there is worse than a
-# stale one in the README: those texts get pasted into a public post. The
-# mapping only has to cover counts a flight set realistically reaches.
-WORDS_EN = {6: "six", 7: "seven", 8: "eight", 9: "nine", 10: "ten", 11: "eleven"}
-WORDS_TR = {6: "altı", 7: "yedi", 8: "sekiz", 9: "dokuz", 10: "on", 11: "on bir"}
+FILES = (EN, TR, TEX, DURUM, SIU)
+TURKISH = {TR, DURUM, SIU}   # comma decimals, percent sign leading
 
 
 def load(p: Path):
@@ -74,14 +65,9 @@ class Claims:
 
     def __init__(self):
         self.rows: list[tuple[str, float, int, bool, list[Path]]] = []
-        self.words: list[tuple[str, int, list[Path]]] = []
 
     def add(self, label, value, digits, files, pct=False):
         self.rows.append((label, value, digits, pct, list(files)))
-
-    def add_word(self, label, count, files):
-        """A count the prose spells out rather than writing in digits."""
-        self.words.append((label, int(count), list(files)))
 
 
 def build() -> Claims:
@@ -145,10 +131,6 @@ def build() -> Claims:
     c.add("tavan", 100 * (tavan["taban_dogru_orani"] + o["basarisiz_kare_orani"]), 1,
           [EN, TR, DURUM])
 
-    # --- the sharing drafts, where counts are spelled out -------------------
-    calisan = sum(1 for i in zorluk.values() if i["tutma_orani"] >= 0.5)
-    c.add_word("degerlendirilen ucus", ozet["n_ucus"], [SHARE_EN, SHARE_TR])
-    c.add_word("calisan ucus", calisan, [SHARE_EN, SHARE_TR])
     return c
 
 
@@ -168,19 +150,9 @@ def main() -> int:
         for f in files:
             if needle(value, digits, f, pct) not in texts[f]:
                 missing.append((label, needle(value, digits, f, pct), f))
-    for label, count, files in claims.words:
-        for f in files:
-            w = (WORDS_TR if f in TURKISH else WORDS_EN).get(count, str(count))
-            # Word boundaries, not substring: Turkish "on" sits inside konum,
-            # once and orani, so a plain `in` would pass no matter what the
-            # document said.
-            if not re.search(r"\b" + re.escape(w) + r"\b", texts[f].lower()):
-                missing.append((label, w, f))
-
-    checks = (sum(len(r[4]) for r in claims.rows)
-              + sum(len(w[2]) for w in claims.words))
+    checks = sum(len(r[4]) for r in claims.rows)
     width = max(len(r[0]) for r in claims.rows) + 2
-    print(f"{len(claims.rows) + len(claims.words)} iddia, {checks} dosya kontrolu\n")
+    print(f"{len(claims.rows)} iddia, {checks} dosya kontrolu\n")
     if missing:
         for label, n, f in missing:
             print(f"  EKSIK  {label:{width}s} '{n}' -> {f.relative_to(ROOT)}")
@@ -192,9 +164,6 @@ def main() -> int:
     for label, value, digits, pct, files in claims.rows:
         shown = needle(value, digits, EN, pct)
         print(f"  ok  {label:{width}s} {shown:>9s}  "
-              f"{', '.join(f.name for f in files)}")
-    for label, count, files in claims.words:
-        print(f"  ok  {label:{width}s} {WORDS_EN.get(count, count):>9s}  "
               f"{', '.join(f.name for f in files)}")
     print("\nHepsi tutuyor.")
     return 0

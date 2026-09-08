@@ -52,3 +52,8 @@ night/ornekler/
 
 # HF Space varliklari: results/ ve figures/'dan uretiliyor (space/hazirla.py)
 space/assets/
+
+# Paylasim taslaklari: kisisel gonderi metinleri, projenin parcasi degil.
+# Yerelde dursunlar, depoda islerinin olmadigi ortaya cikti.
+PAYLASIM.md
+PAYLASIM-EN.md
