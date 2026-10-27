@@ -26,11 +26,6 @@ metre seviyesi konum veriyorlar.
 konuşlandırılabilirlik yasası ve gece ölçümleri; hepsi önceden hesaplanmış,
 kurulum yok.
 
-**Yeni misiniz?** [**GeoAnchor Handbook**](https://claude.ai/code/artifact/4e74f825-8ffb-4469-8efa-68d9fb4e0b62) projeyi sıfırdan
-anlatıyor — problem tam olarak nedir, hangi modeller girdi, hangileri hangi ölçümle
-elendi, hangi ayar ne yapar ve hangi tuzaklar gerçekten vakit yedi. Oradan başlayın;
-bu README başvuru metni. (İngilizce.)
-
 Bu çalışmanın makalesi [`paper/`](paper/) altında —
 *Knowing When You Do Not Know: Sequential Map-Anchored Visual Localization for
 GNSS-Denied UAV Flight*, IEEE konferans biçimi, aşağıdaki sonuçların çıktığı
