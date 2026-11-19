@@ -110,9 +110,32 @@ bilmek, küresel aramayı tek bir yerel kontrole indiriyor.
 İHA çapraz görüş coğrafi konumlandırma literatürü ezici çoğunlukla **tek
 görüntü** getirme üzerine kurulu ve standart kıyas kümesi doygun
 (University-1652, Mart 2026 itibarıyla %97,5 Recall@1). Ama gerçek bir İHA tek
-fotoğraf çekmez — bir **yörünge** uçar. Güncel İHA literatüründe bunu
-kullanan neredeyse hiçbir şey yok. En yakın iş olan *BEV-Patch-PF* (Aralık
-2025) sıralı Bayesçi süzgeç kullanıyor ama **yer araçları** için.
+fotoğraf çekmez, bir **yörünge** uçar. Eşleşmeyen kareler de eşleşenlerin
+arasında kalır.
+
+İkisini zaman içinde birleştirmek yeni bir fikir değil ve bu proje böyle bir
+iddiada bulunmuyor. 2025–2026'da aynı şeyi İHA'da öğrenilmiş eşleyicilerle
+yapan birkaç çalışma var:
+
+| Çalışma | Yaklaşım | Değerlendirme | Bildirilen hata |
+|---|---|---|---|
+| [Li ve ark., *Satellite Navigation* 2026](https://doi.org/10.1186/s43020-026-00232-w) | VO + sıfır atışlı GIM_DKM eşleyici, parçacık süzgecinde | 12 yörünge (9 gerçek, 3 sentetik), başlangıç konumu veriliyor | ort. 5,02 m |
+| [CPFL, *Drones* 2026](https://doi.org/10.3390/drones10060437) | homografiyle hareket + öğrenilmiş çapraz görüş ağı, parçacık süzgecinde | MAFS kampüs uçuşları | ort. 5,28 m |
+| [SWA-PF, arXiv 2025](https://arxiv.org/abs/2509.13795) | anlamsal harita uyumuyla ağırlıklanan parçacık süzgeci | MAFS, 150–500 m | medyan 6,65 m |
+| [TRACE-Loc, *Drones* 2026](https://doi.org/10.3390/drones10110794) | getirme adayları üzerinde harekete tutarlı yol seçimi | UAV-VisLoc, ilk konumlanma | medyan 93,75 m |
+
+Hataları GeoAnchor'ın 8–25 m'sinden düşük, ama sayılar doğrudan
+karşılaştırılamaz. GeoAnchor:
+
+- birkaç yüz metrede toplanmış özel bir veride değil, **herkese açık** bir
+  kıyas kümesinde (UAV-VisLoc) ve **406–2572 m** irtifada çalışıyor,
+- her uçuşa **konum bilgisi olmadan** başlıyor; ilk konum haritanın tamamında
+  yapılan aramadan geliyor,
+- **başarısız olduğu uçuşları** sonuçlardan çıkarmıyor, nedenini ölçüyor.
+
+Asıl katkı bu ortamın ortaya çıkardıkları: kendi pusulasını kalibre eden
+sistem, uçmadan önce sistemin nerede çalışacağını söyleyen ölçüt ve
+yerelleştirmeyi kötüleştiren daha güçlü bir eşleyici (hepsi aşağıda).
 
 GeoAnchor diziyi merkeze alıyor:
 

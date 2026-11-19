@@ -110,10 +110,31 @@ you are turns a global search into a single local check.
 The published literature on UAV cross-view geo-localization is dominated by
 **single-image** retrieval, and the standard benchmark is saturated
 (University-1652 sits at 97.5% Recall@1 as of March 2026). But a real UAV does
-not take one photograph — it flies a **trajectory**. Almost nothing in the
-recent UAV literature exploits that. The one close piece of work,
-*BEV-Patch-PF* (Dec 2025), does sequential Bayesian filtering for **ground
-vehicles**, not aircraft.
+not take one photograph — it flies a **trajectory**, and frames that cannot
+be matched sit between frames that can.
+
+Fusing the two over time is not new, and this project does not claim it.
+Several 2025–2026 papers do the same thing on UAVs with learned matchers:
+
+| Work | Approach | Evaluated on | Reported error |
+|---|---|---|---|
+| [Li et al., *Satellite Navigation* 2026](https://doi.org/10.1186/s43020-026-00232-w) | VO + zero-shot GIM_DKM matcher in a particle filter | 12 trajectories (9 real, 3 synthetic), initial position given | 5.02 m mean |
+| [CPFL, *Drones* 2026](https://doi.org/10.3390/drones10060437) | homography motion + learned cross-view network in a particle filter | MAFS campus flights | 5.28 m mean |
+| [SWA-PF, arXiv 2025](https://arxiv.org/abs/2509.13795) | particle filter weighted by semantic map agreement | MAFS, 150–500 m | 6.65 m median |
+| [TRACE-Loc, *Drones* 2026](https://doi.org/10.3390/drones10110794) | motion-consistent path selection over retrieval candidates | UAV-VisLoc, initial localization | 93.75 m median |
+
+Their errors are lower than GeoAnchor's 8–25 m, and the numbers are not
+directly comparable. GeoAnchor:
+
+- runs on a **public** benchmark (UAV-VisLoc) at **406–2572 m**, not a private
+  collection at a few hundred metres,
+- starts each flight **with no position prior** — the first fix comes from a
+  search over the whole map,
+- **keeps the flights it fails on** in the results and measures why.
+
+What that setting turns up is the actual contribution: the self-calibrating
+compass, the pre-flight predictor of where the system works, and a stronger
+matcher that makes localization worse (all below).
 
 GeoAnchor is built around the sequence:
 

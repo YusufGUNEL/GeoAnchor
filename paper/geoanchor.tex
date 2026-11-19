@@ -79,8 +79,12 @@ trajectory, and frames that cannot be matched are bracketed by frames that
 can. We therefore treat the problem as sequential state estimation: visual
 odometry supplies a motion model, map matching supplies absolute fixes and is
 permitted to fail, and a particle filter carries the two together. This is
-standard practice in ground robotics but is almost absent from the recent UAV
-cross-view literature, which we survey in Section~\ref{sec:related}.
+standard practice in ground robotics and has only recently appeared for UAVs
+with learned matchers (Section~\ref{sec:related}). The fusion is therefore
+not what we claim. What we add is an evaluation on a public benchmark across
+a wide altitude range, started without a position prior and reporting the
+flights on which the method fails, and three findings that this evaluation
+exposes.
 
 Our contributions are:
 
@@ -124,11 +128,29 @@ result with a motion model over time.
 against aerial maps is established for \emph{ground} platforms: BEV-Patch-PF
 combines learned bird's-eye matching with a particle filter for off-road
 vehicles~\cite{bevpatchpf}, and earlier work localises street-level imagery
-city-wide to roughly 20\,m~\cite{downes}. For aircraft the closest work
-predates modern learned matching: Shan et al.~\cite{shan} filter optical flow
-against map correlation. Our contribution sits at the intersection: a modern
-detector-free matcher inside a sequential filter, on an aircraft, evaluated
-with metric error over multi-kilometre trajectories.
+city-wide to roughly 20\,m~\cite{downes}. For aircraft, Shan et
+al.~\cite{shan} filter optical flow against map correlation. Since 2025 the
+same structure has appeared with learned components. SWA-PF~\cite{swapf}
+weights particles by semantic agreement between the UAV view and a semantic
+map, and CPFL~\cite{cpfl} propagates particles with inter-frame homographies
+and weights them with a learned cross-view network; both evaluate on the MAFS
+campus flights at 150--500\,m and report mean or median errors near 5--7\,m.
+Li et al.~\cite{gimpf} fuse feature-based visual odometry with a zero-shot
+dense matcher (GIM\_DKM) in a particle filter and report a mean error of
+5.02\,m over twelve trajectories, nine real and three synthetic, with the
+initial position of each trajectory assumed known. TRACE-Loc~\cite{traceloc}
+applies motion-consistent path selection to cross-view retrieval on
+UAV-VisLoc, for initial localization at a coarser scale (median 93.75\,m).
+
+Sequential fusion on an aircraft is therefore established, and our headline
+errors are higher than those above. They are not directly comparable: we
+evaluate on a public benchmark at 406--2572\,m rather than on a private
+collection at a few hundred metres, start each flight without a position
+prior, and keep the three flights on which the method fails in the reported
+results. What this setting adds is the material in Sections~\ref{sec:selfcal},
+\ref{sec:law} and~\ref{sec:matcher}: self-calibration from match geometry, a
+pre-flight predictor of where the method works, and a matcher that degrades
+localization by matching too readily.
 
 \textbf{Image matching.} LoFTR~\cite{loftr} performs detector-free coarse-to-fine
 matching with transformers. RoMa~\cite{roma} predicts a dense warp with a
@@ -515,6 +537,18 @@ with learned aerial patch matching for GPS-free localization,'' arXiv:2512.15111
 image geolocalization,'' arXiv:2203.05612, 2022.
 \bibitem{shan} M. Shan \textit{et al.}, ``Google map aided visual navigation for
 UAVs in GPS-denied environment,'' arXiv:1703.10125, 2017.
+\bibitem{swapf} J. Yuan \textit{et al.}, ``SWA-PF: Semantic-weighted adaptive
+particle filter for memory-efficient 4-DoF UAV localization in GNSS-denied
+environments,'' arXiv:2509.13795, 2025.
+\bibitem{cpfl} C. Su \textit{et al.}, ``CPFL: Resilient continuous UAV
+localization via cross-view perception and particle filtering,''
+\textit{Drones}, vol. 10, no. 6, p. 437, 2026.
+\bibitem{gimpf} H. Li \textit{et al.}, ``A robust visual localization
+framework for UAVs using a zero-shot aerial-satellite image matcher and a
+particle filter,'' \textit{Satellite Navigation}, vol. 7, art. 42, 2026.
+\bibitem{traceloc} S. Liao, H. Chen, Z. Li, and Z. Liu, ``TRACE-Loc: Causal
+trajectory-constrained cross-view localization for GNSS-denied UAVs,''
+\textit{Drones}, vol. 10, no. 11, p. 794, 2026.
 \bibitem{loftr} J. Sun \textit{et al.}, ``LoFTR: Detector-free local feature
 matching with transformers,'' in \textit{CVPR}, 2021.
 \bibitem{roma} J. Edstedt \textit{et al.}, ``RoMa: Robust dense feature
