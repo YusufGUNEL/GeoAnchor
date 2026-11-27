@@ -734,6 +734,7 @@ python scripts/06_odometry.py         # FAZ 2 odometri + sürüklenme
 python scripts/06b_vo_calibrate.py    # odometri kalibrasyonu, 07 bunu okur
 python scripts/06c_yaw_from_map.py    # pusula sapmasını haritadan ölç
 python scripts/07_sequential.py       # FAZ 3 füzyon  ← ana sonuç
+python -m pytest tests                # regresyon: 07'nin ilk 150 karesi (~2 dk)
 python scripts/08_robustness.py       # FAZ 4 bozulma + ölçüm kesintisi
 python scripts/11_ablation.py         # FAZ 5 ablasyon
 python scripts/09_figures.py --tr     # şekiller (--tr olmadan İngilizce)

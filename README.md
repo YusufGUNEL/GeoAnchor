@@ -751,6 +751,7 @@ python scripts/06_odometry.py         # PHASE 2 odometry + drift
 python scripts/06b_vo_calibrate.py    # odometry calibration, read by 07
 python scripts/06c_yaw_from_map.py    # compass bias measured from the map
 python scripts/07_sequential.py       # PHASE 3 fusion  ← main result
+python -m pytest tests                # regression: first 150 frames of 07 (~2 min)
 python scripts/08_robustness.py       # PHASE 4 degradation + outage
 python scripts/11_ablation.py         # PHASE 5 ablation
 python scripts/09_figures.py          # figures (add --tr for the Turkish set)

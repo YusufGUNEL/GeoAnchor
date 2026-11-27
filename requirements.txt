@@ -17,3 +17,4 @@ h5py>=3.11
 huggingface_hub>=0.24
 pillow>=10.0
 romatch>=0.1.2
+pytest
