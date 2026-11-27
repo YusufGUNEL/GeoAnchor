@@ -1090,3 +1090,45 @@ gönderilebilir.
 **Ders:** Bir bağımlılığın gereksiz olduğunu çoğu zaman onu ödemek zorunda
 kalınca fark ediyorsun. Sunucu tarafında hiçbir hesap yapmayan bir uygulama
 için sunucu kiralanıyordu.
+
+---
+
+## Faz 17 — Sıfırdan yeniden üretim ve arXiv gönderimi (2026-11-27)
+
+`D:\GeoAnchorData` silinmişti. Uçuş 03 Google Drive'dan yeniden indirildi
+(ilk deneme günlük kotaya takıldı, ertesi gün tamamlandı) ve hat README'deki
+sırayla baştan koşuldu. Her adımın sonucu depodaki ağustos sonucuyla
+karşılaştırıldı; yeni sonuç dosyaları commit edilmedi.
+
+| adım | ağustos | bugün |
+|---|---|---|
+| `00` veri denetimi | 768 kare, 0,1142 m/px, %78,8 örtüşme | birebir aynı |
+| `01b` yönelim kuralı | −Phi1 545 / −Phi2 459 iç nokta | 554 / 455, karar aynı |
+| `02` karo veritabanı | 2709 karo, 7,5 MB | aynı |
+| `03c` getirme R@1/5/20 (150 m) | %52,7 / %70,4 / %79,9 | %52,6 / %70,4 / %80,2 |
+| `04f` tavan, kare kırpma | iç nokta 159 → 496, hata ~17,6 m | 163 → 522, 17,8 m |
+| `05` tek kare | 588/768, medyan 5,46 m | 588/768, medyan 5,46 m |
+| `06` odometri son hata | 2802,7 m | 2798,4 m |
+| `06c` haritadan pusula sapması | −1,93° / −7,08° | −1,94° / −6,96° |
+| `06b` kalibrasyonlu odometri | 638,6 m, %0,865 | 647,8 m, %0,877 |
+| **`07` sıralı füzyon** | **%100, medyan 6,20 m, %90 14,76 m** | **%100, medyan 6,21 m, %90 14,54 m** |
+
+Küçük farklar büyük olasılıkla o günden bu yana güncellenen kütüphanelerden
+(kornia 0.9.2, torch 2.11) geliyor; hiçbir karar ve hiçbir makale iddiası
+değişmedi. Kare başına süre bugün belirgin şekilde yüksekti (`07`'de 866 yerine
+2415 ms, `05`'te 2,6 yerine 3,2 sn); sebebi ölçülmedi, sonuçları etkilemiyor.
+
+**README'de bir eksik bulundu.** Yeniden üretim adımlarında
+`06b_vo_calibrate.py` yoktu; `07` onun yazdığı `06b_odometry_cal.npz`'yi okuyup
+ilk karede düşüyordu. Zip'in nereye açılacağı da hiç yazmıyordu. İkisi eklendi;
+betiklerdeki 54 sabit veri yolu `src/paths.py`'ye taşındı (`GEOANCHOR_DATA`).
+
+**Ders:** Belge kendi yazarının makinesinde hep tamamdır. Eksik adım ancak
+boş bir diskte, talimatı harfiyen izleyince ortaya çıktı.
+
+**Makale.** Metin yapay zekâ kalıplarından temizlendi ("X değil, Y"
+kurguları, iki noktalı sonuç cümleleri, em-dash ara cümleleri, retorik soru);
+sayılara dokunulmadı, `32_tutarlilik.py` aynı sonucu verdi. Yerelde LaTeX
+kalmadığı için derlemeyi arXiv yaptı: 6 sayfa, çözülmemiş referans yok.
+Endorsement Prof. Dr. Sinan Kalkan'dan geldi; gönderim cs.CV birincil, cs.RO
+çapraz liste, CC BY 4.0 olarak hazırlandı.
