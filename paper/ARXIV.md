@@ -46,24 +46,23 @@ Matching a downward-looking camera against a pre-loaded satellite map is the
 standard route to absolute position when GNSS is denied. The recent literature
 optimises this as a single-image retrieval problem, and the common benchmark is
 close to saturated. A flying aircraft, however, produces a sequence, and in
-that setting the binding constraint is not retrieval accuracy but the fact that
-a large fraction of frames cannot be matched at all. We fuse cross-view
-matching with visual odometry in a particle filter and evaluate on ten real UAV
-survey flights spanning 406-2572 m altitude, 9-103 km per flight and
-acquisition dates from 2016 to 2023. On the seven flights whose imagery is
-usable against the basemap the system holds a median error of 8.4-24.8 m with
-at least 99.7% of frames localised, while visual odometry alone drifts 2803 m
-over 74 km. Two by-products follow from the same machinery: the residual
-rotation of each map match exposes the platform's heading error, letting the
-system calibrate its own magnetometer deviation without GNSS and cutting
-odometry drift from 3.795% to 0.865% of distance travelled; and the match rate,
-measurable on a planned route before flight, predicts whether the system will
+that setting the larger problem is that many frames cannot be matched at all.
+We fuse cross-view matching with visual odometry in a particle filter and
+evaluate on ten real UAV survey flights spanning 406-2572 m altitude, 9-103 km
+per flight and acquisition dates from 2016 to 2023. On the seven flights whose
+imagery is usable against the basemap the system holds a median error of
+8.4-24.8 m with >=99.7% of frames localised, while visual odometry alone drifts
+2803 m over 74 km. The same machinery gives two further results. The residual
+rotation of each map match exposes the platform's heading error, so the system
+can calibrate its own magnetometer deviation without GNSS, cutting odometry
+drift from 3.795% to 0.865% of distance travelled. The match rate, which can be
+measured on a planned route before flight, predicts whether the system will
 work there at all (rho = -0.764 against log error, with a threshold near 50%).
-Finally we report a negative result that we believe generalises: replacing
-LoFTR with RoMa raises match rate on the failing flights from 12-42% to 96-100%
-and makes end-to-end accuracy dramatically worse, because RoMa returns
-confident correspondences for unrelated imagery. For localization, a matcher is
-useful in proportion to its ability to stay silent, not to match.
+We also report a negative result. Replacing LoFTR with RoMa raises the match
+rate on the failing flights from 12-42% to 96-100%, yet makes end-to-end
+accuracy much worse, because RoMa returns confident correspondences for
+unrelated imagery. In localization, a matcher earns its place by returning
+nothing when the imagery does not match.
 
 ## Before submitting
 

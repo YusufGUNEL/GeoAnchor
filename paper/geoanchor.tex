@@ -28,25 +28,25 @@ Matching a downward-looking camera against a pre-loaded satellite map is the
 standard route to absolute position when GNSS is denied. The recent literature
 optimises this as a single-image retrieval problem, and the common benchmark
 is close to saturated. A flying aircraft, however, produces a \emph{sequence},
-and in that setting the binding constraint is not retrieval accuracy but the
-fact that a large fraction of frames cannot be matched at all. We fuse
+and in that setting the larger problem is that many frames cannot be matched
+at all. We fuse
 cross-view matching with visual odometry in a particle filter and evaluate on
 ten real UAV survey flights spanning 406--2572\,m altitude, 9--103\,km per
 flight and acquisition dates from 2016 to 2023. On the seven flights whose
 imagery is usable against the basemap the system holds a median error of
 8.4--24.8\,m with $\geq$99.7\% of frames localised, while visual odometry
-alone drifts 2803\,m over 74\,km. Two by-products follow from the same
-machinery: the residual rotation of each map match exposes the platform's
-heading error, letting the system calibrate its own magnetometer deviation
-without GNSS and cutting odometry drift from 3.795\% to 0.865\% of distance
-travelled; and the \emph{match rate}, measurable on a planned route before
-flight, predicts whether the system will work there at all
-($\rho=-0.764$ against log error, with a threshold near 50\%). Finally we
-report a negative result that we believe generalises: replacing LoFTR with
-RoMa raises match rate on the failing flights from 12--42\% to 96--100\% and
-makes end-to-end accuracy dramatically \emph{worse}, because RoMa returns
-confident correspondences for unrelated imagery. For localization, a matcher
-is useful in proportion to its ability to stay silent, not to match.
+alone drifts 2803\,m over 74\,km. The same machinery gives two further
+results. The residual rotation of each map match exposes the platform's
+heading error, so the system can calibrate its own magnetometer deviation
+without GNSS, cutting odometry drift from 3.795\% to 0.865\% of distance
+travelled. The \emph{match rate}, which can be measured on a planned route
+before flight, predicts whether the system will work there at all
+($\rho=-0.764$ against log error, with a threshold near 50\%). We also report
+a negative result. Replacing LoFTR with RoMa raises the match rate on the
+failing flights from 12--42\% to 96--100\%, yet makes end-to-end accuracy much
+\emph{worse}, because RoMa returns confident correspondences for unrelated
+imagery. In localization, a matcher earns its place by returning nothing when
+the imagery does not match.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -65,26 +65,25 @@ absolute position by matching what the camera sees against it.
 
 Recent work treats this as cross-view image retrieval and has driven the
 common benchmark close to saturation; University-1652 now sits at 97.5\%
-Recall@1~\cite{mgs2net}. That framing quietly assumes the hard part is
-choosing correctly among candidate locations. In flight over real terrain we
-find a different constraint dominates: on a substantial fraction of frames
-\emph{no} correct match exists to be chosen. Over water, uniform farmland, or
+Recall@1~\cite{mgs2net}. That framing assumes the hard part is choosing
+correctly among candidate locations. Over real terrain we find that a
+different constraint dominates. On a substantial fraction of frames \emph{no}
+correct match exists to be chosen. Over water, uniform farmland, or
 repeated building patterns, and wherever the basemap and the camera disagree
 in season or in years, matching returns nothing usable. In our single-frame
 baseline this is 23\% of frames on the easiest flight in our set and 96\% on
 the hardest.
 
-A flying aircraft is not a collection of independent photographs. It follows a
+The frames of a flight are not independent photographs. They lie along a
 trajectory, and frames that cannot be matched are bracketed by frames that
 can. We therefore treat the problem as sequential state estimation: visual
 odometry supplies a motion model, map matching supplies absolute fixes and is
 permitted to fail, and a particle filter carries the two together. This is
 standard practice in ground robotics and has only recently appeared for UAVs
-with learned matchers (Section~\ref{sec:related}). The fusion is therefore
-not what we claim. What we add is an evaluation on a public benchmark across
-a wide altitude range, started without a position prior and reporting the
-flights on which the method fails, and three findings that this evaluation
-exposes.
+with learned matchers (Section~\ref{sec:related}), so we do not claim the
+fusion itself. We add an evaluation on a public benchmark across a wide
+altitude range, started without a position prior and including the flights on
+which the method fails, and three findings that come out of it.
 
 Our contributions are:
 
@@ -103,14 +102,14 @@ correcting for it reduces odometry drift by a factor of 4.4
 \item A pre-flight predictor of deployability. The fraction of frames that
 match the basemap at a known position separates working from failing flights
 with $\rho = -0.764$ against log error and a threshold near 50\%. Because it
-requires no flight, it turns ``will this work here?'' into a measurement
+requires no flight, ``will this work here?'' can be answered before take-off
 (Section~\ref{sec:law}). The same predictor transfers to a thermal sensor at
 night, where a structure score read off the basemap alone separates
 localisable frames from the rest at $\mathrm{AUC}=0.852$
 (Section~\ref{sec:night}).
-\item A negative result on matcher choice, with the mechanism identified: a
-stronger dense matcher degrades localization because it lacks the ability to
-refuse (Section~\ref{sec:matcher}).
+\item A negative result on matcher choice, with its cause measured. A
+stronger dense matcher degrades localization because it does not refuse to
+match unrelated imagery (Section~\ref{sec:matcher}).
 \end{enumerate}
 
 \section{Related Work}
@@ -166,9 +165,9 @@ to the basemap's ground scale, giving a metric, north-aligned crop covering
 $300 \times 300$\,m. Heading comes from the inertial unit and altitude from the
 barometric altimeter; neither depends on GNSS, matching the pose-prior protocol
 used by contemporary benchmarks. The basemap is stored in EPSG:4326, whose
-pixels are square in degrees but not in metres --- at our latitude
-0.2526\,m/px east-west against 0.2974\,m/px north-south, an 17.8\% anisotropy
---- so satellite crops are resampled to be metrically square before matching.
+pixels are square in degrees but not in metres (at our latitude
+0.2526\,m/px east-west against 0.2974\,m/px north-south, a 17.8\% anisotropy),
+so satellite crops are resampled to be metrically square before matching.
 
 \subsection{Absolute fixes}
 A grid of overlapping 300\,m basemap tiles is indexed with frozen DINOv2
@@ -208,7 +207,7 @@ represent.
 Two mechanisms proved essential in practice. \emph{Measurement-driven
 injection}: once the particle cloud contracts to a few metres, no particle lies
 near a fix 100\,m away, the likelihood is uniformly zero and the filter cannot
-move even when the measurement is correct --- we observed a filter locked
+move even when the measurement is correct. We observed a filter stay locked
 105\,m from truth for twenty frames while receiving 4--10\,m measurements.
 Replacing a fraction of particles with draws from the measurement distribution
 each step resolves this. \emph{Dead reckoning on the heading}: when odometry
@@ -334,9 +333,8 @@ covers every frame but drifts to 2803\,m; single-frame map matching achieves
 5.46\,m median but only on the 76.6\% of frames it can solve, at 3.80 matching
 calls per frame; the fused system covers 100\% of frames at 6.20\,m median with
 1.52 calls per frame. The single-frame baseline produces no gross outliers
-beyond 100\,m --- when retrieval proposes the wrong region, verification
-rejects it and the system reports nothing rather than reporting a wrong
-position.
+beyond 100\,m. When retrieval proposes the wrong region, verification rejects
+it and the system reports nothing instead of a wrong position.
 
 \subsection{What separates working flights from failing ones}
 \label{sec:law}
@@ -353,9 +351,8 @@ those below give 53--648\,m at 80--85\% coverage. The correlation between match
 rate and log error is $-0.764$. Altitude is not the discriminator: the 2572\,m
 flight works and the 551\,m flight fails.
 
-This is practically useful because match rate needs no flight. Given a planned
-route and a basemap, it can be measured in advance, converting deployability
-from a question into a measurement.
+This matters in practice because measuring the match rate needs no flight:
+given a planned route and a basemap, it can be computed in advance.
 
 \subsection{Does the predictor transfer to another sensor?}
 \label{sec:night}
@@ -365,17 +362,18 @@ to visible light, so we tested it on a thermal dataset with a different
 sensor, terrain and country: Boson-nighttime~\cite{sthn}, 26{,}568 aligned
 nighttime thermal/satellite pairs over desert, farmland and roads.
 
-The daylight pipeline does not degrade there, it stops. LoFTR on raw thermal
-returns zero inliers on 100 frames out of 100 --- not a worse position, no
-position. Discarding appearance and keeping structure, by applying CLAHE and a
+There the daylight pipeline does not degrade gradually; it stops working.
+LoFTR on raw thermal returns zero inliers on all 100 frames tested, so it
+produces no position at all. Discarding appearance and keeping structure, by
+applying CLAHE and a
 difference-of-Gaussians band-pass identically to both sides, recovers a
 correct fix on 8.6\% of 1000 frames with RoMa.
 
-Which 8.6\%? We score each satellite tile for structure using the basemap
-alone: Canny edge density minus the fraction of spectral energy above an
-eighth of Nyquist, both standardised. The second term matters because fine
-texture is not structure --- sand speckle and scrub raise the edge count
-without giving a matcher anything to hold. That score separates the frames
+To see which frames these are, we score each satellite tile for structure
+using the basemap alone: Canny edge density minus the fraction of spectral
+energy above an eighth of Nyquist, both standardised. The second term is
+needed because fine texture such as sand speckle and scrub raises the edge
+count without giving a matcher anything to hold. That score separates the frames
 that localise from the ones that do not at $\mathrm{AUC}=0.852$, higher than
 the inlier count measured \emph{after} matching (0.803). Sorted into deciles,
 the least structured tenth of tiles produces no correct fix at all; the most
@@ -383,11 +381,11 @@ structured tenth produces 43\%. Used as a pre-filter it also pays for itself
 in compute: discarding the lower half of tiles before matching retains 90\% of
 the correct fixes.
 
-The predictor therefore survives a change of sensor, and at night it takes a
-stronger form --- it needs only the basemap, not a trial match. It is also
-worth its place as a component. Combining it with a matcher-side check ---
-accept a fix only where two band-passed representations independently agree to
-within the tolerance, on tiles in the top 30\% by structure --- yields 95\%
+The predictor therefore holds under a change of sensor, and at night it needs
+even less: the basemap alone, with no trial match. It is also useful as a
+component. We combine it with a matcher-side check that accepts a fix only
+where two band-passed representations agree to within the tolerance, applied
+to tiles in the top 30\% by structure. This yields 95\%
 precision on 6.2\% of frames while issuing 0.6 matcher calls per frame, against
 92\% precision on 2.4\% of frames at 1.0 calls for the tuned single-score gate.
 
@@ -399,12 +397,12 @@ supply, and the measurements come from a single dataset.
 Removing components one at a time (300 frames, fixed seed): the boresight
 correction is by far the largest single contributor (17.13\,m without it
 against 6.62\,m with); removing odometry barely changes the median but
-destroys the tail (90th percentile 368\,m against 16\,m), which is precisely
+destroys the tail (90th percentile 368\,m against 16\,m), which is exactly
 what a motion model is for; removing measurement-driven injection costs
 1.0\,m median and 3.3\,m at the 90th percentile.
 
-Two components do not earn their place and we report this rather than claiming
-otherwise: particle count is nearly irrelevant (7.08\,m with 100 particles,
+Two components make no measurable difference. Particle count is nearly
+irrelevant (7.08\,m with 100 particles,
 6.80\,m with 2000, 6.62\,m with 600), and removing the likelihood outlier floor
 changes nothing measurable, because gating and injection already filter bad
 fixes upstream.
@@ -425,8 +423,8 @@ Blur can be partially mitigated by equalising the domain: since the basemap
 tile is sharp and depicts the same ground at the same scale, the sharpness gap
 between query and tile measures the blur, and blurring the tile to match
 reduces median error under sustained blur from 44.47\,m to 20.00\,m and the
-90th percentile from 214\,m to 91\,m. It does not restore clean performance;
-heavy vibration remains a genuine limit.
+90th percentile from 214\,m to 91\,m. It does not restore clean performance,
+and heavy vibration remains a real limit.
 
 \section{What Makes a Matcher Useful Here}
 \label{sec:matcher}
@@ -467,16 +465,15 @@ no threshold exists under any criterion, as some wrong places outscore some
 correct ones (best accuracy 98.1\%).
 
 End-to-end, with thresholds tuned in RoMa's favour, flight 08 makes the cost
-concrete. LoFTR produces a position on 4.5\% of frames, median error 582\,m ---
-it is reporting that it does not know. RoMa produces one on 95.5\% of frames
+concrete. LoFTR produces a position on 4.5\% of frames, median error 582\,m;
+in effect it reports that it does not know. RoMa produces one on 95.5\% of frames
 and is 6250\,m wrong on average. In flight the first behaviour triggers a
 handover to inertial navigation; the second flies the aircraft six kilometres
 off course without indication.
 
-We therefore keep LoFTR, not because it is the stronger matcher --- it is not
---- but because this task requires a property that matching benchmarks do not
-measure. A matcher is useful for localization in proportion to its willingness
-to return nothing.
+We therefore keep LoFTR, although it is the weaker matcher. This task needs a
+property that matching benchmarks do not measure: the willingness to return
+nothing.
 
 \section{Limitations}
 
@@ -492,20 +489,20 @@ planar homography assumption holds for near-nadir frames and degrades with
 obliquity; building relief displacement is the dominant residual error source
 and is why the achievable floor is near 6\,m rather than near 1\,m.
 
-The thermal evidence in Section~\ref{sec:night} carries a limitation of its
-own that we want to state rather than leave implied: it is entirely per-frame.
+The thermal evidence in Section~\ref{sec:night} has a further limitation: it
+is entirely per-frame.
 That dataset is a grid of aligned tiles from several regions and nights, not a
 trajectory, so there is no motion to integrate and the filter was never run on
-it. Given that this paper's central claim is precisely that per-frame results
-do not predict sequential ones, the night section should be read as evidence
-that the deployability predictor generalises --- and as nothing more.
+it. Given that this paper's central claim is that per-frame results
+do not predict sequential ones, the night section should be read only as
+evidence that the deployability predictor generalises.
 
 \section{Conclusion}
 
 Treating GNSS-denied visual localization as sequential estimation rather than
-per-frame retrieval changes which problem is hard. Retrieval accuracy is not
-the constraint; the constraint is that many frames cannot be matched at all,
-and a motion model covers exactly those. Across ten real flights the fused
+per-frame retrieval changes which problem is hard. The limiting factor becomes
+the many frames that cannot be matched at all, and a motion model covers
+exactly those. Across ten real flights the fused
 system localises 99.7\% or more of frames at 8--25\,m median wherever the
 basemap and the camera depict a recognisably similar world, and the fraction of
 frames satisfying that condition can be measured before flight.
