@@ -1138,3 +1138,39 @@ sayılara dokunulmadı, `32_tutarlilik.py` aynı sonucu verdi. Yerelde LaTeX
 kalmadığı için derlemeyi arXiv yaptı: 6 sayfa, çözülmemiş referans yok.
 Endorsement Prof. Dr. Sinan Kalkan'dan geldi; gönderim cs.CV birincil, cs.RO
 çapraz liste, CC BY 4.0 olarak hazırlandı.
+
+---
+
+## Faz 18 — Uçtan uca süre: ham JPEG'den konuma (2026-11-27)
+
+`07`'nin "kare başına ~0,8 sn"si önbellekli: kuzey-yukarı kırpma, DINOv2
+gömmesi ve odometri diskten okunuyor. `scripts/40_profil.py` her kareyi canlı
+bir sistemdeki gibi işliyor ve her adımı ayrı ölçüyor (uçuş 03, 768 kare,
+Dengeli güç modu, RTX 3050 Ti Laptop).
+
+| adım | medyan | ort | p95 (ms) |
+|---|---|---|---|
+| JPEG okuma (3976×2652) | 50 | 60 | 96 |
+| kuzey-yukarı kırpma | 2 | 2 | 5 |
+| SIFT odometri | 110 | 135 | 269 |
+| DINOv2 gömmesi (768 karenin 6'sında gerekli) | 14 | 18 | 39 |
+| LoFTR + parçacık süzgeci | 473 | 722 | 2000 |
+| **toplam** | **670** | **920** | **2227** |
+
+Önbelleksiz yol aynı konumları buluyor: kapsama %100, medyan 6,21 m, %90
+14,54 m, `07` ile birebir aynı. İlk denemede 7,23 m çıkmıştı; profil
+betiğine odometrinin duruş düzeltmesini (pitch/roll/irtifa kaynaklı merkez
+kayması, `06`'da yapılıyor) koymayı unutmuştum. Düzeltme yalnızca uçağın
+kendi sensörlerini kullanıyor, canlıda da yapılabilir.
+
+**Sonuç.** Ortalama hız sorun değil; sorun kuyruk. Normal karede tek LoFTR
+çağrısı var, ama süzgeç belirsizleşince ya da kaybolunca adaylar art arda
+LoFTR'a giriyor ve o kareler 2 sn'yi geçiyor. Yol haritasındaki p95 ≤ 500 ms
+hedefi için bakılacak yer bu çağrıların sayısı ve LoFTR'ın kendisi (1.4:
+eşlemeyi ayrı iş parçacığına almak, 1.5: hızlı eşleştirici). Odometride
+önceki karenin SIFT sonucu her karede yeniden hesaplanıyor; saklanırsa bu
+kalem kabaca yarıya iner.
+
+Süre sayıları arka planda veri indirmesi sürerken alındı; aynı betiğin ilk
+koşusunda odometri medyanı 222 ms çıkmıştı. Kesin karşılaştırma için makine
+boşken yeniden ölçülmeli.
