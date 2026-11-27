@@ -13,12 +13,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.stdout.reconfigure(encoding="utf-8")
 
 import numpy as np
+from src import paths
 from src.flight import load_flight
 
 ROOT = Path(__file__).resolve().parents[1]
 z = np.load(ROOT / "results" / "04c_bias.npz")
 dn, de, idx = z["dn"], z["de"], z["idx"]
-flight = load_flight(r"D:\GeoAnchorData\raw", "03")
+flight = load_flight(str(paths.RAW), "03")
 sub = flight.df.iloc[idx]
 h = sub["height"].values
 om = np.radians(sub["Omega"].values)      # eğim

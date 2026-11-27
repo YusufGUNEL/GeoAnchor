@@ -5,12 +5,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.stdout.reconfigure(encoding="utf-8")
 
 import cv2, numpy as np
+from src import paths
 from src.flight import load_flight
 from src.geo import SatelliteMap, latlon_to_local_m, meters_per_degree
 from src.matching import LoFTRMatcher
 
-CACHE = Path(r"D:\GeoAnchorData\cache")
-flight = load_flight(r"D:\GeoAnchorData\raw", "03")
+CACHE = paths.CACHE
+flight = load_flight(str(paths.RAW), "03")
 sat = SatelliteMap(flight.satellite_path)
 q = np.load(CACHE / "northup_03_640.npy", mmap_mode="r")
 matcher = LoFTRMatcher(size=640)

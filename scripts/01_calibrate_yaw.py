@@ -16,10 +16,11 @@ sys.stdout.reconfigure(encoding="utf-8")
 import cv2
 import numpy as np
 
+from src import paths
 from src.flight import load_flight
 from src.geo import SatelliteMap
 
-DATA_ROOT = r"D:\GeoAnchorData\raw"
+DATA_ROOT = str(paths.RAW)
 DRONE_GSD = 0.1142           # Faz 0'da kestirildi
 TILE_M = 300                 # kıyas alanı kenarı (metre)
 

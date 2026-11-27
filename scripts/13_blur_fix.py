@@ -22,6 +22,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 import cv2
 import numpy as np
 
+from src import paths
 from src.flight import load_flight
 from src.geo import SatelliteMap
 from src.geometry import AttitudeModel
@@ -31,7 +32,7 @@ from src.particle_filter import PFConfig
 from src.sequential import SequentialLocalizer
 from src.degrade import motion_blur
 
-CACHE = Path(r"D:\GeoAnchorData\cache")
+CACHE = paths.CACHE
 ROOT = Path(__file__).resolve().parents[1]
 ATT = AttitudeModel(pitch_bias_deg=2.006, roll_bias_deg=-0.137)
 N = 300
@@ -39,7 +40,7 @@ N = 300
 
 def run(gate: bool, blur_match: bool, severity: float, mode: str, seed: int = 0):
     """mode: 'her' (tum kareler bulanik) | 'arada' (her 6. kare bulanik)"""
-    flight = load_flight(r"D:\GeoAnchorData\raw", "03")
+    flight = load_flight(str(paths.RAW), "03")
     sat = SatelliteMap(flight.satellite_path)
     q = np.load(CACHE / "northup_03_640.npy", mmap_mode="r")
     qe = np.load(CACHE / "query_emb_448.npy")

@@ -25,6 +25,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 import cv2
 import numpy as np
 
+from src import paths
 from src.flight import load_flight, MissingMetadata
 from src.geo import SatelliteMap, haversine_m
 from src.features import Dinov2Embedder
@@ -34,8 +35,8 @@ from src.particle_filter import PFConfig
 from src.sequential import SequentialLocalizer
 from src import pipeline as P
 
-DATA = r"D:\GeoAnchorData\full"
-CACHE = Path(r"D:\GeoAnchorData\cache_multi")
+DATA = str(paths.FULL)
+CACHE = paths.CACHE_MULTI
 ROOT = Path(__file__).resolve().parents[1]
 TAG_SUFFIX = ""
 OUT = ROOT / "results" / "20_multiflight.json"

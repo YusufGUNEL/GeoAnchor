@@ -29,6 +29,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from src import paths
 sys.stdout.reconfigure(encoding="utf-8")
 
 import numpy as np
@@ -38,7 +39,7 @@ import matplotlib.pyplot as plt
 
 ROOT = Path(__file__).resolve().parents[1]
 RES = ROOT / "results"
-DATA_ROOT = Path(r"D:\GeoAnchorData\raw")
+DATA_ROOT = paths.RAW
 
 # SIU wants Turkish, arXiv has the English manuscript, and both quote the same
 # result files. Forking the script is how two versions of one figure start

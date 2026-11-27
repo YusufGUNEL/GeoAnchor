@@ -26,12 +26,13 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+from src import paths
 from src.flight import load_flight
 from src.geo import SatelliteMap
 from src.matching import LoFTRMatcher
 
-DATA = r"D:\GeoAnchorData\full"
-CACHE = Path(r"D:\GeoAnchorData\cache_multi")
+DATA = str(paths.FULL)
+CACHE = paths.CACHE_MULTI
 ROOT = Path(__file__).resolve().parents[1]
 N_SAMPLE = 30
 

@@ -5,12 +5,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.stdout.reconfigure(encoding="utf-8")
 
 import numpy as np
+from src import paths
 from src.flight import load_flight
 from src.geo import SatelliteMap
 from src.features import Dinov2Embedder
 from src.tiles import build_tile_grid, TileDB
 
-DATA_ROOT = r"D:\GeoAnchorData\raw"
+DATA_ROOT = str(paths.RAW)
 TILE_M, STRIDE_M = 300.0, 150.0
 OUT = Path(__file__).resolve().parents[1] / "data"
 OUT.mkdir(exist_ok=True)

@@ -23,12 +23,13 @@ import cv2
 import numpy as np
 import torch
 
+from src import paths
 from src.flight import load_flight
 from src.geo import SatelliteMap, haversine_m
 from src.matching import LoFTRMatcher
 
-DATA = r"D:\GeoAnchorData\full"
-CACHE = Path(r"D:\GeoAnchorData\cache_multi")
+DATA = str(paths.FULL)
+CACHE = paths.CACHE_MULTI
 ROOT = Path(__file__).resolve().parents[1]
 CROP_M, OUT_PX = 400.0, 640
 

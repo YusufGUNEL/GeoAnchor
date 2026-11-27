@@ -19,10 +19,11 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
+from src import paths
 from src.flight import load_flight
 from src.geo import SatelliteMap
 
-DATA_ROOT = r"D:\GeoAnchorData\raw"
+DATA_ROOT = str(paths.RAW)
 OUT = Path(__file__).resolve().parents[1]
 (OUT / "results").mkdir(exist_ok=True)
 (OUT / "figures").mkdir(exist_ok=True)

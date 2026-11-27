@@ -7,15 +7,16 @@ sys.stdout.reconfigure(encoding="utf-8")
 import cv2, numpy as np
 import matplotlib; matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from src import paths
 from src.flight import load_flight
 from src.geo import SatelliteMap, haversine_m
 from src.matching import LoFTRMatcher
 
-CACHE = Path(r"D:\GeoAnchorData\cache")
+CACHE = paths.CACHE
 ROOT = Path(__file__).resolve().parents[1]
 CROP_M, OUT = 400.0, 640
 
-flight = load_flight(r"D:\GeoAnchorData\raw", "03")
+flight = load_flight(str(paths.RAW), "03")
 sat = SatelliteMap(flight.satellite_path)
 q = np.load(CACHE / "northup_03_640.npy", mmap_mode="r")
 matcher = LoFTRMatcher(size=640)

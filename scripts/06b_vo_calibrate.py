@@ -22,6 +22,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 
 import numpy as np
 
+from src import paths
 from src.flight import load_flight
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -34,7 +35,7 @@ def wrap(x):
 
 def main():
     z = np.load(ROOT / "results" / "06_odometry.npz")
-    flight = load_flight(r"D:\GeoAnchorData\raw", "03")
+    flight = load_flight(str(paths.RAW), "03")
     d = flight.df
     dn, de = z["d_north"].copy(), z["d_east"].copy()
     tn = np.diff(d["north_m"].values)

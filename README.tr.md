@@ -719,6 +719,8 @@ pip install torch torchvision timm kornia opencv-python rasterio gdown \
 
 # 1. veri (UAV-VisLoc'un 2,04 GB'lık örneği, uçuş 03)
 python -m gdown "https://drive.google.com/uc?id=16tY7tPZiNIoyAhknvyXnp0jAfccIcHtL"
+# zip'i $GEOANCHOR_DATA/raw içine aç, raw/03/03.csv oluşmalı
+# (GEOANCHOR_DATA verilmezse D:\GeoAnchorData, bkz. src/paths.py)
 
 python scripts/00_inspect.py          # coğrafi referansı doğrula, ölçeği kestir
 python scripts/01b_convention.py      # yönelim konvansiyonunu deneyle belirle
@@ -729,6 +731,7 @@ python scripts/03c_retrieval_sweep.py # getirme kalitesi taraması
 python scripts/04f_oracle2.py         # eşleme doğruluk tavanı
 python scripts/05_single_frame.py     # FAZ 1 temel hat
 python scripts/06_odometry.py         # FAZ 2 odometri + sürüklenme
+python scripts/06b_vo_calibrate.py    # odometri kalibrasyonu, 07 bunu okur
 python scripts/06c_yaw_from_map.py    # pusula sapmasını haritadan ölç
 python scripts/07_sequential.py       # FAZ 3 füzyon  ← ana sonuç
 python scripts/08_robustness.py       # FAZ 4 bozulma + ölçüm kesintisi

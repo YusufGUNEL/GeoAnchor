@@ -5,12 +5,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.stdout.reconfigure(encoding="utf-8")
 
 import cv2, numpy as np
+from src import paths
 from src.flight import load_flight
 from src.geo import SatelliteMap
 from src.matching import LoFTRMatcher, estimate_similarity, transform_scale_rot
 
 DRONE_GSD, TILE_M = 0.1142, 300
-flight = load_flight(r"D:\GeoAnchorData\raw", "03")
+flight = load_flight(str(paths.RAW), "03")
 sat = SatelliteMap(flight.satellite_path)
 m = LoFTRMatcher(size=640)
 side = int(TILE_M / sat.gsd)

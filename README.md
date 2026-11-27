@@ -736,6 +736,8 @@ pip install torch torchvision timm kornia opencv-python rasterio gdown \
 
 # 1. data (2.04 GB sample of UAV-VisLoc, flight 03)
 python -m gdown "https://drive.google.com/uc?id=16tY7tPZiNIoyAhknvyXnp0jAfccIcHtL"
+# unzip into $GEOANCHOR_DATA/raw so that raw/03/03.csv exists
+# (GEOANCHOR_DATA defaults to D:\GeoAnchorData, see src/paths.py)
 
 python scripts/00_inspect.py          # verify geo-referencing, estimate GSD
 python scripts/01b_convention.py      # determine yaw convention empirically
@@ -746,6 +748,7 @@ python scripts/03c_retrieval_sweep.py # retrieval quality sweep
 python scripts/04f_oracle2.py         # matching accuracy ceiling
 python scripts/05_single_frame.py     # PHASE 1 baseline
 python scripts/06_odometry.py         # PHASE 2 odometry + drift
+python scripts/06b_vo_calibrate.py    # odometry calibration, read by 07
 python scripts/06c_yaw_from_map.py    # compass bias measured from the map
 python scripts/07_sequential.py       # PHASE 3 fusion  ← main result
 python scripts/08_robustness.py       # PHASE 4 degradation + outage

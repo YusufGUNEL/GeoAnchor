@@ -17,6 +17,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 import cv2
 import numpy as np
 
+from src import paths
 from src.flight import load_flight
 from src.geo import SatelliteMap, latlon_to_local_m
 from src.geometry import AttitudeModel
@@ -25,7 +26,7 @@ from src.localize import SingleFrameLocalizer
 from src.particle_filter import PFConfig
 from src.sequential import SequentialLocalizer
 
-CACHE = Path(r"D:\GeoAnchorData\cache")
+CACHE = paths.CACHE
 ROOT = Path(__file__).resolve().parents[1]
 ATT = AttitudeModel(pitch_bias_deg=2.006, roll_bias_deg=-0.137)
 
@@ -33,7 +34,7 @@ ATT = AttitudeModel(pitch_bias_deg=2.006, roll_bias_deg=-0.137)
 def run(drop_rate=0.0, seed=0, n_particles=600, tag="ana", verbose=True,
         degrade=None, max_frames=None, use_online_yaw=True):
     """drop_rate: ölçümlerin bu oranı zorla atılır (reddedilme senaryosu)."""
-    flight = load_flight(r"D:\GeoAnchorData\raw", "03")
+    flight = load_flight(str(paths.RAW), "03")
     sat = SatelliteMap(flight.satellite_path)
     q = np.load(CACHE / "northup_03_640.npy", mmap_mode="r")
     qe = np.load(CACHE / "query_emb_448.npy")

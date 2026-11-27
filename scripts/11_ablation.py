@@ -15,6 +15,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 import numpy as np
 import cv2
 
+from src import paths
 from src.flight import load_flight
 from src.geo import SatelliteMap
 from src.geometry import AttitudeModel
@@ -23,7 +24,7 @@ from src.localize import SingleFrameLocalizer
 from src.particle_filter import PFConfig
 from src.sequential import SequentialLocalizer
 
-CACHE = Path(r"D:\GeoAnchorData\cache")
+CACHE = paths.CACHE
 ROOT = Path(__file__).resolve().parents[1]
 ATT = AttitudeModel(pitch_bias_deg=2.006, roll_bias_deg=-0.137)
 N_FRAMES = 300
@@ -31,7 +32,7 @@ N_FRAMES = 300
 
 def run_variant(name, n_frames=N_FRAMES, pf_kw=None, seq_kw=None,
                 attitude=ATT, use_odometry=True):
-    flight = load_flight(r"D:\GeoAnchorData\raw", "03")
+    flight = load_flight(str(paths.RAW), "03")
     sat = SatelliteMap(flight.satellite_path)
     q = np.load(CACHE / "northup_03_640.npy", mmap_mode="r")
     qe = np.load(CACHE / "query_emb_448.npy")

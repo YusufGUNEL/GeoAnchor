@@ -19,12 +19,13 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 
+from src import paths
 from src.figtext import figdir, pick
 from src.flight import load_flight
 from src.geo import SatelliteMap, local_m_to_latlon
 
 ROOT = Path(__file__).resolve().parents[1]
-CACHE = Path(r"D:\GeoAnchorData\cache")
+CACHE = paths.CACHE
 FIG = figdir()
 
 T = pick({
@@ -61,7 +62,7 @@ C_VO = "#ff2d55"
 
 
 def main():
-    flight = load_flight(r"D:\GeoAnchorData\raw", "03")
+    flight = load_flight(str(paths.RAW), "03")
     sat = SatelliteMap(flight.satellite_path)
     q = np.load(CACHE / "northup_03_640.npy", mmap_mode="r")
     z = np.load(ROOT / "results" / "07_sequential_ana.npz")

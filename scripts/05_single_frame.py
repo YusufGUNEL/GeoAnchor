@@ -14,20 +14,21 @@ sys.stdout.reconfigure(encoding="utf-8")
 import cv2
 import numpy as np
 
+from src import paths
 from src.flight import load_flight
 from src.geo import SatelliteMap, haversine_m
 from src.geometry import AttitudeModel
 from src.matching import LoFTRMatcher
 from src.localize import SingleFrameLocalizer
 
-CACHE = Path(r"D:\GeoAnchorData\cache")
+CACHE = paths.CACHE
 ROOT = Path(__file__).resolve().parents[1]
 # Faz 1b kalibrasyonundan (uçuşun ilk %20'si üzerinden)
 ATT = AttitudeModel(pitch_bias_deg=2.006, roll_bias_deg=-0.137)
 
 
 def main():
-    flight = load_flight(r"D:\GeoAnchorData\raw", "03")
+    flight = load_flight(str(paths.RAW), "03")
     sat = SatelliteMap(flight.satellite_path)
     q = np.load(CACHE / "northup_03_640.npy", mmap_mode="r")
     qe = np.load(CACHE / "query_emb_448.npy")

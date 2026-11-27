@@ -17,13 +17,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.stdout.reconfigure(encoding="utf-8")
 
 import cv2, numpy as np
+from src import paths
 from src.flight import load_flight
 from src.geo import SatelliteMap, haversine_m_array
 from src.features import Dinov2Embedder
 from src.preprocess import drone_to_northup
 from src.tiles import TileDB
 
-DATA_ROOT = r"D:\GeoAnchorData\raw"
+DATA_ROOT = str(paths.RAW)
 DRONE_GSD, TILE_M = 0.1142, 300.0
 ROOT = Path(__file__).resolve().parents[1]
 KS = [1, 3, 5, 10, 20, 50]

@@ -17,6 +17,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+from src import paths
 from src.figtext import figdir, num, pct, pick
 from src.flight import load_flight
 from src.geo import SatelliteMap, latlon_to_local_m, local_m_to_latlon
@@ -103,7 +104,7 @@ T = pick({
 
 
 def load_all():
-    flight = load_flight(r"D:\GeoAnchorData\raw", "03")
+    flight = load_flight(str(paths.RAW), "03")
     d = flight.df
     data = {"flight": flight, "gt_n": d["north_m"].values,
             "gt_e": d["east_m"].values, "dist": d["cum_dist_m"].values}

@@ -5,11 +5,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.stdout.reconfigure(encoding="utf-8")
 
 import numpy as np
+from src import paths
 from src.flight import load_flight
 from src.geo import haversine_m_array
 from src.features import Dinov2Embedder
 
-CACHE = Path(r"D:\GeoAnchorData\cache")
+CACHE = paths.CACHE
 ROOT = Path(__file__).resolve().parents[1]
 KS = [1, 3, 5, 10, 20, 50]
 THRESH = [75, 150, 300]
@@ -29,7 +30,7 @@ def slice_norm(e, part):
     return v / np.linalg.norm(v, axis=1, keepdims=True)
 
 def main():
-    flight = load_flight(r"D:\GeoAnchorData\raw", "03")
+    flight = load_flight(str(paths.RAW), "03")
     g = np.load(CACHE / "tilegrid_03.npz")
     tiles = np.load(CACHE / "tiles_03_448.npy", mmap_mode="r")
     queries = np.load(CACHE / "northup_03_640.npy", mmap_mode="r")

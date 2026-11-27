@@ -11,9 +11,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.stdout.reconfigure(encoding="utf-8")
 
 import numpy as np
+from src import paths
 from src.flight import load_flight
 
-flight = load_flight(r"D:\GeoAnchorData\raw", "03")
+flight = load_flight(str(paths.RAW), "03")
 d = flight.df
 n = d["north_m"].values; e = d["east_m"].values
 yaw = d["Phi1"].values

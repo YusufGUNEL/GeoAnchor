@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.stdout.reconfigure(encoding="utf-8")
 
 import cv2, numpy as np
+from src import paths
 from src.flight import load_flight
 from src.geo import SatelliteMap
 from src.geometry import AttitudeModel
@@ -22,8 +23,8 @@ from src.particle_filter import PFConfig
 from src.sequential import SequentialLocalizer
 from src import pipeline as P
 
-DATA = r"D:\GeoAnchorData\full"
-CACHE = Path(r"D:\GeoAnchorData\cache_multi")
+DATA = str(paths.FULL)
+CACHE = paths.CACHE_MULTI
 ROOT = Path(__file__).resolve().parents[1]
 N_FRAMES = 220
 

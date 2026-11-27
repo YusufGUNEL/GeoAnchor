@@ -16,12 +16,13 @@ sys.stdout.reconfigure(encoding="utf-8")
 import cv2
 import numpy as np
 
+from src import paths
 from src.flight import load_flight
 from src.geo import SatelliteMap, latlon_to_local_m
 from src.geometry import AttitudeModel
 from src.odometry import VisualOdometry, integrate
 
-CACHE = Path(r"D:\GeoAnchorData\cache")
+CACHE = paths.CACHE
 ROOT = Path(__file__).resolve().parents[1]
 TILE_M, OUT_PX = 300.0, 640
 M_PER_PX = TILE_M / OUT_PX          # 0.469 m/px
@@ -29,7 +30,7 @@ ATT = AttitudeModel(pitch_bias_deg=2.006, roll_bias_deg=-0.137)
 
 
 def main():
-    flight = load_flight(r"D:\GeoAnchorData\raw", "03")
+    flight = load_flight(str(paths.RAW), "03")
     sat = SatelliteMap(flight.satellite_path)
     q = np.load(CACHE / "northup_03_640.npy", mmap_mode="r")
     d = flight.df

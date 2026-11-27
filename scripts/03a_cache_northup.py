@@ -10,12 +10,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.stdout.reconfigure(encoding="utf-8")
 
 import cv2, numpy as np
+from src import paths
 from src.flight import load_flight
 from src.geo import SatelliteMap
 from src.preprocess import drone_to_northup
 
-DATA_ROOT = r"D:\GeoAnchorData\raw"
-CACHE = Path(r"D:\GeoAnchorData\cache"); CACHE.mkdir(exist_ok=True)
+DATA_ROOT = str(paths.RAW)
+CACHE = paths.CACHE; CACHE.mkdir(exist_ok=True)
 DRONE_GSD, TILE_M, OUT_PX = 0.1142, 300.0, 640
 
 def main():

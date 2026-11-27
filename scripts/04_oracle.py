@@ -9,16 +9,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.stdout.reconfigure(encoding="utf-8")
 
 import numpy as np, cv2
+from src import paths
 from src.flight import load_flight
 from src.geo import SatelliteMap, haversine_m
 from src.matching import LoFTRMatcher
 from src.localize import SingleFrameLocalizer
 
-CACHE = Path(r"D:\GeoAnchorData\cache")
+CACHE = paths.CACHE
 ROOT = Path(__file__).resolve().parents[1]
 
 def main():
-    flight = load_flight(r"D:\GeoAnchorData\raw", "03")
+    flight = load_flight(str(paths.RAW), "03")
     sat = SatelliteMap(flight.satellite_path)
     q = np.load(CACHE / "northup_03_640.npy", mmap_mode="r")
     g = np.load(CACHE / "tilegrid_03.npz")
