@@ -1116,7 +1116,13 @@ karşılaştırıldı; yeni sonuç dosyaları commit edilmedi.
 Küçük farklar büyük olasılıkla o günden bu yana güncellenen kütüphanelerden
 (kornia 0.9.2, torch 2.11) geliyor; hiçbir karar ve hiçbir makale iddiası
 değişmedi. Kare başına süre bugün belirgin şekilde yüksekti (`07`'de 866 yerine
-2415 ms, `05`'te 2,6 yerine 3,2 sn); sebebi ölçülmedi, sonuçları etkilemiyor.
+2415 ms, `05`'te 2,6 yerine 3,2 sn). Sebep laptopun "Silent" güç moduydu:
+bu modda işlemci kısılıyor (CPU matris çarpımı 165 → 47 ms, SIFT 297 → 156 ms
+Dengeli'ye geçince), GPU ise değişmiyor (LoFTR 430 / 428 ms). `07`'nin işlemci
+payı büyük (SIFT odometri, 600 parçacık), `05`'in ağırlığı GPU'da; yavaşlama
+oranlarındaki fark buradan. `07` Dengeli modda yeniden koşuldu: kare başına
+804 ms, doğruluk sayıları Silent koşusuyla birebir aynı. Makaledeki süre
+sayıları geçerli; ölçüm yapılırken güç modu Dengeli ya da Performans olmalı.
 
 **README'de bir eksik bulundu.** Yeniden üretim adımlarında
 `06b_vo_calibrate.py` yoktu; `07` onun yazdığı `06b_odometry_cal.npz`'yi okuyup
